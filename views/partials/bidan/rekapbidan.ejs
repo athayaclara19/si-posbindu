@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekap Wilayah - Bidan</title>
+    <link rel="stylesheet" href="/css/output.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+        .font-inter { font-family: 'Inter', sans-serif; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-50 font-inter antialiased text-slate-800 flex h-screen overflow-hidden">
+    
+    <%- include('../partials/sidebar', { active: 'rekap', role: 'bidan' }) %>
+
+    <div class="flex-1 flex flex-col h-screen overflow-y-auto relative">
+        <%- include('../partials/header', { pageTitle: 'Rekap Wilayah', role: 'bidan' }) %>
+
+        <main class="p-8 space-y-6 w-full">
+            <div>
+                <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">
+                    Rekap Wilayah
+                </h2>
+                <p class="text-[#6B7280] text-sm mt-1">Nagari Sungai Tarab · Januari 2025</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </div>
+                        <span class="px-2 py-1 bg-blue-50 text-blue-600 text-[10px] font-semibold rounded-md">Jan 2025</span>
+                    </div>
+                    <div>
+                        <p class="text-3xl font-poppins font-bold text-gray-800">202</p>
+                        <p class="text-gray-500 text-xs font-medium mt-1">Total Pasien</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-3xl font-poppins font-bold text-gray-800">80</p>
+                        <p class="text-gray-500 text-xs font-medium mt-1">Kasus Hipertensi <span class="text-gray-400 font-normal ml-1">39.6% dari total</span></p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-green-100 text-green-600 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-3xl font-poppins font-bold text-gray-800">71.8%</p>
+                        <p class="text-gray-500 text-xs font-medium mt-1">Tekanan Terkendali</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-3xl font-poppins font-bold text-gray-800">+7.4%</p>
+                        <p class="text-gray-500 text-xs font-medium mt-1">Trend Bulan Ini</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                <h3 class="text-[#1F2937] font-poppins font-semibold mb-6">Tren Bulanan</h3>
+                <div class="w-full h-[280px]">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                    <h3 class="text-[#1F2937] font-poppins font-semibold mb-6">Pasien per Jorong</h3>
+                    <div class="w-full h-[250px]">
+                        <canvas id="jorongBarChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="px-6 py-5 border-b border-gray-100">
+                        <h3 class="text-[#1F2937] font-poppins font-semibold">Rekap per Jorong</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-[#F8FAFC] border-b border-gray-100">
+                                    <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Jorong</th>
+                                    <th class="text-center px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Total</th>
+                                    <th class="text-center px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Hipertensi</th>
+                                    <th class="text-center px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Terkendali</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50">
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-5 py-3.5 text-sm text-[#1F2937] font-medium">Jorong Pasar</td>
+                                    <td class="px-5 py-3.5 text-sm text-center text-[#6B7280]">68</td>
+                                    <td class="px-5 py-3.5 text-sm text-center text-[#EF4444] font-medium">28</td>
+                                    <td class="px-5 py-3.5 text-center">
+                                        <span class="text-xs px-2.5 py-1 rounded-full bg-[#D1FAE5] text-[#059669] font-medium">72%</span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-5 py-3.5 text-sm text-[#1F2937] font-medium">Jorong Koto</td>
+                                    <td class="px-5 py-3.5 text-sm text-center text-[#6B7280]">45</td>
+                                    <td class="px-5 py-3.5 text-sm text-center text-[#EF4444] font-medium">19</td>
+                                    <td class="px-5 py-3.5 text-center">
+                                        <span class="text-xs px-2.5 py-1 rounded-full bg-[#FEF3C7] text-[#D97706] font-medium">65%</span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-5 py-3.5 text-sm text-[#1F2937] font-medium">Jorong Tengah</td>
+                                    <td class="px-5 py-3.5 text-sm text-center text-[#6B7280]">38</td>
+                                    <td class="px-5 py-3.5 text-sm text-center text-[#EF4444] font-medium">14</td>
+                                    <td class="px-5 py-3.5 text-center">
+                                        <span class="text-xs px-2.5 py-1 rounded-full bg-[#D1FAE5] text-[#059669] font-medium">80%</span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-5 py-3.5 text-sm text-[#1F2937] font-medium">Jorong Barat</td>
+                                    <td class="px-5 py-3.5 text-sm text-center text-[#6B7280]">29</td>
+                                    <td class="px-5 py-3.5 text-sm text-center text-[#EF4444] font-medium">11</td>
+                                    <td class="px-5 py-3.5 text-center">
+                                        <span class="text-xs px-2.5 py-1 rounded-full bg-[#FEF3C7] text-[#D97706] font-medium">68%</span>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-5 py-3.5 text-sm text-[#1F2937] font-medium">Jorong Timur</td>
+                                    <td class="px-5 py-3.5 text-sm text-center text-[#6B7280]">22</td>
+                                    <td class="px-5 py-3.5 text-sm text-center text-[#EF4444] font-medium">8</td>
+                                    <td class="px-5 py-3.5 text-center">
+                                        <span class="text-xs px-2.5 py-1 rounded-full bg-[#D1FAE5] text-[#059669] font-medium">75%</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // Konfigurasi Umum Font Chart
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.color = '#6B7280';
+
+            // 1. CHART TREN BULANAN (LINE CHART)
+            const ctxTrend = document.getElementById('trendChart').getContext('2d');
+            new Chart(ctxTrend, {
+                type: 'line',
+                data: {
+                    labels: ["Agu", "Sep", "Okt", "Nov", "Des", "Jan"],
+                    datasets: [
+                        {
+                            label: 'Total Pasien',
+                            data: [178, 185, 172, 195, 188, 202],
+                            borderColor: '#2563EB',
+                            backgroundColor: '#2563EB',
+                            borderWidth: 2,
+                            tension: 0.3, // Membuat garis sedikit melengkung
+                            pointRadius: 4,
+                            pointBackgroundColor: '#fff',
+                            pointBorderWidth: 2
+                        },
+                        {
+                            label: 'Terkendali',
+                            data: [120, 128, 115, 135, 130, 145],
+                            borderColor: '#10B981',
+                            backgroundColor: '#10B981',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#fff',
+                            pointBorderWidth: 2
+                        },
+                        {
+                            label: 'Hipertensi',
+                            data: [68, 72, 65, 78, 70, 80],
+                            borderColor: '#EF4444',
+                            backgroundColor: '#EF4444',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#fff',
+                            pointBorderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, padding: 20 } },
+                        tooltip: { backgroundColor: 'white', titleColor: '#1F2937', bodyColor: '#4B5563', borderColor: '#E5E7EB', borderWidth: 1, padding: 10, usePointStyle: true, titleFont: { family: "'Poppins', sans-serif" } }
+                    },
+                    scales: {
+                        x: { grid: { display: false, drawBorder: false } },
+                        y: { grid: { color: '#F3F4F6', drawBorder: false, strokeDash: [3, 3] }, min: 0 }
+                    },
+                    interaction: { mode: 'index', intersect: false }
+                }
+            });
+
+            // 2. CHART PASIEN PER JORONG (HORIZONTAL BAR CHART)
+            const ctxJorong = document.getElementById('jorongBarChart').getContext('2d');
+            new Chart(ctxJorong, {
+                type: 'bar',
+                data: {
+                    labels: ["Jorong Pasar", "Jorong Koto", "Jorong Tengah", "Jorong Barat", "Jorong Timur"],
+                    datasets: [
+                        {
+                            label: 'Total',
+                            data: [68, 45, 38, 29, 22],
+                            backgroundColor: '#2563EB',
+                            borderRadius: 4,
+                            barPercentage: 0.6,
+                            categoryPercentage: 0.8
+                        },
+                        {
+                            label: 'Hipertensi',
+                            data: [28, 19, 14, 11, 8],
+                            backgroundColor: '#EF4444',
+                            borderRadius: 4,
+                            barPercentage: 0.6,
+                            categoryPercentage: 0.8
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y', // Mengubah chart menjadi horizontal
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, padding: 15 } },
+                        tooltip: { backgroundColor: 'white', titleColor: '#1F2937', bodyColor: '#4B5563', borderColor: '#E5E7EB', borderWidth: 1, padding: 10, usePointStyle: true, titleFont: { family: "'Poppins', sans-serif" } }
+                    },
+                    scales: {
+                        x: { grid: { color: '#F3F4F6', drawBorder: false, strokeDash: [3, 3] } },
+                        y: { grid: { display: false, drawBorder: false } }
+                    }
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>

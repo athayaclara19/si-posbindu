@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validasi Skrining - Bidan</title>
+    <link rel="stylesheet" href="/css/output.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+        .font-inter { font-family: 'Inter', sans-serif; }
+        .hidden-el { display: none !important; }
+        /* Efek transisi grid untuk panel detail */
+        .grid-transition { transition: all 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-slate-50 font-inter antialiased text-slate-800 flex h-screen overflow-hidden">
+    
+    <%- include('../partials/sidebar', { active: 'validasi', role: 'bidan' }) %>
+
+    <div class="flex-1 flex flex-col h-screen overflow-y-auto relative">
+        <%- include('../partials/header', { pageTitle: 'Validasi Skrining', role: 'bidan' }) %>
+
+        <main class="p-8 space-y-5 max-w-[1400px] mx-auto w-full">
+            <div class="flex items-start justify-between">
+                <div>
+                    <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Validasi Skrining</h2>
+                    <p class="text-[#6B7280] text-sm mt-1" id="countText">Memuat data...</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3">
+                <div class="relative flex-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    <input type="text" id="searchInput" placeholder="Cari nama atau NIK pasien..." class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all">
+                </div>
+                <div class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#6B7280] flex-shrink-0"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                    <select id="periodeFilter" class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all min-w-[120px]">
+                        <option value="Semua">Semua Periode</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#6B7280] flex-shrink-0"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                    <select id="jorongFilter" class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all min-w-[140px]">
+                        <option value="Semua">Semua Jorong</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
+                
+                <div id="tableContainer" class="lg:col-span-5 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden grid-transition">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-[#F8FAFC] border-b border-gray-100">
+                                    <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Nama Pasien</th>
+                                    <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Kader</th>
+                                    <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Periode</th>
+                                    <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">TD</th>
+                                    <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Status</th>
+                                    <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody" class="divide-y divide-gray-50">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="detailPanel" class="hidden-el lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden sticky top-8">
+                    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50">
+                        <h3 class="text-[#1F2937] font-poppins font-semibold flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#2563EB]"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                            Detail Skrining
+                        </h3>
+                        <button onclick="closeDetail()" class="p-1.5 rounded-lg hover:bg-gray-200 text-[#6B7280] transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+                    </div>
+
+                    <div class="overflow-y-auto max-h-[calc(100vh-220px)]">
+                        <div class="px-5 py-4 border-b border-gray-100">
+                            <p class="text-[#2563EB] text-[11px] font-bold uppercase tracking-wider mb-3">Data Pasien</p>
+                            <div class="space-y-2.5">
+                                <div class="flex justify-between text-sm"><span class="text-[#6B7280]">Nama</span><span id="det-nama" class="text-[#1F2937] font-medium">-</span></div>
+                                <div class="flex justify-between text-sm"><span class="text-[#6B7280]">NIK</span><span id="det-nik" class="text-[#1F2937] font-medium font-mono">-</span></div>
+                                <div class="flex justify-between text-sm"><span class="text-[#6B7280]">Alamat</span><span id="det-alamat" class="text-[#1F2937] font-medium text-right max-w-[200px]">-</span></div>
+                                <div class="flex justify-between text-sm"><span class="text-[#6B7280]">Jorong</span><span id="det-jorong" class="text-[#1F2937] font-medium">-</span></div>
+                                <div class="flex justify-between text-sm"><span class="text-[#6B7280]">Tanggal Skrining</span><span id="det-tanggal" class="text-[#1F2937] font-medium">-</span></div>
+                            </div>
+                        </div>
+
+                        <div class="px-5 py-4 border-b border-gray-100 bg-[#F8FAFC]">
+                            <p class="text-[#2563EB] text-[11px] font-bold uppercase tracking-wider mb-3">Hasil Pengukuran</p>
+                            <div class="space-y-2.5">
+                                <div class="flex justify-between text-sm"><span class="text-[#6B7280]">Sistole / Diastole</span><span id="det-td" class="text-[#1F2937] font-semibold">-</span></div>
+                                <div class="flex justify-between text-sm items-center"><span class="text-[#6B7280]">Kategori TD</span><span id="det-kat" class="text-sm font-semibold">-</span></div>
+                                <div class="flex justify-between text-sm"><span class="text-[#6B7280]">Berat / Tinggi</span><span id="det-bbtb" class="text-[#1F2937] font-medium">-</span></div>
+                                <div class="flex justify-between text-sm"><span class="text-[#6B7280]">IMT</span><span id="det-imt" class="text-[#1F2937] font-medium">-</span></div>
+                                <div class="flex justify-between text-sm"><span class="text-[#6B7280]">Gula Darah</span><span id="det-gula" class="text-[#1F2937] font-medium">-</span></div>
+                                <div class="flex justify-between text-sm"><span class="text-[#6B7280]">Kolesterol</span><span id="det-kolesterol" class="text-[#1F2937] font-medium">-</span></div>
+                            </div>
+                        </div>
+
+                        <div class="px-5 py-5 bg-gray-50 rounded-b-2xl">
+                            <div id="actionButtons" class="flex flex-col gap-2">
+                                <button onclick="handleVerifikasi()" class="w-full flex items-center justify-center gap-2 bg-[#10B981] hover:bg-[#059669] text-white py-2.5 rounded-xl text-sm transition-all font-medium shadow-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                    Verifikasi & Terima Data
+                                </button>
+                                <button onclick="openRevisiModal()" class="w-full flex items-center justify-center gap-2 border border-[#F59E0B] text-[#D97706] bg-white py-2.5 rounded-xl text-sm hover:bg-[#FEF3C7] transition-all font-medium">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                                    Kembalikan ke Kader (Revisi)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <div id="revisiModal" class="fixed inset-0 z-50 hidden-el items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="closeRevisiModal()"></div>
+        <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl z-10 relative">
+            <h3 class="text-[#1F2937] mb-1 font-poppins font-semibold text-lg">Alasan Perbaikan</h3>
+            <p class="text-[#6B7280] text-sm mb-4">Masukkan alasan mengapa data ini perlu diperbaiki oleh Kader</p>
+            
+            <textarea id="revisiText" placeholder="Contoh: Nilai sistole tampak tidak wajar, mohon cek ulang..." rows="4" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#F59E0B] resize-none transition-all"></textarea>
+            <p id="revisiError" class="hidden-el flex items-center gap-1 text-xs text-[#EF4444] mt-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Alasan perbaikan wajib diisi
+            </p>
+
+            <div class="flex gap-3 mt-5">
+                <button onclick="closeRevisiModal()" class="flex-1 border border-gray-200 text-[#6B7280] py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all">Batal</button>
+                <button onclick="submitRevisi()" class="flex-1 bg-[#F59E0B] hover:bg-[#D97706] text-white py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm">Kirim ke Kader</button>
+            </div>
+        </div>
+    </div>
+
+    <form id="formValidasiReal" method="POST" class="hidden-el">
+        <input type="hidden" name="status_validasi" id="inputStatusVal">
+        <input type="hidden" name="catatan_bidan" id="inputCatatanVal">
+    </form>
+
+    <script>
+        // 1. Ambil data asli dari PostgreSQL via EJS
+        const rawData = <%- JSON.stringify(typeof menungguValidasi !== 'undefined' ? menungguValidasi : []) %>;
+        
+        // 2. Format data agar sesuai dengan struktur Javascript sebelumnya
+        let skriningData = rawData.map(d => {
+            const tgl = new Date(d.tanggal_kegiatan);
+            return {
+                id: d.id_skrining,
+                nama: d.nama_pasien,
+                nik: d.nik,
+                alamat: d.alamat || '-',
+                jorong: d.nama_jorong,
+                periode: tgl.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }),
+                kader: d.nama_kader || 'Kader Posbindu',
+                tanggal: tgl.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+                sistole: d.sistole,
+                diastole: d.diastole,
+                beratBadan: d.berat_badan || '-',
+                tinggiBadan: d.tinggi_badan || '-',
+                gulaDarah: d.gula_darah || '-',
+                kolesterol: d.kolesterol || '-',
+                kategori: d.status_tekanan || 'Normal',
+                status: 'Menunggu Validasi'
+            };
+        });
+
+        let currentSelectedId = null;
+
+        // Ekstrak Periode & Jorong unik untuk mengisi dropdown filter secara otomatis
+        function populateFilters() {
+            const periodeSet = new Set(skriningData.map(d => d.periode));
+            const jorongSet = new Set(skriningData.map(d => d.jorong));
+            
+            const pFilter = document.getElementById('periodeFilter');
+            periodeSet.forEach(p => pFilter.innerHTML += `<option value="${p}">${p}</option>`);
+            
+            const jFilter = document.getElementById('jorongFilter');
+            jorongSet.forEach(j => jFilter.innerHTML += `<option value="${j}">${j}</option>`);
+        }
+
+        // Render Tabel Utama
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const periode = document.getElementById('periodeFilter').value;
+            const jorong = document.getElementById('jorongFilter').value;
+
+            tbody.innerHTML = '';
+            let count = 0;
+
+            skriningData.forEach(d => {
+                if (search && !d.nama.toLowerCase().includes(search) && !d.nik.includes(search)) return;
+                if (periode !== 'Semua' && d.periode !== periode) return;
+                if (jorong !== 'Semua' && d.jorong !== jorong) return;
+
+                count++;
+                
+                const isSelected = currentSelectedId === d.id;
+                const rowClass = isSelected ? "bg-[#DBEAFE]/40 border-l-2 border-[#2563EB]" : "hover:bg-slate-50";
+
+                const tr = document.createElement('tr');
+                tr.className = `cursor-pointer transition-colors border-b border-gray-50 last:border-0 ${rowClass}`;
+                tr.onclick = () => openDetail(d.id);
+                
+                tr.innerHTML = `
+                    <td class="px-5 py-3.5">
+                        <p class="text-[#1F2937] text-sm font-semibold">${d.nama}</p>
+                        <p class="text-[#6B7280] text-xs mt-0.5">${d.jorong}</p>
+                    </td>
+                    <td class="px-5 py-3.5 text-sm text-[#6B7280] font-medium">${d.kader}</td>
+                    <td class="px-5 py-3.5 text-sm text-[#6B7280]">${d.periode}</td>
+                    <td class="px-5 py-3.5">
+                        <span class="text-[#1F2937] text-sm font-semibold">${d.sistole}/${d.diastole}</span>
+                        <span class="text-[#6B7280] text-xs ml-0.5">mmHg</span>
+                    </td>
+                    <td class="px-5 py-3.5">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FEF3C7] text-[#D97706] text-[11px] font-semibold border border-[#FDE68A]"><span class="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></span>Menunggu</span>
+                    </td>
+                    <td class="px-5 py-3.5">
+                        <span class="text-[#2563EB] text-xs font-semibold hover:underline">Detail</span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            if (count === 0) {
+                tbody.innerHTML = `<tr><td colSpan="6" class="px-5 py-10 text-center text-[#6B7280] text-sm">Tidak ada antrean validasi saat ini.</td></tr>`;
+            }
+            document.getElementById('countText').innerText = `${count} data menunggu validasi`;
+        }
+
+        // Buka Panel Detail Sebelah Kanan
+        function openDetail(id) {
+            currentSelectedId = id;
+            renderTable(); 
+
+            const data = skriningData.find(d => d.id === id);
+            
+            document.getElementById('tableContainer').classList.remove('lg:col-span-5');
+            document.getElementById('tableContainer').classList.add('lg:col-span-3');
+            document.getElementById('detailPanel').classList.remove('hidden-el');
+
+            document.getElementById('det-nama').innerText = data.nama;
+            document.getElementById('det-nik').innerText = data.nik;
+            document.getElementById('det-alamat').innerText = data.alamat;
+            document.getElementById('det-jorong').innerText = data.jorong;
+            document.getElementById('det-tanggal').innerText = data.tanggal;
+
+            document.getElementById('det-td').innerText = `${data.sistole}/${data.diastole} mmHg`;
+            document.getElementById('det-bbtb').innerText = `${data.beratBadan}kg / ${data.tinggiBadan}cm`;
+            document.getElementById('det-gula').innerText = `${data.gulaDarah} mg/dL`;
+            document.getElementById('det-kolesterol').innerText = `${data.kolesterol} mg/dL`;
+            
+            let imt = '-';
+            if(data.beratBadan !== '-' && data.tinggiBadan !== '-') {
+                imt = (data.beratBadan / Math.pow(data.tinggiBadan / 100, 2)).toFixed(1);
+            }
+            document.getElementById('det-imt').innerText = imt !== '-' ? `${imt} kg/m²` : '-';
+
+            const katEl = document.getElementById('det-kat');
+            katEl.innerText = data.kategori;
+            katEl.className = "text-sm font-semibold ";
+            if(data.kategori === 'Normal') katEl.className += "text-[#059669]";
+            else if(data.kategori === 'Prehipertensi') katEl.className += "text-[#D97706]";
+            else if(data.kategori === 'Hipertensi Tahap 1') katEl.className += "text-[#EA580C]";
+            else katEl.className += "text-[#DC2626]";
+        }
+
+        // Tutup Detail
+        function closeDetail() {
+            currentSelectedId = null;
+            document.getElementById('tableContainer').classList.remove('lg:col-span-3');
+            document.getElementById('tableContainer').classList.add('lg:col-span-5');
+            document.getElementById('detailPanel').classList.add('hidden-el');
+            renderTable();
+        }
+
+        // Aksi Verifikasi (Kirim ke Node.js Backend)
+        function handleVerifikasi() {
+            if(!currentSelectedId) return;
+            // Arahkan form ke URL ID skrining
+            document.getElementById('formValidasiReal').action = '/bidan/validasi/' + currentSelectedId;
+            document.getElementById('inputStatusVal').value = 'diterima';
+            document.getElementById('inputCatatanVal').value = 'Telah diverifikasi oleh Bidan.';
+            
+            // Submit form
+            document.getElementById('formValidasiReal').submit();
+        }
+
+        // Aksi Revisi
+        function openRevisiModal() {
+            document.getElementById('revisiModal').classList.remove('hidden-el');
+            document.getElementById('revisiModal').classList.add('flex');
+            document.getElementById('revisiText').value = '';
+            document.getElementById('revisiError').classList.add('hidden-el');
+        }
+
+        function closeRevisiModal() {
+            document.getElementById('revisiModal').classList.add('hidden-el');
+            document.getElementById('revisiModal').classList.remove('flex');
+        }
+
+        function submitRevisi() {
+            const text = document.getElementById('revisiText').value;
+            if (!text.trim()) {
+                document.getElementById('revisiError').classList.remove('hidden-el');
+                return;
+            }
+            if(currentSelectedId) {
+                // Arahkan form ke URL ID skrining
+                document.getElementById('formValidasiReal').action = '/bidan/validasi/' + currentSelectedId;
+                document.getElementById('inputStatusVal').value = 'revisi';
+                document.getElementById('inputCatatanVal').value = text;
+                
+                // Submit form
+                document.getElementById('formValidasiReal').submit();
+            }
+        }
+
+        // Inisialisasi
+        populateFilters();
+        document.getElementById('searchInput').addEventListener('input', renderTable);
+        document.getElementById('periodeFilter').addEventListener('change', renderTable);
+        document.getElementById('jorongFilter').addEventListener('change', renderTable);
+        renderTable();
+    </script>
+</body>
+</html>

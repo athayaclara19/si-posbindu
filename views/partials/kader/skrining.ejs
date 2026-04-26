@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Skrining - Kader</title>
+    <link rel="stylesheet" href="/css/output.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+        .font-inter { font-family: 'Inter', sans-serif; }
+        .hidden-step { display: none; }
+    </style>
+</head>
+<body class="bg-slate-50 font-inter antialiased text-slate-800 flex h-screen overflow-hidden">
+    
+    <%- include('../partials/sidebar', { active: 'skrining' }) %>
+
+    <div class="flex-1 flex flex-col h-screen overflow-y-auto">
+        <%- include('../partials/header', { pageTitle: 'Input Skrining' }) %>
+
+        <main class="p-8 max-w-3xl mx-auto w-full space-y-5">
+            
+            <div id="form-header">
+                <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Form Input Skrining</h2>
+                <p class="text-[#6B7280] text-sm">Isi data pemeriksaan dengan lengkap dan benar</p>
+            </div>
+
+            <div id="stepper-container" class="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-4">
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2">
+                        <div id="step-circle-1" class="w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0 transition-all bg-[#2563EB] text-white font-semibold">1</div>
+                        <span id="step-text-1" class="text-xs hidden sm:block text-[#2563EB] font-semibold">Data Pasien</span>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-300 flex-shrink-0"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    
+                    <div class="flex items-center gap-2">
+                        <div id="step-circle-2" class="w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0 transition-all bg-gray-200 text-gray-500 font-semibold">2</div>
+                        <span id="step-text-2" class="text-xs hidden sm:block text-[#6B7280]">Hasil Pengukuran</span>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-300 flex-shrink-0"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    
+                    <div class="flex items-center gap-2">
+                        <div id="step-circle-3" class="w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0 transition-all bg-gray-200 text-gray-500 font-semibold">3</div>
+                        <span id="step-text-3" class="text-xs hidden sm:block text-[#6B7280]">Faktor Risiko & Edukasi</span>
+                    </div>
+                </div>
+            </div>
+
+            <form id="skrining-form" action="/skrining" method="POST">                
+                <div id="step-1" class="bg-white rounded-2xl border border-gray-100 shadow-sm">
+                    <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#2563EB]"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <h3 class="text-[#1F2937] font-poppins font-semibold">Step 1 — Data Pasien</h3>
+                    </div>
+                    <div class="px-6 py-5 space-y-4">
+                        
+                        <div>
+                            <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Pilih Pasien <span class="text-[#EF4444]">*</span></label>
+                            <select id="input-pasien" name="id_pasien" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white" required>
+                                <option value="">-- Pilih Pasien --</option>
+                                <% if (typeof pasien !== 'undefined') { %>
+                                    <% pasien.forEach(p => { %>
+                                        <option value="<%= p.id_pasien %>"><%= p.nama_pasien %> (<%= p.nik %>)</option>
+                                    <% }) %>
+                                <% } %>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Kegiatan Posbindu <span class="text-[#EF4444]">*</span></label>
+                            <select id="input-kegiatan" name="id_kegiatan" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white" required>
+                                <option value="">-- Pilih kegiatan --</option>
+                                <% if (typeof kegiatan !== 'undefined') { %>
+                                    <% kegiatan.forEach(k => { %>
+                                        <option value="<%= k.id_kegiatan %>"><%= k.lokasi %> (<%= k.tanggal_kegiatan.toISOString().split('T')[0] %>)</option>
+                                    <% }) %>
+                                <% } %>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Tanggal Pemeriksaan <span class="text-[#EF4444]">*</span></label>
+                            <input type="date" id="input-tanggal" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white" required readonly>
+                        </div>
+
+                        <div>
+                            <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Status (Otomatis)</label>
+                            <div class="px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 flex items-center gap-2">
+                                <span class="w-2 h-2 bg-[#F59E0B] rounded-full"></span>
+                                <span class="text-[#D97706] text-sm font-medium">Menunggu Validasi</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 border-t border-gray-100 flex justify-end">
+                        <button type="button" onclick="goToStep(2)" class="flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all">
+                            Lanjut <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="step-2" class="bg-white rounded-2xl border border-gray-100 shadow-sm hidden-step">
+                    <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#2563EB]"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        <h3 class="text-[#1F2937] font-poppins font-semibold">Step 2 — Hasil Pengukuran</h3>
+                    </div>
+                    <div class="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        
+                        <div>
+                            <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Sistole <span class="text-[#EF4444]">*</span></label>
+                            <div class="relative">
+                                <input type="number" id="input-sistole" name="sistole" placeholder="70 - 250" class="w-full px-4 py-2.5 pr-16 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white" required>
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] text-xs">mmHg</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Diastole <span class="text-[#EF4444]">*</span></label>
+                            <div class="relative">
+                                <input type="number" id="input-diastole" name="diastole" placeholder="40 - 150" class="w-full px-4 py-2.5 pr-16 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white" required>
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] text-xs">mmHg</span>
+                            </div>
+                        </div>
+
+                        <div id="box-kategori" class="sm:col-span-2 hidden-step">
+                            <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Kategori (Otomatis)</label>
+                            <div id="badge-kategori" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium">
+                                <span id="text-kategori">-</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Berat Badan</label>
+                            <div class="relative">
+                                <input type="number" step="0.1" id="input-bb" name="berat_badan" placeholder="kg" class="w-full px-4 py-2.5 pr-10 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white">
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] text-xs">kg</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Tinggi Badan</label>
+                            <div class="relative">
+                                <input type="number" id="input-tb" name="tinggi_badan" placeholder="cm" class="w-full px-4 py-2.5 pr-10 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white">
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] text-xs">cm</span>
+                            </div>
+                        </div>
+
+                        <div id="box-imt" class="sm:col-span-2 items-center gap-3 px-4 py-2.5 bg-[#F0F9FF] rounded-xl border border-[#BAE6FD] hidden-step flex">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#0284C7]"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            <span class="text-[#0284C7] text-sm">IMT: <strong id="text-imt-val">0</strong></span>
+                            <span id="text-imt-status" class="text-[#6B7280] text-xs"></span>
+                        </div>
+
+                        <div>
+                            <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Gula Darah</label>
+                            <div class="relative">
+                                <input type="number" id="input-gula" name="gula_darah" placeholder="40 - 600" class="w-full px-4 py-2.5 pr-16 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white">
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] text-xs">mg/dL</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Kolesterol</label>
+                            <div class="relative">
+                                <input type="number" id="input-kolesterol" name="kolesterol" placeholder="50 - 600" class="w-full px-4 py-2.5 pr-16 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white">
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] text-xs">mg/dL</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="px-6 py-4 border-t border-gray-100 flex justify-between">
+                        <button type="button" onclick="goToStep(1)" class="flex items-center gap-2 border border-gray-300 text-[#1F2937] px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all">← Kembali</button>
+                        <button type="button" onclick="goToStep(3)" class="flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all">Lanjut <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+                    </div>
+                </div>
+
+                <div id="step-3" class="bg-white rounded-2xl border border-gray-100 shadow-sm hidden-step">
+                    <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#2563EB]"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        <h3 class="text-[#1F2937] font-poppins font-semibold">Step 3 — Faktor Risiko & Edukasi</h3>
+                    </div>
+                    <div class="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        
+                        <div>
+                            <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Merokok</label>
+                            <select name="merokok" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white">
+                                <option value="">-- Pilih --</option>
+                                <option value="true">Ya</option>
+                                <option value="false">Tidak</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Aktivitas Fisik</label>
+                            <select name="aktivitas_fisik" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white">
+                                <option value="">-- Pilih --</option>
+                                <option value="Aktif">Aktif</option>
+                                <option value="Kurang Aktif">Kurang Aktif</option>
+                            </select>
+                        </div>
+                        
+                        <div class="sm:col-span-2 mt-2">
+                            <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Catatan Edukasi yang Diberikan</label>
+                            <textarea name="edukasi" rows="3" placeholder="Contoh: Edukasi diet rendah garam, anjuran olahraga rutin..." class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white resize-none"></textarea>
+                        </div>
+
+                    </div>
+                    <div class="px-6 py-4 border-t border-gray-100 flex justify-between">
+                        <button type="button" onclick="goToStep(2)" class="flex items-center gap-2 border border-gray-300 text-[#1F2937] px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all">← Kembali</button>
+                        <button type="button" onclick="submitData()" class="flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            Kirim Data
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <div id="step-success" class="hidden-step flex-col items-center justify-center min-h-[50vh] space-y-4 pt-10">
+                <div class="w-16 h-16 bg-[#D1FAE5] rounded-full flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#10B981]"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Mengirim Data...</h2>
+                <p class="text-[#6B7280] text-sm text-center max-w-sm">
+                    Mohon tunggu sebentar.
+                </p>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // Set tanggal hari ini otomatis
+        document.getElementById('input-tanggal').valueAsDate = new Date();
+
+        // Navigasi Antar Step
+        function goToStep(step) {
+            // Validasi sederhana sebelum lanjut ke Step 2
+            if (step === 2) {
+                const p = document.getElementById('input-pasien').value;
+                const k = document.getElementById('input-kegiatan').value;
+                if (!p || !k) return alert("Pilih pasien dan kegiatan terlebih dahulu!");
+            }
+            // Validasi sederhana sebelum lanjut ke Step 3
+            if (step === 3) {
+                const s = document.getElementById('input-sistole').value;
+                const d = document.getElementById('input-diastole').value;
+                if (!s || !d) return alert("Sistole dan Diastole wajib diisi!");
+            }
+
+            // Sembunyikan semua step
+            document.getElementById('step-1').classList.add('hidden-step');
+            document.getElementById('step-2').classList.add('hidden-step');
+            document.getElementById('step-3').classList.add('hidden-step');
+            
+            // Tampilkan step yang dituju
+            document.getElementById('step-' + step).classList.remove('hidden-step');
+
+            // Update UI Stepper
+            for (let i = 1; i <= 3; i++) {
+                let circle = document.getElementById('step-circle-' + i);
+                let text = document.getElementById('step-text-' + i);
+                
+                if (i < step) { // Step yang sudah dilewati (Hijau)
+                    circle.className = "w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0 transition-all bg-[#10B981] text-white font-semibold";
+                    circle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
+                    text.className = "text-xs hidden sm:block text-[#059669]";
+                } else if (i === step) { // Step saat ini (Biru)
+                    circle.className = "w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0 transition-all bg-[#2563EB] text-white font-semibold";
+                    circle.innerHTML = i;
+                    text.className = "text-xs hidden sm:block text-[#2563EB] font-semibold";
+                } else { // Step masa depan (Abu-abu)
+                    circle.className = "w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0 transition-all bg-gray-200 text-gray-500 font-semibold";
+                    circle.innerHTML = i;
+                    text.className = "text-xs hidden sm:block text-[#6B7280]";
+                }
+            }
+        }
+
+        // Hitung Kategori Tekanan Darah Otomatis
+        const sysInput = document.getElementById('input-sistole');
+        const diaInput = document.getElementById('input-diastole');
+        const boxKat = document.getElementById('box-kategori');
+        const badgeKat = document.getElementById('badge-kategori');
+        const textKat = document.getElementById('text-kategori');
+
+        function checkBP() {
+            const sys = parseInt(sysInput.value);
+            const dia = parseInt(diaInput.value);
+            
+            if (sys && dia) {
+                boxKat.classList.remove('hidden-step');
+                if (sys >= 180 || dia >= 120) {
+                    textKat.innerText = "Krisis Hipertensi";
+                    badgeKat.className = "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-[#FEE2E2] text-[#DC2626]";
+                } else if (sys >= 160 || dia >= 100) {
+                    textKat.innerText = "Hipertensi Tahap 2";
+                    badgeKat.className = "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-[#FEE2E2] text-[#DC2626]";
+                } else if (sys >= 140 || dia >= 90) {
+                    textKat.innerText = "Hipertensi Tahap 1";
+                    badgeKat.className = "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-[#FFEDD5] text-[#EA580C]";
+                } else if (sys >= 120 || dia >= 80) {
+                    textKat.innerText = "Prehipertensi";
+                    badgeKat.className = "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-[#FEF3C7] text-[#D97706]";
+                } else {
+                    textKat.innerText = "Normal";
+                    badgeKat.className = "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-[#D1FAE5] text-[#059669]";
+                }
+            } else {
+                boxKat.classList.add('hidden-step');
+            }
+        }
+        sysInput.addEventListener('input', checkBP);
+        diaInput.addEventListener('input', checkBP);
+
+        // Hitung IMT Otomatis
+        const bbInput = document.getElementById('input-bb');
+        const tbInput = document.getElementById('input-tb');
+        const boxImt = document.getElementById('box-imt');
+        const textImtVal = document.getElementById('text-imt-val');
+        const textImtStatus = document.getElementById('text-imt-status');
+
+        function checkIMT() {
+            const bb = parseFloat(bbInput.value);
+            const tb = parseFloat(tbInput.value);
+            if (bb && tb) {
+                const imt = (bb / Math.pow(tb / 100, 2)).toFixed(1);
+                textImtVal.innerText = imt + " kg/m²";
+                textImtStatus.innerText = imt < 18.5 ? "Kurus" : imt < 25 ? "Normal" : imt < 30 ? "Gemuk" : "Obesitas";
+                boxImt.classList.remove('hidden-step');
+            } else {
+                boxImt.classList.add('hidden-step');
+            }
+        }
+        bbInput.addEventListener('input', checkIMT);
+        tbInput.addEventListener('input', checkIMT);
+
+        // Submit Form
+        function submitData() {
+            // Tampilkan animasi loading singkat
+            document.getElementById('form-header').classList.add('hidden-step');
+            document.getElementById('stepper-container').classList.add('hidden-step');
+            document.getElementById('skrining-form').classList.add('hidden-step');
+            document.getElementById('step-success').classList.remove('hidden-step');
+            document.getElementById('step-success').classList.add('flex');
+            
+            // Jeda sebentar agar user melihat pesan "Mengirim Data..." 
+            // lalu submit form secara nyata ke backend
+            setTimeout(() => {
+                document.getElementById('skrining-form').submit();
+            }, 500);
+        }
+    </script>
+</body>
+</html>

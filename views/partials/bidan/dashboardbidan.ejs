@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Bidan</title>
+    <link rel="stylesheet" href="/css/output.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+        .font-inter { font-family: 'Inter', sans-serif; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-50 font-inter antialiased text-slate-800 flex h-screen overflow-hidden">
+    
+    <%- include('../partials/sidebar', { active: 'dashboard_bidan', role: 'bidan' }) %>
+
+    <div class="flex-1 flex flex-col h-screen overflow-y-auto">
+        <%- include('../partials/header', { pageTitle: 'Dashboard Bidan', role: 'bidan' }) %>
+
+        <main class="p-8 space-y-6 max-w-7xl mx-auto w-full">
+            <div>
+                <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">
+                    Dashboard Bidan - Kecamatan IV Koto Agam
+                </h2>
+                <p class="text-[#6B7280] text-sm mt-1">Kamis, 02 April 2026</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </div>
+                        <span class="px-2 py-1 bg-blue-50 text-blue-600 text-[10px] font-semibold rounded-md">Bulan ini</span>
+                    </div>
+                    <div>
+                        <p class="text-3xl font-poppins font-bold text-gray-800">156</p>
+                        <p class="text-gray-500 text-xs font-medium mt-1">Total Data Masuk</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        </div>
+                        <span class="px-2 py-1 bg-amber-50 text-amber-600 text-[10px] font-semibold rounded-md">Perlu tindakan</span>
+                    </div>
+                    <div>
+                        <p class="text-3xl font-poppins font-bold text-gray-800">12</p>
+                        <p class="text-gray-500 text-xs font-medium mt-1">Data Belum Diverifikasi</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-green-100 text-green-600 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-3xl font-poppins font-bold text-gray-800">144</p>
+                        <p class="text-gray-500 text-xs font-medium mt-1">Data Terverifikasi</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col justify-between">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-3xl font-poppins font-bold text-gray-800">5</p>
+                        <p class="text-gray-500 text-xs font-medium mt-1">Perlu Perbaikan</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                    <h3 class="text-[#1F2937] font-poppins font-semibold mb-6">Capaian per Jorong (Bulan Ini)</h3>
+                    <div class="w-full h-[250px]">
+                        <canvas id="jorongChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col">
+                    <h3 class="text-[#1F2937] font-poppins font-semibold mb-5">Status Tekanan Darah</h3>
+                    
+                    <div class="space-y-5">
+                        <div>
+                            <div class="flex justify-between text-sm mb-1.5">
+                                <span class="text-[#6B7280] font-medium">Terkendali</span>
+                                <span class="text-[#1F2937] font-semibold">68%</span>
+                            </div>
+                            <div class="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-[#10B981] rounded-full" style="width: 68%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1.5">
+                                <span class="text-[#6B7280] font-medium">Hipertensi</span>
+                                <span class="text-[#1F2937] font-semibold">40%</span>
+                            </div>
+                            <div class="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-[#EF4444] rounded-full" style="width: 40%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1.5">
+                                <span class="text-[#6B7280] font-medium">Normal</span>
+                                <span class="text-[#1F2937] font-semibold">82%</span>
+                            </div>
+                            <div class="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-[#2563EB] rounded-full" style="width: 82%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-5 border-t border-gray-100">
+                        <p class="text-[#1F2937] text-xs font-semibold mb-3 uppercase tracking-wider">Belum Diverifikasi per Jorong</p>
+                        <div class="space-y-2.5">
+                            <div class="flex items-center justify-between text-sm">
+                                <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-[#2563EB]"></div><span class="text-[#6B7280]">Jrg Pasar</span></div>
+                                <span class="text-[#D97706] font-semibold">5 data</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-[#10B981]"></div><span class="text-[#6B7280]">Jrg Koto</span></div>
+                                <span class="text-[#D97706] font-semibold">4 data</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-[#F59E0B]"></div><span class="text-[#6B7280]">Jrg Tengah</span></div>
+                                <span class="text-[#D97706] font-semibold">3 data</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-[#8B5CF6]"></div><span class="text-[#6B7280]">Jrg Ranah</span></div>
+                                <span class="text-[#059669] font-semibold">0 data</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+                    <h3 class="text-[#1F2937] font-poppins font-semibold">Data Belum Diverifikasi (12)</h3>
+                    <a href="/bidan/validasi" class="text-sm bg-[#2563EB] text-white px-5 py-2.5 rounded-xl hover:bg-[#1D4ED8] transition-all font-medium shadow-sm">
+                        Verifikasi Sekarang
+                    </a>
+                </div>
+                <div class="divide-y divide-gray-50">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">S</div>
+                            <div>
+                                <p class="text-[#1F2937] text-sm font-semibold">Siti Maimunah</p>
+                                <p class="text-[#6B7280] text-xs mt-0.5">Jorong Pasar • 02 Apr 2026</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 justify-between sm:justify-end w-full sm:w-auto pl-12 sm:pl-0">
+                            <span class="text-[#6B7280] text-xs font-medium">Kader: Sari Dewi</span>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FEF3C7] text-[#D97706] text-xs font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></span>Menunggu Validasi</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">A</div>
+                            <div>
+                                <p class="text-[#1F2937] text-sm font-semibold">Ahmad Yusuf</p>
+                                <p class="text-[#6B7280] text-xs mt-0.5">Jorong Pasar • 02 Apr 2026</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 justify-between sm:justify-end w-full sm:w-auto pl-12 sm:pl-0">
+                            <span class="text-[#6B7280] text-xs font-medium">Kader: Sari Dewi</span>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FEF3C7] text-[#D97706] text-xs font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></span>Menunggu Validasi</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">F</div>
+                            <div>
+                                <p class="text-[#1F2937] text-sm font-semibold">Fatimah Zahra</p>
+                                <p class="text-[#6B7280] text-xs mt-0.5">Jorong Koto • 25 Mar 2026</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 justify-between sm:justify-end w-full sm:w-auto pl-12 sm:pl-0">
+                            <span class="text-[#6B7280] text-xs font-medium">Kader: Rina Sari</span>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FEF3C7] text-[#D97706] text-xs font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></span>Menunggu Validasi</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('jorongChart').getContext('2d');
+            
+            // Konfigurasi Gradien/Warna (Opsional untuk estetika)
+            const colors = ["#2563EB", "#10B981", "#F59E0B", "#8B5CF6"];
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jrg Pasar', 'Jrg Koto', 'Jrg Tengah', 'Jrg Ranah'],
+                    datasets: [
+                        {
+                            label: 'Total Pasien',
+                            data: [62, 48, 35, 11],
+                            backgroundColor: colors,
+                            borderRadius: { topLeft: 4, topRight: 4 },
+                            barPercentage: 0.5,
+                            categoryPercentage: 0.8
+                        },
+                        {
+                            label: 'Hipertensi',
+                            data: [24, 18, 12, 8],
+                            backgroundColor: '#EF4444',
+                            borderRadius: { topLeft: 4, topRight: 4 },
+                            barPercentage: 0.5,
+                            categoryPercentage: 0.8
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                boxWidth: 8,
+                                font: { family: "'Inter', sans-serif", size: 12, weight: '500' },
+                                color: '#4B5563'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'white',
+                            titleColor: '#1F2937',
+                            bodyColor: '#4B5563',
+                            borderColor: '#E5E7EB',
+                            borderWidth: 1,
+                            padding: 10,
+                            boxPadding: 4,
+                            usePointStyle: true,
+                            titleFont: { family: "'Poppins', sans-serif", size: 13 },
+                            bodyFont: { family: "'Inter', sans-serif", size: 12 }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false, drawBorder: false },
+                            ticks: { font: { family: "'Inter', sans-serif", size: 11 }, color: '#6B7280' }
+                        },
+                        y: {
+                            grid: { color: '#F3F4F6', drawBorder: false, strokeDash: [3, 3] },
+                            ticks: { font: { family: "'Inter', sans-serif", size: 11 }, color: '#6B7280' }
+                        }
+                    },
+                    interaction: { mode: 'index', intersect: false }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

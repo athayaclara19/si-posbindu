@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="/css/output.css">
+</head>
+<body class="bg-[#F3F4F6]">
+  <div class="flex min-h-screen">
+    <%- include('../partials/sidebar', { active: 'dashboard' }) %>
+
+    <div class="flex-1 flex flex-col">
+      <%- include('../partials/header', { pageTitle: 'Dashboard' }) %>
+
+      <main class="p-6 space-y-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-[#1F2937] font-poppins font-semibold text-[20px]">
+              Selamat datang, Sari Dewi! 👋
+            </h2>
+            <p class="text-[#6B7280] text-sm">Rabu, 04 Maret 2026 · Jorong Pasar</p>
+          </div>
+
+          <a href="/skrining" class="bg-[#2563EB] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#1D4ED8] transition-all inline-flex items-center gap-2">
+            + Input Skrining
+          </a>
+        </div>
+
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+            <div class="flex items-start justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl bg-[#2563EB] flex items-center justify-center text-white">👥</div>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-[#DBEAFE] text-[#2563EB] font-medium">+2 bulan ini</span>
+            </div>
+            <p class="text-[#1F2937] text-2xl font-poppins font-semibold">10</p>
+            <p class="text-[#6B7280] text-sm mt-0.5">Total Pasien Terdaftar</p>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+            <div class="flex items-start justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl bg-[#10B981] flex items-center justify-center text-white">📝</div>
+            </div>
+            <p class="text-[#1F2937] text-2xl font-poppins font-semibold">24</p>
+            <p class="text-[#6B7280] text-sm mt-0.5">Skrining Bulan Ini</p>
+            <p class="text-[#6B7280] text-xs mt-1 opacity-70">dari 10 pasien aktif</p>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+            <div class="flex items-start justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl bg-[#F59E0B] flex items-center justify-center text-white">⏳</div>
+            </div>
+            <p class="text-[#1F2937] text-2xl font-poppins font-semibold">8</p>
+            <p class="text-[#6B7280] text-sm mt-0.5">Pending Validasi</p>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+            <div class="flex items-start justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl bg-[#EF4444] flex items-center justify-center text-white">⚠</div>
+            </div>
+            <p class="text-[#1F2937] text-2xl font-poppins font-semibold">3</p>
+            <p class="text-[#6B7280] text-sm mt-0.5">Perlu Revisi</p>
+          </div>
+        </section>
+
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+            <h3 class="text-[#1F2937] mb-4 font-poppins font-semibold">
+              Tren Skrining 6 Bulan Terakhir
+            </h3>
+
+            <div class="h-[200px] flex items-end gap-4 pt-6">
+              <div class="flex-1 flex flex-col items-center justify-end gap-2">
+                <div class="w-full max-w-[40px] h-[70px] bg-[#2563EB] rounded-t-md"></div>
+                <span class="text-xs text-[#6B7280]">Agu</span>
+              </div>
+              <div class="flex-1 flex flex-col items-center justify-end gap-2">
+                <div class="w-full max-w-[40px] h-[110px] bg-[#2563EB] rounded-t-md"></div>
+                <span class="text-xs text-[#6B7280]">Sep</span>
+              </div>
+              <div class="flex-1 flex flex-col items-center justify-end gap-2">
+                <div class="w-full max-w-[40px] h-[95px] bg-[#2563EB] rounded-t-md"></div>
+                <span class="text-xs text-[#6B7280]">Okt</span>
+              </div>
+              <div class="flex-1 flex flex-col items-center justify-end gap-2">
+                <div class="w-full max-w-[40px] h-[125px] bg-[#2563EB] rounded-t-md"></div>
+                <span class="text-xs text-[#6B7280]">Nov</span>
+              </div>
+              <div class="flex-1 flex flex-col items-center justify-end gap-2">
+                <div class="w-full max-w-[40px] h-[110px] bg-[#2563EB] rounded-t-md"></div>
+                <span class="text-xs text-[#6B7280]">Des</span>
+              </div>
+              <div class="flex-1 flex flex-col items-center justify-end gap-2">
+                <div class="w-full max-w-[40px] h-[145px] bg-[#2563EB] rounded-t-md"></div>
+                <span class="text-xs text-[#6B7280]">Jan</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="text-[#2563EB]">📅</span>
+              <h3 class="text-[#1F2937] font-poppins font-semibold">Jadwal Hari Ini</h3>
+            </div>
+
+            <div class="space-y-3">
+              <div class="flex gap-3 p-3 bg-[#F8FAFC] rounded-xl">
+                <div class="text-center">
+                  <p class="text-[#2563EB] text-xs font-semibold">08:00</p>
+                </div>
+                <div class="border-l-2 border-[#DBEAFE] pl-3">
+                  <p class="text-[#1F2937] text-sm font-medium">Skrining Posbindu</p>
+                  <p class="text-[#6B7280] text-xs mt-0.5">Balai Jorong Pasar</p>
+                </div>
+              </div>
+
+              <div class="flex gap-3 p-3 bg-[#F8FAFC] rounded-xl">
+                <div class="text-center">
+                  <p class="text-[#2563EB] text-xs font-semibold">13:00</p>
+                </div>
+                <div class="border-l-2 border-[#DBEAFE] pl-3">
+                  <p class="text-[#1F2937] text-sm font-medium">Skrining Lanjut Usia</p>
+                  <p class="text-[#6B7280] text-xs mt-0.5">Puskesmas Pembantu</p>
+                </div>
+              </div>
+            </div>
+
+            <button class="w-full mt-4 text-[#2563EB] text-sm hover:underline">
+              Lihat semua jadwal →
+            </button>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

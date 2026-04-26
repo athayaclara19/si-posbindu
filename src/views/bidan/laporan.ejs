@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Skrining - Bidan</title>
+    <link rel="stylesheet" href="/css/output.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+        .font-inter { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 font-inter antialiased text-slate-800 flex h-screen overflow-hidden">
+    
+    <%- include('../partials/sidebar', { active: 'laporan', role: 'bidan' }) %>
+
+    <div class="flex-1 flex flex-col h-screen overflow-y-auto">
+        <%- include('../partials/header', { pageTitle: 'Laporan Skrining', role: 'bidan' }) %>
+
+        <main class="p-8 space-y-6 w-full max-w-6xl mx-auto">
+            
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Rekapitulasi Data Pasien</h2>
+                    <p class="text-[#6B7280] text-sm mt-1">Data skrining yang telah divalidasi dan siap untuk dilaporkan.</p>
+                </div>
+                
+                <a href="/bidan/laporan/export" class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#10B981] hover:bg-[#059669] text-white text-sm font-medium rounded-xl transition-all shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                    Export ke Excel
+                </a>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-[#F8FAFC] border-b border-gray-100">
+                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Pasien / NIK</th>
+                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Tanggal / Jorong</th>
+                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Hasil Tensi</th>
+                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Status Validasi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            <% if (typeof laporanData !== 'undefined' && laporanData.length > 0) { %>
+                                <% laporanData.forEach(r => { %>
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-5 py-4">
+                                        <p class="text-[#1F2937] text-sm font-medium"><%= r.nama_pasien %></p>
+                                        <p class="text-[#6B7280] text-xs font-mono"><%= r.nik %></p>
+                                    </td>
+                                    <td class="px-5 py-4">
+                                        <p class="text-[#1F2937] text-sm"><%= new Date(r.tanggal_kegiatan).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) %></p>
+                                        <p class="text-[#6B7280] text-xs"><%= r.nama_jorong %></p>
+                                    </td>
+                                    <td class="px-5 py-4">
+                                        <p class="text-[#1F2937] text-sm font-medium"><%= r.sistole %>/<%= r.diastole %> mmHg</p>
+                                        <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-gray-100 text-gray-700 mt-1 inline-block"><%= r.status_tekanan %></span>
+                                    </td>
+                                    <td class="px-5 py-4">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D1FAE5] text-[#059669] text-[11px] font-semibold border border-[#A7F3D0]">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>Valid
+                                        </span>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="4" class="px-5 py-12 text-center text-sm text-gray-500">
+                                        Belum ada data skrining yang tervalidasi.
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</body>
+</html>

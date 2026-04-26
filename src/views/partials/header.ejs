@@ -1,0 +1,43 @@
+<% const currentRole = (typeof role !== 'undefined') ? role : 'kader'; %>
+<header class="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between sticky top-0 z-20">
+    <div>
+        <h1 class="text-[#1F2937] font-poppins font-semibold text-lg">
+            <%= typeof pageTitle !== 'undefined' ? pageTitle : 'Dashboard' %>
+        </h1>
+    </div>
+    <div class="flex items-center gap-5">
+        <button class="relative text-gray-400 hover:text-[#2563EB] transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            <span class="absolute top-0 right-0 w-2 h-2 bg-[#EF4444] rounded-full border-2 border-white"></span>
+        </button>
+
+        <div class="flex items-center gap-3 pl-5 border-l border-gray-200 cursor-pointer group">
+            <% if (currentRole === 'bidan') { %>
+                <div class="w-9 h-9 rounded-full bg-[#2563EB] text-white flex items-center justify-center font-bold text-sm shadow-sm group-hover:bg-[#1D4ED8] transition-colors">B</div>
+                <div class="hidden sm:block text-right">
+                    <p class="text-[#1F2937] text-sm font-semibold leading-tight">Bidan Ratna</p>
+                    <p class="text-[#6B7280] text-[11px] font-medium mt-0.5">Bidan Desa</p>
+                </div>
+            <% } else if (currentRole === 'ptm') { %>
+                <div class="w-9 h-9 rounded-full bg-[#2563EB] text-white flex items-center justify-center font-bold text-sm shadow-sm group-hover:bg-[#1D4ED8] transition-colors">H</div>
+                <div class="hidden sm:block text-right">
+                    <p class="text-[#1F2937] text-sm font-semibold leading-tight">Dr. Hendra</p>
+                    <p class="text-[#6B7280] text-[11px] font-medium mt-0.5">PJ Program PTM</p>
+                </div>
+            <% } else if (currentRole === 'kepala') { %>
+                <div class="w-9 h-9 rounded-full bg-[#2563EB] text-white flex items-center justify-center font-bold text-sm shadow-sm group-hover:bg-[#1D4ED8] transition-colors">A</div>
+                <div class="hidden sm:block text-right">
+                    <p class="text-[#1F2937] text-sm font-semibold leading-tight">Dr. Amelia</p>
+                    <p class="text-[#6B7280] text-[11px] font-medium mt-0.5">Kepala Puskesmas</p>
+                </div>
+            <% } else { %>
+                <div class="w-9 h-9 rounded-full bg-[#2563EB] text-white flex items-center justify-center font-bold text-sm shadow-sm group-hover:bg-[#1D4ED8] transition-colors">S</div>
+                <div class="hidden sm:block text-right">
+                    <p class="text-[#1F2937] text-sm font-semibold leading-tight">Sari Dewi</p>
+                    <p class="text-[#6B7280] text-[11px] font-medium mt-0.5">Kader Posbindu</p>
+                </div>
+            <% } %>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+    </div>
+</header>

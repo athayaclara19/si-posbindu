@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SI Posbindu</title>
+    <link rel="stylesheet" href="/css/output.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+        .font-inter { font-family: 'Inter', sans-serif; }
+        .hidden-el { display: none !important; }
+    </style>
+</head>
+<body class="bg-white font-inter min-h-screen flex">
+
+    <div class="hidden lg:flex lg:w-1/2 bg-[#1F2937] flex-col items-center justify-center p-12 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10">
+            <div class="absolute top-10 left-10 w-32 h-32 rounded-full bg-[#2563EB]"></div>
+            <div class="absolute bottom-20 right-10 w-48 h-48 rounded-full bg-[#2563EB]"></div>
+            <div class="absolute top-1/2 left-1/3 w-24 h-24 rounded-full bg-white"></div>
+        </div>
+        
+        <div class="relative z-10 text-center max-w-sm">
+            <img src="/images/logo_puskesmas.png" alt="Logo Puskesmas" class="w-20 h-20 mx-auto mb-4 object-contain">
+            <h1 class="text-white mb-3 font-poppins font-bold text-[28px]">SI-Posbindu</h1>
+            <p class="text-white/60 text-sm leading-relaxed">
+                Sistem Informasi Monitoring & Pelaporan Hipertensi Program PTM Puskesmas IV Koto Kabupaten Agam
+            </p>
+
+            <div class="mt-10 grid grid-cols-2 gap-4 text-left">
+                <div class="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/5">
+                    <p class="text-white text-xl font-semibold">1.847</p>
+                    <p class="text-white/50 text-xs mt-0.5">Pasien Tercatat</p>
+                </div>
+                <div class="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/5">
+                    <p class="text-white text-xl font-semibold">98.2%</p>
+                    <p class="text-white/50 text-xs mt-0.5">Data Tervalidasi</p>
+                </div>
+                <div class="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/5">
+                    <p class="text-white text-xl font-semibold">12</p>
+                    <p class="text-white/50 text-xs mt-0.5">Laporan Bulan Ini</p>
+                </div>
+                <div class="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/5">
+                    <p class="text-white text-xl font-semibold">24</p>
+                    <p class="text-white/50 text-xs mt-0.5">Kader Aktif</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-1 flex items-center justify-center p-8">
+        <div class="w-full max-w-md">
+            
+            <div class="lg:hidden flex items-center gap-3 mb-8">
+                <div class="w-10 h-10  flex items-center justify-center">
+                    <img src="/images/logo_puskesmas.png" alt="Logo Puskesmas" class="w-20 h-20 mx-auto mb-4 object-contain">
+                </div>
+                <div>
+                    <p class="text-[#1F2937] font-poppins font-semibold leading-tight">SI-Posbindu</p>
+                    <p class="text-[#6B7280] text-xs">Puskesmas Sungai Tarab</p>
+                </div>
+            </div>
+
+            <h2 class="text-[#1F2937] mb-1 font-poppins font-semibold text-[22px]">Selamat Datang</h2>
+            <p class="text-[#6B7280] text-sm mb-8">Masuk ke akun Anda untuk melanjutkan</p>
+
+            <div class="mb-6">
+                <label class="text-sm text-[#1F2937] mb-2 block font-medium">Login sebagai <span class="text-[#6B7280] text-xs font-normal">(Pilih Akses)</span></label>
+                <input type="hidden" id="selectedRole" value="kader">
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" onclick="selectRole('kader', this)" class="role-btn text-left p-3 rounded-xl border-2 transition-all border-[#2563EB] bg-[#DBEAFE]">
+                        <p class="text-xs font-medium text-[#2563EB]">Kader Posbindu</p>
+                        <p class="text-[#6B7280] text-xs mt-0.5">Input & monitoring skrining</p>
+                    </button>
+                    <button type="button" onclick="selectRole('bidan', this)" class="role-btn text-left p-3 rounded-xl border-2 transition-all border-gray-200 hover:border-gray-300">
+                        <p class="text-xs font-medium text-[#1F2937]">Bidan Desa</p>
+                        <p class="text-[#6B7280] text-xs mt-0.5">Validasi data wilayah</p>
+                    </button>
+                    <button type="button" onclick="selectRole('ptm', this)" class="role-btn text-left p-3 rounded-xl border-2 transition-all border-gray-200 hover:border-gray-300">
+                        <p class="text-xs font-medium text-[#1F2937]">PJ Program PTM</p>
+                        <p class="text-[#6B7280] text-xs mt-0.5">Rekap & generate laporan</p>
+                    </button>
+                    <button type="button" onclick="selectRole('kepala', this)" class="role-btn text-left p-3 rounded-xl border-2 transition-all border-gray-200 hover:border-gray-300">
+                        <p class="text-xs font-medium text-[#1F2937]">Kepala Puskesmas</p>
+                        <p class="text-[#6B7280] text-xs mt-0.5">Review & persetujuan laporan</p>
+                    </button>
+                </div>
+            </div>
+
+            <form id="loginForm" action="/login" method="POST" onsubmit="handleLogin(event)" class="space-y-4">
+                
+                <% if (typeof error !== 'undefined' && error) { %>
+                    <div class="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4 border border-red-200 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <%= error %>
+                    </div>
+                <% } %> 
+                
+                <div>
+                    <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Username / Email <span class="text-[#EF4444]">*</span></label>
+                    <input type="text" id="email" name="email" placeholder="kader_ani atau email@puskesmas.id" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white transition-all" required>
+                    <p id="emailError" class="hidden-el flex items-center gap-1 text-xs text-[#EF4444] mt-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Username wajib diisi</p>
+                </div>
+                
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-sm text-[#1F2937] font-medium">Password <span class="text-[#EF4444]">*</span></label>
+                        <button type="button" onclick="openForgotModal()" class="text-xs text-[#2563EB] hover:underline font-medium">Lupa Password?</button>
+                    </div>
+                    <div class="relative">
+                        <input type="password" id="password" name="password" placeholder="••••••••" class="w-full px-4 py-2.5 pr-11 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white transition-all" required>
+                        <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                    <p id="passError" class="hidden-el flex items-center gap-1 text-xs text-[#EF4444] mt-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Password minimal 6 karakter</p>
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm mt-2">
+                    Masuk
+                </button>
+            </form>
+
+            <p class="text-center text-[#6B7280] text-xs mt-8">© 2026 SI-Posbindu · Puskesmas Sungai Tarab</p>
+        </div>
+    </div>
+
+    <div id="forgotModal" class="fixed inset-0 z-50 hidden-el items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="closeForgotModal()"></div>
+        
+        <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl z-10 relative">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-[#DBEAFE] rounded-xl flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#2563EB]"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-[#1F2937] font-poppins font-semibold">Lupa Password</h3>
+                        <p class="text-[#6B7280] text-xs">Reset password via email</p>
+                    </div>
+                </div>
+                <button onclick="closeForgotModal()" class="p-1.5 rounded-lg hover:bg-gray-100 text-[#6B7280] transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+
+            <div id="forgotFormBox">
+                <p class="text-[#6B7280] text-sm mb-4">Masukkan email akun Anda. Kami akan mengirimkan instruksi untuk mereset password.</p>
+                <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Email <span class="text-[#EF4444]">*</span></label>
+                <input type="email" id="forgotEmail" placeholder="nama@puskesmas.id" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white transition-all">
+                
+                <div class="flex gap-3 mt-5">
+                    <button onclick="closeForgotModal()" class="flex-1 border border-gray-200 text-[#6B7280] py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all">Batal</button>
+                    <button onclick="submitForgot()" id="forgotBtn" class="flex-1 bg-[#2563EB] hover:bg-[#1D4ED8] text-white py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm">Kirim Instruksi</button>
+                </div>
+            </div>
+
+            <div id="forgotSuccessBox" class="hidden-el text-center py-4">
+                <div class="w-14 h-14 bg-[#D1FAE5] rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#10B981]"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <p class="text-[#1F2937] mb-1 font-semibold text-lg">Email Terkirim!</p>
+                <p class="text-[#6B7280] text-sm mb-6">Instruksi telah dikirim ke email Anda. Periksa kotak masuk email Anda.</p>
+                <button onclick="closeForgotModal()" class="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm">Kembali ke Login</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Logika Pilih Role
+        function selectRole(role, btnElement) {
+            document.getElementById('selectedRole').value = role;
+            
+            // Reset semua tombol ke abu-abu
+            const buttons = document.querySelectorAll('.role-btn');
+            buttons.forEach(btn => {
+                btn.className = "role-btn text-left p-3 rounded-xl border-2 transition-all border-gray-200 hover:border-gray-300";
+                btn.querySelector('p:first-child').classList.replace('text-[#2563EB]', 'text-[#1F2937]');
+            });
+
+            // Set tombol aktif ke biru
+            btnElement.className = "role-btn text-left p-3 rounded-xl border-2 transition-all border-[#2563EB] bg-[#DBEAFE]";
+            btnElement.querySelector('p:first-child').classList.replace('text-[#1F2937]', 'text-[#2563EB]');
+        }
+
+        // Logika Lihat Password
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const icon = document.getElementById('eyeIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.innerHTML = '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/>';
+            } else {
+                input.type = 'password';
+                icon.innerHTML = '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>';
+            }
+        }
+
+        // Logika Submit Login
+        function handleLogin(e) {
+            e.preventDefault(); // Tahan form sebentar untuk animasi loading
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            const btn = document.getElementById('submitBtn');
+
+            // Reset Error
+            document.getElementById('emailError').classList.add('hidden-el');
+            document.getElementById('passError').classList.add('hidden-el');
+
+            let hasError = false;
+            if (email.trim() === '') {
+                document.getElementById('emailError').classList.remove('hidden-el');
+                hasError = true;
+            }
+            if (pass.length < 6) {
+                document.getElementById('passError').classList.remove('hidden-el');
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            // Animasi Loading
+            btn.innerText = "Memverifikasi...";
+            btn.disabled = true;
+            btn.classList.add('opacity-70', 'cursor-not-allowed');
+
+            // Lanjutkan pengiriman data form ke Backend Node.js
+            document.getElementById('loginForm').submit();
+        }
+
+        // Logika Modal Lupa Password
+        function openForgotModal() {
+            document.getElementById('forgotModal').classList.remove('hidden-el');
+            document.getElementById('forgotModal').classList.add('flex');
+            document.getElementById('forgotFormBox').classList.remove('hidden-el');
+            document.getElementById('forgotSuccessBox').classList.add('hidden-el');
+            document.getElementById('forgotEmail').value = '';
+        }
+
+        function closeForgotModal() {
+            document.getElementById('forgotModal').classList.add('hidden-el');
+            document.getElementById('forgotModal').classList.remove('flex');
+        }
+
+        function submitForgot() {
+            const email = document.getElementById('forgotEmail').value;
+            if (!email || !email.includes('@')) return alert('Masukkan email yang valid!');
+            
+            const btn = document.getElementById('forgotBtn');
+            btn.innerText = "Mengirim...";
+            btn.disabled = true;
+
+            setTimeout(() => {
+                document.getElementById('forgotFormBox').classList.add('hidden-el');
+                document.getElementById('forgotSuccessBox').classList.remove('hidden-el');
+                btn.innerText = "Kirim Instruksi";
+                btn.disabled = false;
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

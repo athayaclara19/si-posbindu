@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Skrining - Kader</title>
+    <link rel="stylesheet" href="/css/output.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* CSS Tambahan untuk menyembunyikan panah atas-bawah di input angka */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield; /* Untuk Firefox */
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-inter antialiased text-slate-800 flex h-screen overflow-hidden">
+    
+    <%- include('../partials/sidebar', { active: 'riwayat' }) %>
+
+    <div class="flex-1 flex flex-col h-screen overflow-y-auto">
+        <%- include('../partials/header', { pageTitle: 'Perbaikan Data Skrining' }) %>
+
+        <main class="p-8 w-full max-w-3xl mx-auto">
+            
+            <div class="mb-6 flex items-center gap-4">
+                <a href="/riwayat" class="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </a>
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800 font-poppins">Perbaikan Data Skrining</h2>
+                    <p class="text-gray-500 text-sm mt-1">Pasien: <span class="font-semibold text-gray-800"><%= skrining.nama_pasien %></span> (<%= skrining.nik %>)</p>
+                </div>
+            </div>
+
+            <div class="mb-6 bg-[#FEF3C7] border border-[#F59E0B] rounded-2xl p-5 flex gap-4 items-start shadow-sm">
+                <div class="w-10 h-10 rounded-full bg-[#F59E0B]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#D97706]"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                </div>
+                <div>
+                    <h3 class="text-[#D97706] font-bold text-sm mb-1 uppercase tracking-wider">Catatan Perbaikan dari Bidan:</h3>
+                    <p class="text-gray-800 text-sm leading-relaxed"><%= skrining.catatan_bidan %></p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+                <form action="/skrining/edit/<%= skrining.id_skrining %>" method="POST" class="space-y-6">
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Hasil Pemeriksaan Tensi</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Tekanan Sistole <span class="text-red-500">*</span></label>
+                                <div class="flex items-center rounded-xl border border-gray-200 bg-gray-50 overflow-hidden focus-within:border-[#2563EB] focus-within:bg-white transition-all">
+                                    <input type="number" name="sistole" value="<%= skrining.sistole %>" class="w-full px-4 py-2.5 bg-transparent text-sm outline-none" required>
+                                    <span class="px-4 py-2.5 bg-gray-100 border-l border-gray-200 text-gray-500 text-sm whitespace-nowrap">mmHg</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Tekanan Diastole <span class="text-red-500">*</span></label>
+                                <div class="flex items-center rounded-xl border border-gray-200 bg-gray-50 overflow-hidden focus-within:border-[#2563EB] focus-within:bg-white transition-all">
+                                    <input type="number" name="diastole" value="<%= skrining.diastole %>" class="w-full px-4 py-2.5 bg-transparent text-sm outline-none" required>
+                                    <span class="px-4 py-2.5 bg-gray-100 border-l border-gray-200 text-gray-500 text-sm whitespace-nowrap">mmHg</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Pemeriksaan Lainnya (Opsional)</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Berat Badan</label>
+                                <div class="flex items-center rounded-xl border border-gray-200 bg-gray-50 overflow-hidden focus-within:border-[#2563EB] focus-within:bg-white transition-all">
+                                    <input type="number" step="0.1" name="berat_badan" value="<%= skrining.berat_badan %>" class="w-full px-4 py-2.5 bg-transparent text-sm outline-none">
+                                    <span class="px-4 py-2.5 bg-gray-100 border-l border-gray-200 text-gray-500 text-sm whitespace-nowrap">kg</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Tinggi Badan</label>
+                                <div class="flex items-center rounded-xl border border-gray-200 bg-gray-50 overflow-hidden focus-within:border-[#2563EB] focus-within:bg-white transition-all">
+                                    <input type="number" name="tinggi_badan" value="<%= skrining.tinggi_badan %>" class="w-full px-4 py-2.5 bg-transparent text-sm outline-none">
+                                    <span class="px-4 py-2.5 bg-gray-100 border-l border-gray-200 text-gray-500 text-sm whitespace-nowrap">cm</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Gula Darah</label>
+                                <div class="flex items-center rounded-xl border border-gray-200 bg-gray-50 overflow-hidden focus-within:border-[#2563EB] focus-within:bg-white transition-all">
+                                    <input type="number" name="gula_darah" value="<%= skrining.gula_darah %>" class="w-full px-4 py-2.5 bg-transparent text-sm outline-none">
+                                    <span class="px-4 py-2.5 bg-gray-100 border-l border-gray-200 text-gray-500 text-sm whitespace-nowrap">mg/dL</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Kolesterol</label>
+                                <div class="flex items-center rounded-xl border border-gray-200 bg-gray-50 overflow-hidden focus-within:border-[#2563EB] focus-within:bg-white transition-all">
+                                    <input type="number" name="kolesterol" value="<%= skrining.kolesterol %>" class="w-full px-4 py-2.5 bg-transparent text-sm outline-none">
+                                    <span class="px-4 py-2.5 bg-gray-100 border-l border-gray-200 text-gray-500 text-sm whitespace-nowrap">mg/dL</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-6 border-t border-gray-100 flex justify-end gap-3">
+                        <a href="/riwayat" class="px-6 py-2.5 rounded-xl text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all">Batal</a>
+                        <button type="submit" class="px-6 py-2.5 rounded-xl text-sm font-medium bg-[#F59E0B] text-white hover:bg-[#D97706] transition-all shadow-sm flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                            Kirim Ulang ke Bidan
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+
+        </main>
+    </div>
+</body>
+</html>

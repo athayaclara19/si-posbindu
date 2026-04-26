@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan - PJ PTM</title>
+    <link rel="stylesheet" href="/css/output.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+        .font-inter { font-family: 'Inter', sans-serif; }
+        .hidden-el { display: none !important; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-50 font-inter antialiased text-slate-800 flex h-screen overflow-hidden">
+    
+    <%- include('../partials/sidebar', { active: 'laporan', role: 'ptm' }) %>
+
+    <div class="flex-1 flex flex-col h-screen overflow-y-auto relative">
+        <%- include('../partials/header', { pageTitle: 'Laporan Program PTM', role: 'ptm' }) %>
+
+        <main class="p-8 space-y-6 w-full">
+            
+            <div class="flex items-start justify-between">
+                <div>
+                    <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Laporan Program PTM</h2>
+                    <p class="text-[#6B7280] text-sm mt-1">Kelola dan ajukan laporan monitoring hipertensi</p>
+                </div>
+                <div id="headerActionBtn">
+                    <button onclick="switchTab('buat')" class="flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-5 py-2.5 rounded-xl text-sm transition-all font-medium shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                        Buat Laporan
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex gap-1 bg-[#F3F4F6] p-1.5 rounded-xl w-fit">
+                <button onclick="switchTab('list')" id="tab-list" class="px-5 py-2 rounded-lg text-sm transition-all bg-white text-[#2563EB] shadow-sm font-semibold flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10.4 12.6a2 2 0 1 1 3 3L8 21l-4 1 1-4Z"/><path d="M20 18v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v4"/></svg>
+                    List Laporan
+                </button>
+                <button onclick="switchTab('buat')" id="tab-buat" class="px-5 py-2 rounded-lg text-sm transition-all text-[#6B7280] hover:text-[#1F2937] flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                    Buat Laporan
+                </button>
+            </div>
+
+            <div id="section-list" class="space-y-4">
+                <div id="list-table-container" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-[#F8FAFC] border-b border-gray-100">
+                                    <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Periode</th>
+                                    <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Tanggal Buat</th>
+                                    <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Tanggal Ajukan</th>
+                                    <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Total Pasien</th>
+                                    <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Status</th>
+                                    <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50">
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded-lg bg-[#DBEAFE] flex items-center justify-center text-[#2563EB]">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                            </div>
+                                            <span class="text-[#1F2937] text-sm font-medium">Desember 2024</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-[#6B7280]">02 Jan 2025</td>
+                                    <td class="px-6 py-4 text-sm text-[#6B7280]">03 Jan 2025</td>
+                                    <td class="px-6 py-4 text-sm text-[#1F2937] font-medium">1.480</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D1FAE5] text-[#059669] text-xs font-semibold border border-[#A7F3D0]">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>Disetujui
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <button onclick="showDetail('Desember 2024')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[#2563EB] hover:bg-[#DBEAFE] text-xs font-medium transition-all">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                            Detail
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded-lg bg-[#DBEAFE] flex items-center justify-center text-[#2563EB]"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                                            <span class="text-[#1F2937] text-sm font-medium">November 2024</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-[#6B7280]">01 Des 2024</td>
+                                    <td class="px-6 py-4 text-sm text-[#6B7280]">02 Des 2024</td>
+                                    <td class="px-6 py-4 text-sm text-[#1F2937] font-medium">1.320</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D1FAE5] text-[#059669] text-xs font-semibold border border-[#A7F3D0]">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>Disetujui
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <button onclick="showDetail('November 2024')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[#2563EB] hover:bg-[#DBEAFE] text-xs font-medium transition-all">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>Detail
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded-lg bg-[#DBEAFE] flex items-center justify-center text-[#2563EB]"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                                            <span class="text-[#1F2937] text-sm font-medium">Oktober 2024</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-[#6B7280]">01 Nov 2024</td>
+                                    <td class="px-6 py-4 text-sm text-[#6B7280]">02 Nov 2024</td>
+                                    <td class="px-6 py-4 text-sm text-[#1F2937] font-medium">1.150</td>
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FEE2E2] text-[#DC2626] text-xs font-semibold border border-[#FECACA]">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-[#EF4444]"></span>Ditolak
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <button onclick="showDetail('Oktober 2024')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[#2563EB] hover:bg-[#DBEAFE] text-xs font-medium transition-all">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>Detail
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="px-6 py-4 border-t border-gray-100">
+                        <p class="text-[#6B7280] text-xs">3 laporan tersimpan</p>
+                    </div>
+                </div>
+
+                <div id="detail-container" class="hidden-el max-w-5xl mx-auto space-y-4">
+                    <button onclick="hideDetail()" class="flex items-center gap-2 text-[#6B7280] hover:text-[#1F2937] text-sm font-medium transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                        Kembali ke List Laporan
+                    </button>
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="bg-[#1F2937] px-8 py-6 text-white">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-400"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                    <div>
+                                        <p class="text-xs opacity-60 font-semibold tracking-wider mb-1">LAPORAN PROGRAM PTM</p>
+                                        <h3 class="text-xl font-poppins font-semibold" id="detail-title">Laporan Monitoring Hipertensi — Desember 2024</h3>
+                                    </div>
+                                </div>
+                                <span class="px-3 py-1.5 rounded-lg text-xs bg-[#10B981]/20 text-[#34D399] font-semibold border border-[#34D399]/30">Disetujui</span>
+                            </div>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 mt-6 pt-6 border-t border-gray-600/50">
+                                <div><p class="text-xs opacity-60 mb-1">Periode</p><p class="text-sm font-medium" id="det-periode">Desember 2024</p></div>
+                                <div><p class="text-xs opacity-60 mb-1">Puskesmas</p><p class="text-sm font-medium">Sungai Tarab</p></div>
+                                <div><p class="text-xs opacity-60 mb-1">Dibuat oleh</p><p class="text-sm font-medium">Dr. Hendra</p></div>
+                                <div><p class="text-xs opacity-60 mb-1">Tanggal Buat</p><p class="text-sm font-medium">02 Jan 2025</p></div>
+                            </div>
+                        </div>
+
+                        <div class="px-8 py-6 border-b border-gray-100">
+                            <h4 class="text-[#1F2937] mb-5 font-poppins font-semibold">Ringkasan Statistik</h4>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                <div class="bg-[#F8FAFC] rounded-xl p-5 text-center border border-gray-50">
+                                    <p class="text-2xl font-poppins font-bold text-[#2563EB]">1.480</p>
+                                    <p class="text-[#6B7280] text-xs mt-1.5 font-medium">Total Pasien Skrining</p>
+                                </div>
+                                <div class="bg-[#F8FAFC] rounded-xl p-5 text-center border border-gray-50">
+                                    <p class="text-2xl font-poppins font-bold text-[#EF4444]">578</p>
+                                    <p class="text-[#6B7280] text-xs mt-1.5 font-medium">Kasus Hipertensi</p>
+                                </div>
+                                <div class="bg-[#F8FAFC] rounded-xl p-5 text-center border border-gray-50">
+                                    <p class="text-2xl font-poppins font-bold text-[#10B981]">415</p>
+                                    <p class="text-[#6B7280] text-xs mt-1.5 font-medium">Tekanan Terkendali</p>
+                                </div>
+                                <div class="bg-[#F8FAFC] rounded-xl p-5 text-center border border-gray-50">
+                                    <p class="text-2xl font-poppins font-bold text-[#F59E0B]">74%</p>
+                                    <p class="text-[#6B7280] text-xs mt-1.5 font-medium">Capaian Target</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="px-8 py-5 bg-gray-50">
+                            <button onclick="alert('Mengunduh PDF...')" class="flex items-center gap-2 border border-gray-200 bg-white text-[#6B7280] px-6 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-all font-medium shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                Unduh Laporan (PDF)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div id="section-buat" class="hidden-el space-y-6 max-w-5xl mx-auto">
+                
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-3 bg-gray-50">
+                        <div id="badge-step-1" class="w-7 h-7 rounded-full flex items-center justify-center text-xs bg-[#2563EB] text-white font-bold transition-colors">1</div>
+                        <h3 class="text-[#1F2937] font-poppins font-semibold">Pilih Periode Laporan</h3>
+                    </div>
+                    <div class="px-6 py-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 items-end">
+                            <div>
+                                <label class="text-sm text-[#1F2937] font-medium mb-1.5 block">Periode <span class="text-[#EF4444]">*</span></label>
+                                <div class="relative">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                                    <select id="select-periode" onchange="resetPreview()" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white transition-all cursor-pointer">
+                                        <option value="">-- Pilih periode laporan --</option>
+                                        <option value="Januari 2025">Januari 2025</option>
+                                        <option value="Februari 2025">Februari 2025</option>
+                                        <option value="Maret 2025">Maret 2025</option>
+                                        <option value="April 2025">April 2025</option>
+                                        <option value="Mei 2025">Mei 2025</option>
+                                    </select>
+                                </div>
+                                <p id="error-periode" class="hidden-el text-[#EF4444] text-xs mt-1 font-medium flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Pilih periode terlebih dahulu</p>
+                            </div>
+                            <button id="btn-generate" onclick="generatePreview()" class="flex items-center justify-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-2.5 rounded-xl text-sm transition-all font-medium shadow-sm w-full sm:w-auto">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+                                Generate Preview Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="step-preview" class="hidden-el space-y-6">
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-3 bg-gray-50">
+                            <div id="badge-step-2" class="w-7 h-7 rounded-full flex items-center justify-center text-xs bg-[#2563EB] text-white font-bold transition-colors">2</div>
+                            <h3 class="text-[#1F2937] font-poppins font-semibold">Preview Data Laporan</h3>
+                        </div>
+                        
+                        <div class="bg-[#2563EB] px-8 py-6 text-white">
+                            <div class="flex items-center gap-4 mb-5">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                <div>
+                                    <p class="text-xs opacity-80 font-medium tracking-wider mb-1">LAPORAN PROGRAM PTM</p>
+                                    <h3 class="text-xl font-poppins font-semibold">Laporan Monitoring Hipertensi</h3>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-4 border-t border-white/20">
+                                <div><p class="text-xs opacity-70 mb-1">Periode</p><p class="text-sm font-semibold" id="prev-periode">-</p></div>
+                                <div><p class="text-xs opacity-70 mb-1">Puskesmas</p><p class="text-sm font-semibold">Sungai Tarab</p></div>
+                                <div><p class="text-xs opacity-70 mb-1">Diajukan oleh</p><p class="text-sm font-semibold">Dr. Hendra</p></div>
+                                <div><p class="text-xs opacity-70 mb-1">Tanggal</p><p class="text-sm font-semibold">Hari ini</p></div>
+                            </div>
+                        </div>
+
+                        <div class="px-8 py-6 border-b border-gray-100">
+                            <h4 class="text-[#1F2937] mb-5 font-poppins font-semibold">Ringkasan Statistik</h4>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                <div class="bg-[#F8FAFC] rounded-xl p-4 text-center border border-gray-50"><p class="text-2xl font-poppins font-bold text-[#2563EB]">1.615</p><p class="text-[#6B7280] text-xs mt-1.5 font-medium">Total Skrining</p></div>
+                                <div class="bg-[#F8FAFC] rounded-xl p-4 text-center border border-gray-50"><p class="text-2xl font-poppins font-bold text-[#EF4444]">628</p><p class="text-[#6B7280] text-xs mt-1.5 font-medium">Kasus Hipertensi</p></div>
+                                <div class="bg-[#F8FAFC] rounded-xl p-4 text-center border border-gray-50"><p class="text-2xl font-poppins font-bold text-[#10B981]">71.8%</p><p class="text-[#6B7280] text-xs mt-1.5 font-medium">Tekanan Terkendali</p></div>
+                                <div class="bg-[#F8FAFC] rounded-xl p-4 text-center border border-gray-50"><p class="text-2xl font-poppins font-bold text-[#F59E0B]">80.7%</p><p class="text-[#6B7280] text-xs mt-1.5 font-medium">Capaian Target</p></div>
+                            </div>
+                        </div>
+
+                        <div class="px-8 py-6 border-b border-gray-100">
+                            <h4 class="text-[#1F2937] mb-5 font-poppins font-semibold">Distribusi per Nagari</h4>
+                            <div class="w-full h-[250px]">
+                                <canvas id="previewChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <div id="badge-step-3" class="w-7 h-7 rounded-full flex items-center justify-center text-xs bg-[#2563EB] text-white font-bold transition-colors">3</div>
+                            <span class="text-[#1F2937] font-poppins font-semibold">Simpan & Ajukan Laporan</span>
+                        </div>
+                        
+                        <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                            <button onclick="alert('Mencetak...')" class="flex-1 sm:flex-none flex items-center justify-center gap-2 border border-gray-200 text-[#6B7280] px-4 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-all font-medium">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+                            </button>
+                            <button onclick="alert('Mengunduh PDF...')" class="flex-1 sm:flex-none flex items-center justify-center gap-2 border border-gray-200 text-[#6B7280] px-4 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-all font-medium">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                            </button>
+                            
+                            <button id="btn-simpan" onclick="simpanLaporan()" class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[#10B981] hover:bg-[#059669] text-white px-6 py-2.5 rounded-xl text-sm transition-all font-medium shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                                Simpan Draft
+                            </button>
+                            <button id="btn-ajukan" onclick="ajukanLaporan()" class="hidden-el flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[#F59E0B] hover:bg-[#D97706] text-white px-6 py-2.5 rounded-xl text-sm transition-all font-medium shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                Ajukan ke Kepala
+                            </button>
+                            
+                            <div id="msg-success" class="hidden-el flex items-center gap-2 text-[#10B981] text-sm font-semibold bg-[#D1FAE5] px-4 py-2.5 rounded-xl">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                Laporan Diajukan!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Logika Tab Navigasi
+        function switchTab(tab) {
+            const btnList = document.getElementById('tab-list');
+            const btnBuat = document.getElementById('tab-buat');
+            const secList = document.getElementById('section-list');
+            const secBuat = document.getElementById('section-buat');
+            const headBtn = document.getElementById('headerActionBtn');
+            const detContainer = document.getElementById('detail-container');
+            const tableContainer = document.getElementById('list-table-container');
+
+            if (tab === 'list') {
+                btnList.className = "px-5 py-2 rounded-lg text-sm transition-all bg-white text-[#2563EB] shadow-sm font-semibold flex items-center gap-2";
+                btnBuat.className = "px-5 py-2 rounded-lg text-sm transition-all text-[#6B7280] hover:text-[#1F2937] flex items-center gap-2";
+                secList.classList.remove('hidden-el');
+                secBuat.classList.add('hidden-el');
+                headBtn.innerHTML = `<button onclick="switchTab('buat')" class="flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-5 py-2.5 rounded-xl text-sm transition-all font-medium shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Buat Laporan</button>`;
+                
+                // Pastikan kembali ke table view jika sedang di detail
+                detContainer.classList.add('hidden-el');
+                tableContainer.classList.remove('hidden-el');
+            } else {
+                btnBuat.className = "px-5 py-2 rounded-lg text-sm transition-all bg-white text-[#2563EB] shadow-sm font-semibold flex items-center gap-2";
+                btnList.className = "px-5 py-2 rounded-lg text-sm transition-all text-[#6B7280] hover:text-[#1F2937] flex items-center gap-2";
+                secBuat.classList.remove('hidden-el');
+                secList.classList.add('hidden-el');
+                headBtn.innerHTML = `<button onclick="switchTab('list')" class="flex items-center gap-2 border border-gray-200 text-[#6B7280] px-5 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-all font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> Kembali ke List</button>`;
+            }
+        }
+
+        // Logika Detail List
+        function showDetail(periode) {
+            document.getElementById('list-table-container').classList.add('hidden-el');
+            document.getElementById('detail-container').classList.remove('hidden-el');
+            document.getElementById('detail-title').innerText = `Laporan Monitoring Hipertensi — ${periode}`;
+            document.getElementById('det-periode').innerText = periode;
+        }
+
+        function hideDetail() {
+            document.getElementById('detail-container').classList.add('hidden-el');
+            document.getElementById('list-table-container').classList.remove('hidden-el');
+        }
+
+        // Logika Generate Laporan Baru (Step 1, 2, 3)
+        let chartInstance = null;
+
+        function resetPreview() {
+            document.getElementById('step-preview').classList.add('hidden-el');
+            document.getElementById('btn-generate').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg> Generate Preview Data`;
+            document.getElementById('btn-generate').classList.remove('bg-[#10B981]', 'hover:bg-[#059669]');
+            document.getElementById('badge-step-1').classList.remove('bg-[#10B981]');
+            
+            // Reset state step 3
+            document.getElementById('btn-simpan').classList.remove('hidden-el');
+            document.getElementById('btn-ajukan').classList.add('hidden-el');
+            document.getElementById('msg-success').classList.add('hidden-el');
+            document.getElementById('badge-step-2').classList.remove('bg-[#10B981]');
+            document.getElementById('badge-step-3').classList.remove('bg-[#10B981]');
+        }
+
+        function generatePreview() {
+            const periode = document.getElementById('select-periode').value;
+            if(!periode) {
+                document.getElementById('error-periode').classList.remove('hidden-el');
+                return;
+            }
+            document.getElementById('error-periode').classList.add('hidden-el');
+
+            // Ubah UI Step 1 ke Selesai
+            document.getElementById('btn-generate').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Data Ter-generate`;
+            document.getElementById('btn-generate').classList.add('bg-[#10B981]', 'hover:bg-[#059669]');
+            document.getElementById('badge-step-1').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
+            document.getElementById('badge-step-1').classList.add('bg-[#10B981]');
+            
+            // Tampilkan Step 2 dan set teks
+            document.getElementById('prev-periode').innerText = periode;
+            document.getElementById('step-preview').classList.remove('hidden-el');
+
+            // Inisialisasi Chart jika belum
+            if(!chartInstance) {
+                Chart.defaults.font.family = "'Inter', sans-serif";
+                const ctx = document.getElementById('previewChart').getContext('2d');
+                chartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ["Sg. Tarab", "Baringin", "Salimpaung", "Tigo Jangko", "Guguak"],
+                        datasets: [
+                            { label: 'Total Pasien', data: [420, 380, 310, 290, 215], backgroundColor: '#2563EB', borderRadius: 4, barPercentage: 0.6 },
+                            { label: 'Hipertensi', data: [165, 148, 122, 110, 83], backgroundColor: '#EF4444', borderRadius: 4, barPercentage: 0.6 }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } } },
+                        scales: {
+                            x: { grid: { display: false } },
+                            y: { grid: { color: '#F3F4F6', strokeDash: [3, 3] }, min: 0 }
+                        }
+                    }
+                });
+            }
+        }
+
+        function simpanLaporan() {
+            document.getElementById('btn-simpan').classList.add('hidden-el');
+            document.getElementById('btn-ajukan').classList.remove('hidden-el');
+            document.getElementById('badge-step-2').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
+            document.getElementById('badge-step-2').classList.add('bg-[#10B981]');
+        }
+
+        function ajukanLaporan() {
+            const btn = document.getElementById('btn-ajukan');
+            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Mengirim...`;
+            btn.disabled = true;
+
+            setTimeout(() => {
+                btn.classList.add('hidden-el');
+                document.getElementById('msg-success').classList.remove('hidden-el');
+                document.getElementById('badge-step-3').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
+                document.getElementById('badge-step-3').classList.add('bg-[#10B981]');
+                btn.disabled = false;
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

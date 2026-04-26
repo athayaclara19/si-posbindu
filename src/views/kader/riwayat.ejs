@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riwayat Skrining - Kader</title>
+    <link rel="stylesheet" href="/css/output.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+        .font-inter { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 font-inter antialiased text-slate-800 flex h-screen overflow-hidden">
+    
+    <%- include('../partials/sidebar', { active: 'riwayat' }) %>
+
+    <div class="flex-1 flex flex-col h-screen overflow-y-auto relative">
+        <%- include('../partials/header', { pageTitle: 'Riwayat Skrining' }) %>
+
+        <main class="p-8 space-y-5">
+            <div>
+                <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Riwayat Skrining</h2>
+                <p class="text-[#6B7280] text-sm mt-1">Semua data skrining yang pernah Anda input</p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3">
+                <div class="relative flex-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    <input type="text" id="searchInput" placeholder="Cari nama atau NIK pasien..." class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all">
+                </div>
+                <div class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#6B7280]"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                    <select id="statusFilter" class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all">
+                        <option value="Semua">Semua</option>
+                        <option value="Menunggu Validasi">Menunggu Validasi</option>
+                        <option value="Valid">Valid (Diterima)</option>
+                        <option value="Perlu Revisi">Perlu Revisi</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full" id="riwayatTable">
+                        <thead>
+                            <tr class="border-b border-gray-100 bg-[#F8FAFC]">
+                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Pasien</th>
+                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Tanggal</th>
+                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">TD</th>
+                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Kategori</th>
+                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Status</th>
+                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            
+                            <% if (typeof riwayat !== 'undefined' && riwayat.length > 0) { %>
+                                <% riwayat.forEach(r => { 
+                                    // Set status untuk filter
+                                    let filterStatus = 'Semua';
+                                    if(r.status_validasi === 'menunggu') filterStatus = 'Menunggu Validasi';
+                                    if(r.status_validasi === 'diterima') filterStatus = 'Valid';
+                                    if(r.status_validasi === 'revisi') filterStatus = 'Perlu Revisi';
+                                %>
+                                <tr class="hover:bg-gray-50 transition-colors data-row cursor-default" data-status="<%= filterStatus %>">
+                                    <td class="px-5 py-3.5">
+                                        <p class="text-[#1F2937] text-sm font-medium search-target"><%= r.nama_pasien %></p>
+                                        <p class="text-[#6B7280] text-xs font-mono search-target"><%= r.nik %></p>
+                                    </td>
+                                    <td class="px-5 py-3.5 text-sm text-[#6B7280]">
+                                        <%= new Date(r.tanggal_kegiatan).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+                                    </td>
+                                    <td class="px-5 py-3.5">
+                                        <span class="text-[#1F2937] text-sm font-medium"><%= r.sistole %>/<%= r.diastole %></span><span class="text-[#6B7280] text-xs ml-1">mmHg</span>
+                                    </td>
+                                    <td class="px-5 py-3.5">
+                                        <% if (r.status_tekanan === 'Tidak Terkendali') { %>
+                                            <span class="text-xs text-[#DC2626] font-medium">Tidak Terkendali</span>
+                                        <% } else { %>
+                                            <span class="text-xs text-[#D97706] font-medium"><%= r.status_tekanan || 'Terkendali' %></span>
+                                        <% } %>
+                                    </td>
+                                    <td class="px-5 py-3.5">
+                                        <% if (r.status_validasi === 'menunggu') { %>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FEF3C7] text-[#D97706] text-xs font-medium"><span class="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></span>Menunggu</span>
+                                        <% } else if (r.status_validasi === 'diterima') { %>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D1FAE5] text-[#059669] text-xs font-medium"><span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>Valid</span>
+                                        <% } else { %>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FEE2E2] text-[#DC2626] text-xs font-medium"><span class="w-1.5 h-1.5 rounded-full bg-[#EF4444]"></span>Revisi</span>
+                                        <% } %>
+                                    </td>
+                                    <td class="px-5 py-3.5 flex items-center gap-1">
+                                        <button onclick="openDetailModal('<%= r.nama_pasien %>', '<%= r.nik %>', '<%= new Date(r.tanggal_kegiatan).toLocaleDateString('id-ID') %>', '<%= r.sistole %>', '<%= r.diastole %>', '<%= r.berat_badan %>', '<%= r.tinggi_badan %>', '<%= r.status_tekanan %>', '<%= filterStatus %>')" class="p-1.5 rounded-lg text-[#6B7280] hover:bg-[#DBEAFE] hover:text-[#2563EB] transition-all" title="Lihat Detail"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                                        
+                                        <% if (r.status_validasi === 'revisi') { %>
+                                            <a href="/skrining/edit/<%= r.id_skrining %>" class="inline-block p-1.5 rounded-lg text-[#6B7280] hover:bg-[#FEF3C7] hover:text-[#D97706] transition-all" title="Edit Data"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></a>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" class="px-5 py-10 text-center text-[#6B7280]">Belum ada data skrining yang diinput.</td>
+                                </tr>
+                            <% } %>
+                            </tbody>
+                    </table>
+                </div>
+                
+                <div class="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
+                    <p id="rowCountText" class="text-[#6B7280] text-xs">Menampilkan data</p>
+                </div>
+            </div>
+        </main>
+
+        <div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center">
+            <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onclick="closeDetailModal()"></div>
+            
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl z-10 overflow-hidden transform transition-all m-4">
+                
+                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#2563EB]"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <h3 class="font-poppins font-semibold text-gray-800 text-lg">Detail Skrining</h3>
+                    </div>
+                    <button onclick="closeDetailModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+
+                <div class="p-6 space-y-6">
+                    <div class="flex items-center gap-4">
+                        <div id="modalInisial" class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
+                            BS
+                        </div>
+                        <div>
+                            <p id="modalNama" class="font-poppins font-semibold text-gray-800 text-lg">Nama Pasien</p>
+                            <p id="modalNik" class="text-sm text-gray-500 font-mono">NIK Pasien</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-100 grid grid-cols-2 gap-y-4 gap-x-6">
+                        <div>
+                            <p class="text-gray-500 text-xs font-medium mb-1">Tanggal Pemeriksaan</p>
+                            <p id="modalTanggal" class="font-medium text-gray-800 text-sm">-</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs font-medium mb-1">Kategori Tekanan Darah</p>
+                            <span id="modalKategori" class="inline-block px-2.5 py-1 bg-yellow-100 text-yellow-700 rounded-md text-xs font-semibold">-</span>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs font-medium mb-1">Sistole / Diastole</p>
+                            <p class="font-bold text-gray-800 text-sm"><span id="modalTensi">-</span> <span class="text-gray-500 font-normal text-xs">mmHg</span></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs font-medium mb-1">Berat / Tinggi Badan</p>
+                            <p id="modalFisik" class="font-medium text-gray-800 text-sm">- kg / - cm</p>
+                        </div>
+                        <div class="col-span-2">
+                            <p class="text-gray-500 text-xs font-medium mb-1">Status Validasi</p>
+                            <span id="modalStatus" class="inline-block px-2.5 py-1 bg-gray-200 text-gray-700 rounded-md text-xs font-semibold">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-6 py-4 border-t border-gray-100 flex justify-end bg-gray-50 rounded-b-2xl">
+                    <button onclick="closeDetailModal()" class="px-5 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-medium rounded-xl transition-all shadow-sm">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const statusFilter = document.getElementById('statusFilter');
+        const rows = document.querySelectorAll('.data-row');
+        const rowCountText = document.getElementById('rowCountText');
+
+        // Fungsi Filter
+        function filterTable() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const filterValue = statusFilter.value;
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const textData = row.querySelector('.search-target') ? row.innerText.toLowerCase() : '';
+                const rowStatus = row.getAttribute('data-status');
+                
+                const matchesSearch = textData.includes(searchTerm);
+                const matchesStatus = filterValue === "Semua" || rowStatus === filterValue;
+
+                if (matchesSearch && matchesStatus) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            rowCountText.innerText = `Menampilkan ${visibleCount} data`;
+        }
+        
+        // Jalankan saat pertama load
+        filterTable();
+
+        searchInput.addEventListener('input', filterTable);
+        statusFilter.addEventListener('change', filterTable);
+
+        // FUNGSI UNTUK MEMBUKA & MENUTUP MODAL DINAMIS
+        function openDetailModal(nama, nik, tanggal, sistole, diastole, bb, tb, kategori, status) {
+            // Update Teks Modal
+            document.getElementById('modalNama').innerText = nama;
+            document.getElementById('modalNik').innerText = nik;
+            document.getElementById('modalTanggal').innerText = tanggal;
+            document.getElementById('modalTensi').innerText = sistole + ' / ' + diastole;
+            
+            // Handle null/kosong untuk BB dan TB
+            bb = bb && bb !== 'null' ? bb : '-';
+            tb = tb && tb !== 'null' ? tb : '-';
+            document.getElementById('modalFisik').innerText = `${bb} kg / ${tb} cm`;
+            
+            document.getElementById('modalKategori').innerText = kategori || 'Terkendali';
+            document.getElementById('modalStatus').innerText = status;
+
+            // Buat Inisial Nama (Misal: "Budi Santoso" jadi "BS")
+            let inisial = nama.substring(0, 2).toUpperCase();
+            if(nama.includes(' ')) {
+                const words = nama.split(' ');
+                inisial = words[0][0] + words[1][0];
+            }
+            document.getElementById('modalInisial').innerText = inisial.toUpperCase();
+
+            // Tampilkan Modal
+            const modal = document.getElementById('detailModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeDetailModal() {
+            const modal = document.getElementById('detailModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    </script>
+</body>
+</html>
