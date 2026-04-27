@@ -48,10 +48,21 @@ exports.handleTambahPasien = async (req, res) => {
     // TAMBAHKAN id_jorong DI SINI 👇
     const { nik, nama_pasien, id_jorong, tanggal_lahir, jenis_kelamin, alamat, no_hp, pekerjaan, agama } = req.body;
     
-    // HAPUS/KOMENTARI BARIS INI KARENA KITA SUDAH AMBIL DARI FORM:
-    // const id_jorong = req.session.user.id_jorong; 
+    // --- LOGIKA AUTO-INCREMENT ID PASIEN (PAS001, PAS002, dst) ---
+    let id_pasien = 'PAS001'; // Default jika tabel pasien masih kosong
     
-    const id_pasien = 'PAS-' + Date.now(); // Generate ID unik
+    // Cari ID Pasien terakhir yang berawalan 'PAS'
+    const lastPasienResult = await pool.query(
+        "SELECT id_pasien FROM pasien WHERE id_pasien LIKE 'PAS%' ORDER BY id_pasien DESC LIMIT 1"
+    );
+
+    if (lastPasienResult.rows.length > 0) {
+        const lastId = lastPasienResult.rows[0].id_pasien; // Contoh: 'PAS002'
+        const lastNumber = parseInt(lastId.substring(3));  // Mengambil angka '002' menjadi 2
+        const nextNumber = lastNumber + 1;                 // 2 + 1 = 3
+        id_pasien = 'PAS' + String(nextNumber).padStart(3, '0'); // Menggabungkan jadi 'PAS003'
+    }
+    // -----------------------------------------------------------
 
     try {
         const query = `

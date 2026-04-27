@@ -6,6 +6,7 @@ const express = require('express');
 const path    = require('path');
 const session = require('express-session'); // BARU: Session management
 require('dotenv').config();                 // BARU: Memuat file .env
+const pool = require('./src/config/db');
 
 const app = express();
 
@@ -117,6 +118,7 @@ app.use('/', require('./src/routes/auth'));
 
 // --- RUTE KADER (Hanya untuk role 'kader') ---
 const kaderController = require('./src/controllers/kaderControllers');
+const jadwalController = require('./src/controllers/jadwalController');
 
 app.get('/kader/dashboard', isAuthenticated, isAuthorized('kader'), kaderController.renderDashboard);
 
@@ -128,7 +130,7 @@ app.get('/',
 app.get('/jadwal',
     isAuthenticated,
     isAuthorized('kader'),
-    (req, res) => res.render('kader/jadwal')
+    jadwalController.renderJadwalKader
 );
 
 app.get('/skrining', 
@@ -150,12 +152,18 @@ app.post('/skrining/edit/:id_skrining', isAuthenticated, isAuthorized('kader'), 
 
 // --- RUTE BIDAN (Hanya untuk role 'bidan') ---
 const bidanController = require('./src/controllers/bidanController');
+const monitoringController = require('./src/controllers/monitoringController');
+const laporanController = require('./src/controllers/laporanController');
 
+console.log("CEK ISI CONTROLLER BIDAN:", bidanController);
+
+// PERBAIKAN: Gunakan controller untuk dashboard bidan
 app.get('/bidan',
     isAuthenticated,
     isAuthorized('bidan'),
-    (req, res) => res.render('bidan/dashboardbidan')
+    bidanController.renderDashboard 
 );
+
 app.get('/bidan/validasi', 
     isAuthenticated, 
     isAuthorized('bidan'), bidanController.renderValidasi);
@@ -169,10 +177,17 @@ app.get('/bidan/rekap',
     isAuthorized('bidan'),
     (req, res) => res.render('bidan/rekapbidan')
 );
+
 app.get('/bidan/monitoring',
     isAuthenticated,
     isAuthorized('bidan'),
-    (req, res) => res.render('bidan/monitoring')
+    monitoringController.renderMonitoring
+);
+
+app.get('/bidan/monitoring/:id_pasien',
+    isAuthenticated,
+    isAuthorized('bidan'),
+    monitoringController.renderGrafikTensi
 );
 
 app.get('/bidan/laporan', 
@@ -196,9 +211,21 @@ app.get('/ptm/rekap',
     (req, res) => res.render('ptm/rekapptm')
 );
 app.get('/ptm/laporan',
-    isAuthenticated,
-    isAuthorized('pj_ptm'),
-    (req, res) => res.render('ptm/laporanptm')
+    isAuthenticated, 
+    isAuthorized('pj_ptm'), 
+    laporanController.renderLaporanPTM
+);
+
+app.post('/ptm/laporan/generate',
+    isAuthenticated, 
+    isAuthorized('pj_ptm'), 
+    laporanController.generateLaporan
+);
+
+app.post('/ptm/laporan/kirim/:id_laporan',
+    isAuthenticated, 
+    isAuthorized('pj_ptm'), 
+    laporanController.kirimLaporan
 );
 
 

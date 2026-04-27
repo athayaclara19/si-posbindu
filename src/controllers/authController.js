@@ -1,57 +1,55 @@
 const bcrypt = require('bcryptjs');
-const pool = require('../config/db');
+const pool   = require('../config/db');
 
 // 1. Tampilkan Halaman Login
 exports.renderLogin = (req, res) => {
-    // Jika user sudah login, langsung arahkan ke dashboardnya
     if (req.session.user) {
-        const role = req.session.user.role;
-        if (role === 'kader') return res.redirect('/');
-        if (role === 'bidan') return res.redirect('/bidan');
-        if (role === 'ptm') return res.redirect('/ptm');
-        if (role === 'kepala') return res.redirect('/kepala');
+        const roleMap = {
+            'kader': '/', 
+            'bidan': '/bidan',
+            'pj_ptm': '/ptm', 
+            'kepala_puskesmas': '/kepala'
+        };
+        return res.redirect(roleMap[req.session.user.role] || '/login');
     }
-    // Jika belum login, tampilkan halaman login (kirim error kosong di awal)
     res.render('login', { error: null });
 };
 
-// 2. Proses Pengecekan Login
+// 2. Proses Login
 exports.handleLogin = async (req, res) => {
     const { email, password } = req.body;
-
     try {
-        // Cari user berdasarkan username/email
-        const result = await pool.query('SELECT * FROM "user" WHERE username = $1 AND is_active = true', [email]);
-        
-        // JIKA USER TIDAK DITEMUKAN
+        const result = await pool.query(
+            'SELECT * FROM "user" WHERE username = $1 AND is_active = true',
+            [email]
+        );
         if (result.rows.length === 0) {
-            // UBAH PESANNYA DI SINI
-            return res.render('login', { error: 'Username/Email atau Password salah.' });
+            return res.render('login', { error: 'Username atau Password salah.' });
         }
 
         const user = result.rows[0];
-
-        // Bandingkan password yang diketik dengan password hash di database
         const isMatch = await bcrypt.compare(password, user.password);
 
-        // JIKA PASSWORD SALAH
         if (!isMatch) {
-            // UBAH PESANNYA DI SINI JUGA (Sama Persis)
-            return res.render('login', { error: 'Username/Email atau Password salah.' });
+            return res.render('login', { error: 'Username atau Password salah.' });
         }
 
-        // Jika sukses, simpan data ke session
+        // Simpan ke session — pastikan id_user dan role sinkron dengan DB
         req.session.user = {
-            id: user.id_user,
-            nama: user.nama_user,
-            role: user.role
+            id_user:   user.id_user,
+            nama:      user.nama_user,
+            username:  user.username,
+            role:      user.role,
+            id_jorong: user.id_jorong,
         };
 
-        // Redirect ke dashboard sesuai role
-        if (user.role === 'kader') res.redirect('/');
-        else if (user.role === 'bidan') res.redirect('/bidan');
-        else if (user.role === 'ptm') res.redirect('/ptm');
-        else if (user.role === 'kepala') res.redirect('/kepala');
+        const roleMap = {
+            'kader': '/', 
+            'bidan': '/bidan',
+            'pj_ptm': '/ptm', 
+            'kepala_puskesmas': '/kepala'
+        };
+        res.redirect(roleMap[user.role] || '/login');
 
     } catch (err) {
         console.error(err);
@@ -59,15 +57,10 @@ exports.handleLogin = async (req, res) => {
     }
 };
 
-// 3. Proses Logout
+// 3. Logout
 exports.handleLogout = (req, res) => {
-    // Menghancurkan session
     req.session.destroy((err) => {
-        if(err) {
-            console.error("Gagal logout:", err);
-            return res.status(500).send("Gagal logout");
-        }
-        // Redirect ke halaman login setelah berhasil
+        if (err) console.error('Gagal logout:', err);
         res.redirect('/login');
     });
 };

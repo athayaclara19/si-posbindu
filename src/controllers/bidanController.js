@@ -1,150 +1,134 @@
-const pool = require('../config/db');
+const pool    = require('../config/db');
 const ExcelJS = require('exceljs');
-
-// 0. Tampilkan Halaman Dashboard (Wajib ada agar server tidak crash)
+ 
+// 1. Dashboard Bidan
 exports.renderDashboard = async (req, res) => {
     try {
-        res.render('bidan/dashboard', {
-            active: 'dashboard'
+        const menunggu     = await pool.query("SELECT COUNT(*) FROM skrining WHERE status_validasi='menunggu'");
+        const terverifikasi = await pool.query("SELECT COUNT(*) FROM skrining WHERE status_validasi='terverifikasi'");
+        const ditolak      = await pool.query("SELECT COUNT(*) FROM skrining WHERE status_validasi='ditolak'");
+        res.render('bidan/dashboardbidan', {
+            active: 'dashboard',
+            jumlahMenunggu:      menunggu.rows[0].count,
+            jumlahTerverifikasi: terverifikasi.rows[0].count,
+            jumlahDitolak:       ditolak.rows[0].count,
         });
     } catch (err) {
         console.error(err);
-        res.status(500).send("Gagal memuat dashboard bidan");
+        res.status(500).send("Gagal memuat dashboard bidan.");
     }
 };
-
-// 1. Tampilkan Daftar Antrean Validasi
+ 
+// 2. Daftar Antrean Validasi
 exports.renderValidasi = async (req, res) => {
     try {
-        // Ambil data skrining yang statusnya 'menunggu'
         const query = `
             SELECT s.*, p.nama_pasien, p.nik, k.tanggal_kegiatan, j.nama_jorong
             FROM skrining s
-            JOIN pasien p ON s.id_pasien = p.id_pasien
+            JOIN pasien  p ON s.id_pasien   = p.id_pasien
             JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
-            JOIN jorong j ON p.id_jorong = j.id_jorong
+            JOIN jorong  j ON p.id_jorong   = j.id_jorong
             WHERE s.status_validasi = 'menunggu'
             ORDER BY k.tanggal_kegiatan ASC
         `;
         const result = await pool.query(query);
-
-        res.render('bidan/validasi', {
-            menungguValidasi: result.rows,
-            active: 'validasi' // Untuk penanda menu aktif di sidebar
-        });
+        res.render('bidan/validasi', { menungguValidasi: result.rows, active: 'validasi' });
     } catch (err) {
         console.error(err);
-        res.status(500).send("Gagal memuat antrean validasi");
+        res.status(500).send("Gagal memuat antrean validasi.");
     }
 };
-
-// 2. Proses Action Validasi (Terima / Revisi)
+ 
+// 3. Proses Validasi (Terima / Tolak)
 exports.handleActionValidasi = async (req, res) => {
-    const { id_skrining } = req.params;
-    const { status_validasi, catatan_bidan } = req.body; 
-
+    const { id_skrining }                  = req.params;
+    const { status_validasi, catatan_bidan } = req.body;
+    const id_validator                     = req.session.user.id_user;
     try {
         const query = `
-            UPDATE skrining 
-            SET status_validasi = $1, catatan_bidan = $2 
-            WHERE id_skrining = $3
+            UPDATE skrining
+            SET status_validasi=$1, catatan_bidan=$2,
+                id_validator=$3, tanggal_validasi=NOW()
+            WHERE id_skrining=$4
         `;
-        await pool.query(query, [status_validasi, catatan_bidan, id_skrining]);
-        
-        res.redirect('/bidan/validasi'); // Refresh halaman setelah divalidasi
+        await pool.query(query, [status_validasi, catatan_bidan||null, id_validator, id_skrining]);
+        res.redirect('/bidan/validasi');
     } catch (err) {
         console.error(err);
-        res.status(500).send("Gagal memproses validasi");
+        res.status(500).send("Gagal memproses validasi.");
     }
 };
-
-// 3. Tampilkan Halaman Laporan
+ 
+// 4. Halaman Laporan Bidan
 exports.renderLaporan = async (req, res) => {
     try {
-        // Ambil data skrining yang sudah 'diterima' oleh bidan
         const query = `
-            SELECT s.*, p.nama_pasien, p.nik, j.nama_jorong, k.tanggal_kegiatan 
+            SELECT s.*, p.nama_pasien, p.nik, j.nama_jorong, k.tanggal_kegiatan
             FROM skrining s
-            JOIN pasien p ON s.id_pasien = p.id_pasien
+            JOIN pasien  p ON s.id_pasien   = p.id_pasien
             JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
-            JOIN jorong j ON p.id_jorong = j.id_jorong
-            WHERE s.status_validasi = 'diterima'
+            JOIN jorong  j ON p.id_jorong   = j.id_jorong
+            WHERE s.status_validasi = 'terverifikasi'
             ORDER BY k.tanggal_kegiatan DESC
         `;
         const result = await pool.query(query);
-
-        res.render('bidan/laporan', {
-            laporanData: result.rows,
-            active: 'laporan' // Untuk highlight menu sidebar
-        });
+        res.render('bidan/laporan', { laporanData: result.rows, active: 'laporan' });
     } catch (err) {
         console.error(err);
-        res.status(500).send("Gagal memuat halaman laporan");
+        res.status(500).send("Gagal memuat laporan.");
     }
 };
-
-// 4. Proses Export Data ke Excel
+ 
+// 5. Export Excel
 exports.exportLaporanExcel = async (req, res) => {
     try {
         const query = `
-            SELECT s.*, p.nama_pasien, p.nik, j.nama_jorong, k.tanggal_kegiatan 
+            SELECT s.*, p.nama_pasien, p.nik, j.nama_jorong, k.tanggal_kegiatan
             FROM skrining s
-            JOIN pasien p ON s.id_pasien = p.id_pasien
+            JOIN pasien  p ON s.id_pasien   = p.id_pasien
             JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
-            JOIN jorong j ON p.id_jorong = j.id_jorong
-            WHERE s.status_validasi = 'diterima'
+            JOIN jorong  j ON p.id_jorong   = j.id_jorong
+            WHERE s.status_validasi = 'terverifikasi'
             ORDER BY k.tanggal_kegiatan ASC
         `;
         const result = await pool.query(query);
-
-        // Buat file Excel Baru
-        const workbook = new ExcelJS.Workbook();
+        const workbook  = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Laporan Posbindu');
-
-        // Buat Header Kolom
         worksheet.columns = [
-            { header: 'No', key: 'no', width: 5 },
-            { header: 'Tanggal', key: 'tanggal', width: 15 },
-            { header: 'Nama Pasien', key: 'nama_pasien', width: 25 },
-            { header: 'NIK', key: 'nik', width: 20 },
-            { header: 'Jorong', key: 'jorong', width: 20 },
-            { header: 'Tensi (S/D)', key: 'tensi', width: 15 },
-            { header: 'Status Tekanan', key: 'status', width: 20 },
-            { header: 'Berat (kg)', key: 'bb', width: 10 },
-            { header: 'Tinggi (cm)', key: 'tb', width: 10 },
-            { header: 'Gula Darah', key: 'gula', width: 15 },
+            { header:'No',          key:'no',         width:5  },
+            { header:'Tanggal',     key:'tanggal',    width:15 },
+            { header:'Nama Pasien', key:'nama_pasien',width:25 },
+            { header:'NIK',         key:'nik',        width:20 },
+            { header:'Jorong',      key:'jorong',     width:20 },
+            { header:'Tensi (S/D)', key:'tensi',      width:15 },
+            { header:'BB (kg)',     key:'bb',         width:10 },
+            { header:'TB (cm)',     key:'tb',         width:10 },
+            { header:'Gula Darah',  key:'gula',       width:15 },
+            { header:'Status',      key:'status',     width:20 },
         ];
-
-        // Memasukkan data dari database ke Excel
-        result.rows.forEach((row, index) => {
+        result.rows.forEach((row, i) => {
+            let status = 'Normal';
+            if (row.sistole >= 180) status = 'Krisis';
+            else if (row.sistole >= 160) status = 'HT Tkt.2';
+            else if (row.sistole >= 140) status = 'HT Tkt.1';
+            else if (row.sistole >= 120) status = 'Pra-HT';
             worksheet.addRow({
-                no: index + 1,
+                no: i+1,
                 tanggal: new Date(row.tanggal_kegiatan).toLocaleDateString('id-ID'),
-                nama_pasien: row.nama_pasien,
-                nik: row.nik,
-                jorong: row.nama_jorong,
+                nama_pasien: row.nama_pasien, nik: row.nik, jorong: row.nama_jorong,
                 tensi: `${row.sistole}/${row.diastole}`,
-                status: row.status_tekanan,
-                bb: row.berat_badan || '-',
-                tb: row.tinggi_badan || '-',
-                gula: row.gula_darah || '-'
+                bb: row.berat_badan||'-', tb: row.tinggi_badan||'-',
+                gula: row.gula_darah||'-', status
             });
         });
-
-        // Styling Header Excel (Tebal & Warna Latar)
-        worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-        worksheet.getRow(1).fill = { type: 'pattern', pattern:'solid', fgColor:{ argb:'FF2563EB' } };
-
-        // Konfigurasi Response untuk Download File
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', 'attachment; filename=' + 'Laporan_Posbindu.xlsx');
-
-        // Kirim file ke browser
+        worksheet.getRow(1).font = { bold:true, color:{argb:'FFFFFFFF'} };
+        worksheet.getRow(1).fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF2563EB'} };
+        res.setHeader('Content-Type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition','attachment; filename=Laporan_Posbindu.xlsx');
         await workbook.xlsx.write(res);
         res.end();
-
     } catch (err) {
         console.error(err);
-        res.status(500).send("Gagal mengekspor laporan");
+        res.status(500).send("Gagal mengekspor laporan: " + err.message);
     }
 };
