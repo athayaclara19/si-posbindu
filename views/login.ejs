@@ -65,29 +65,6 @@
             <h2 class="text-[#1F2937] mb-1 font-poppins font-semibold text-[22px]">Selamat Datang</h2>
             <p class="text-[#6B7280] text-sm mb-8">Masuk ke akun Anda untuk melanjutkan</p>
 
-            <div class="mb-6">
-                <label class="text-sm text-[#1F2937] mb-2 block font-medium">Login sebagai <span class="text-[#6B7280] text-xs font-normal">(Pilih Akses)</span></label>
-                <input type="hidden" id="selectedRole" value="kader">
-                <div class="grid grid-cols-2 gap-2">
-                    <button type="button" onclick="selectRole('kader', this)" class="role-btn text-left p-3 rounded-xl border-2 transition-all border-[#2563EB] bg-[#DBEAFE]">
-                        <p class="text-xs font-medium text-[#2563EB]">Kader Posbindu</p>
-                        <p class="text-[#6B7280] text-xs mt-0.5">Input & monitoring skrining</p>
-                    </button>
-                    <button type="button" onclick="selectRole('bidan', this)" class="role-btn text-left p-3 rounded-xl border-2 transition-all border-gray-200 hover:border-gray-300">
-                        <p class="text-xs font-medium text-[#1F2937]">Bidan Desa</p>
-                        <p class="text-[#6B7280] text-xs mt-0.5">Validasi data wilayah</p>
-                    </button>
-                    <button type="button" onclick="selectRole('ptm', this)" class="role-btn text-left p-3 rounded-xl border-2 transition-all border-gray-200 hover:border-gray-300">
-                        <p class="text-xs font-medium text-[#1F2937]">PJ Program PTM</p>
-                        <p class="text-[#6B7280] text-xs mt-0.5">Rekap & generate laporan</p>
-                    </button>
-                    <button type="button" onclick="selectRole('kepala', this)" class="role-btn text-left p-3 rounded-xl border-2 transition-all border-gray-200 hover:border-gray-300">
-                        <p class="text-xs font-medium text-[#1F2937]">Kepala Puskesmas</p>
-                        <p class="text-[#6B7280] text-xs mt-0.5">Review & persetujuan laporan</p>
-                    </button>
-                </div>
-            </div>
-
             <form id="loginForm" action="/login" method="POST" onsubmit="handleLogin(event)" class="space-y-4">
                 
                 <% if (typeof error !== 'undefined' && error) { %>

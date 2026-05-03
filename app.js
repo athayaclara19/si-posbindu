@@ -154,6 +154,7 @@ app.post('/skrining/edit/:id_skrining', isAuthenticated, isAuthorized('kader'), 
 const bidanController = require('./src/controllers/bidanController');
 const monitoringController = require('./src/controllers/monitoringController');
 const laporanController = require('./src/controllers/laporanController');
+const rekapController = require('./src/controllers/rekapController');
 
 console.log("CEK ISI CONTROLLER BIDAN:", bidanController);
 
@@ -175,7 +176,7 @@ app.post('/bidan/validasi/:id_skrining',
 app.get('/bidan/rekap',
     isAuthenticated,
     isAuthorized('bidan'),
-    (req, res) => res.render('bidan/rekapbidan')
+    rekapController.renderRekapBidan
 );
 
 app.get('/bidan/monitoring',
@@ -200,6 +201,8 @@ app.get('/bidan/laporan/export',
 
 
 // --- RUTE PJ PTM (Hanya untuk role 'pj_ptm') ---
+const ptmController = require('./src/controllers/ptmController');
+
 app.get('/ptm',
     isAuthenticated,
     isAuthorized('pj_ptm'),
@@ -208,8 +211,9 @@ app.get('/ptm',
 app.get('/ptm/rekap',
     isAuthenticated,
     isAuthorized('pj_ptm'),
-    (req, res) => res.render('ptm/rekapptm')
+    rekapController.renderRekapPTM
 );
+
 app.get('/ptm/laporan',
     isAuthenticated, 
     isAuthorized('pj_ptm'), 
@@ -227,6 +231,34 @@ app.post('/ptm/laporan/kirim/:id_laporan',
     isAuthorized('pj_ptm'), 
     laporanController.kirimLaporan
 );
+
+app.get('/ptm/jadwal', 
+    isAuthenticated, 
+    isAuthorized('pj_ptm'), 
+    jadwalController.renderJadwalPTM
+);
+
+app.post('/ptm/jadwal/tambah', 
+    isAuthenticated, 
+    isAuthorized('pj_ptm'), 
+    jadwalController.handleTambahJadwal
+);
+
+
+app.get('/ptm/pasien', 
+    ptmController.renderKelolaPasien);
+
+// 2. Form edit pasien (menggunakan NIK sebagai ID)
+app.get('/ptm/pasien/edit/:id', 
+    ptmController.renderEditPasien);
+
+// 3. Proses update data pasien
+app.post('/ptm/pasien/update', 
+    ptmController.handleUpdatePasien);
+
+// 4. Proses hapus data pasien
+app.post('/ptm/pasien/delete/:id', 
+    ptmController.handleDeletePasien);
 
 
 // --- RUTE KEPALA PUSKESMAS (Hanya untuk role 'kepala_puskesmas') ---

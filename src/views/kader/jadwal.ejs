@@ -29,152 +29,195 @@
                     </p>
                 </div>
 
-                <div class="grid grid-cols-3 gap-4">
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4">
-                        <p class="text-2xl text-[#1F2937] font-poppins font-bold">5</p>
-                        <p class="text-[#6B7280] text-xs mt-0.5">Total Jadwal</p>
+                <% 
+                    // LOGIKA PENGHITUNGAN KARTU OTOMATIS
+                    let totalJadwal = 0;
+                    let countHariIni = 0;
+                    let countMendatang = 0;
+
+                    if (typeof jadwal !== 'undefined' && jadwal.length > 0) {
+                        totalJadwal = jadwal.length;
+                        const hariIniDate = new Date();
+                        hariIniDate.setHours(0, 0, 0, 0);
+
+                        jadwal.forEach(item => {
+                            const tglKeg = new Date(item.tanggal_kegiatan);
+                            tglKeg.setHours(0, 0, 0, 0);
+
+                            if (tglKeg.getTime() === hariIniDate.getTime()) {
+                                countHariIni++;
+                            } else if (tglKeg > hariIniDate) {
+                                countMendatang++;
+                            }
+                        });
+                    }
+                %>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-5 w-full">
+                        <p class="text-3xl text-[#1F2937] font-poppins font-bold"><%= totalJadwal %></p>
+                        <p class="text-[#6B7280] text-sm mt-1">Total Jadwal</p>
                     </div>
-                    <div class="bg-[#EFF6FF] rounded-2xl border border-blue-100 shadow-sm px-5 py-4">
-                        <p class="text-2xl text-[#1D4ED8] font-poppins font-bold">1</p>
-                        <p class="text-[#6B7280] text-xs mt-0.5">Hari Ini</p>
+                    
+                    <div class="bg-[#EFF6FF] rounded-2xl border border-blue-100 shadow-sm px-5 py-5 w-full border-l-4 border-l-[#2563EB]">
+                        <p class="text-3xl text-[#1D4ED8] font-poppins font-bold"><%= countHariIni %></p>
+                        <p class="text-[#6B7280] text-sm mt-1">Hari Ini</p>
                     </div>
-                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4">
-                        <p class="text-2xl text-[#6B7280] font-poppins font-bold">3</p>
-                        <p class="text-[#6B7280] text-xs mt-0.5">Mendatang</p>
+                    
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-5 w-full">
+                        <p class="text-3xl text-[#6B7280] font-poppins font-bold"><%= countMendatang %></p>
+                        <p class="text-[#6B7280] text-sm mt-1">Mendatang</p>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#6B7280]">
+                <div class="flex items-center gap-3 pt-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#6B7280]">
                         <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>
                     </svg>
-                    <select class="px-3 py-2 border border-gray-200 rounded-xl text-sm text-[#1F2937] bg-white outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]">
-                        <option>Mei 2025</option>
-                        <option>Juni 2025</option>
-                        <option>Juli 2025</option>
+
+                    <select id="filterPeriode" class="px-4 py-2 border border-gray-200 rounded-xl text-sm text-[#1F2937] bg-white outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] cursor-pointer">
+                        <option value="Semua">Semua Jadwal</option> 
+                        
+                        <% if (typeof jadwal !== 'undefined' && jadwal.length > 0) { %>
+                            <% 
+                                const periodeSet = new Set();
+                                const namaBulan = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+                                
+                                jadwal.forEach(item => {
+                                    const tgl = new Date(item.tanggal_kegiatan);
+                                    const teksPeriode = `${namaBulan[tgl.getMonth() + 1]} ${tgl.getFullYear()}`;
+                                    periodeSet.add(teksPeriode);
+                                });
+                                
+                                const periodeUnik = Array.from(periodeSet);
+                            %>
+                            <% periodeUnik.forEach(periode => { %>
+                                <option value="<%= periode %>"><%= periode %></option>
+                            <% }) %>
+                        <% } %>
                     </select>
-                    <span class="text-[#6B7280] text-xs">5 jadwal ditemukan</span>
+                    
+                    <span id="jadwalCount" class="text-[#6B7280] text-sm">
+                        <%= (typeof jadwal !== 'undefined') ? jadwal.length : 0 %> jadwal ditemukan
+                    </span>
                 </div>
 
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="border-b border-gray-100 bg-[#F9FAFB]">
-                                <th class="text-left px-5 py-3 text-[#6B7280] text-xs uppercase tracking-wider font-medium">Tanggal</th>
-                                <th class="text-left px-5 py-3 text-[#6B7280] text-xs uppercase tracking-wider font-medium">Lokasi / Jorong</th>
-                                <th class="text-left px-5 py-3 text-[#6B7280] text-xs uppercase tracking-wider font-medium">Waktu</th>
-                                <th class="text-left px-5 py-3 text-[#6B7280] text-xs uppercase tracking-wider font-medium">Petugas</th>
-                                <th class="text-left px-5 py-3 text-[#6B7280] text-xs uppercase tracking-wider font-medium">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="border-b border-gray-50 hover:bg-[#F8FAFC] transition-colors">
-                                <td class="px-5 py-3.5">
-                                    <p class="text-[#1F2937] text-sm font-medium">08 Mei 2025</p>
-                                    <p class="text-[#6B7280] text-xs">Kamis</p>
-                                </td>
-                                <td class="px-5 py-3.5">
-                                    <div class="flex items-center gap-1.5">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#6B7280] flex-shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                                        <span class="text-[#1F2937]">Jorong Koto Gadang</span>
-                                    </div>
-                                </td>
-                                <td class="px-5 py-3.5">
-                                    <div class="flex items-center gap-1.5">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#6B7280] flex-shrink-0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                        <span class="text-[#6B7280]">08.00 – 12.00</span>
-                                    </div>
-                                </td>
-                                <td class="px-5 py-3.5 text-[#1F2937] font-medium">Sari Dewi</td>
-                                <td class="px-5 py-3.5">
-                                    <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-[#D1FAE5] text-[#059669]">Selesai</span>
-                                </td>
-                            </tr>
-
-                            <tr class="border-b border-gray-50 hover:bg-[#F8FAFC] transition-colors bg-[#EFF6FF]">
-                                <td class="px-5 py-3.5">
-                                    <p class="text-[#1F2937] text-sm font-medium">15 Mei 2025</p>
-                                    <p class="text-[#6B7280] text-xs">Kamis</p>
-                                </td>
-                                <td class="px-5 py-3.5">
-                                    <div class="flex items-center gap-1.5">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#6B7280] flex-shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                                        <span class="text-[#1F2937]">Jorong Koto Tinggi</span>
-                                    </div>
-                                </td>
-                                <td class="px-5 py-3.5">
-                                    <div class="flex items-center gap-1.5">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#6B7280] flex-shrink-0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                        <span class="text-[#6B7280]">08.00 – 12.00</span>
-                                    </div>
-                                </td>
-                                <td class="px-5 py-3.5 text-[#1F2937] font-medium">Sari Dewi</td>
-                                <td class="px-5 py-3.5">
-                                    <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-[#DBEAFE] text-[#1D4ED8]">Hari Ini</span>
-                                </td>
-                            </tr>
-
-                            <tr class="border-b border-gray-50 hover:bg-[#F8FAFC] transition-colors">
-                                <td class="px-5 py-3.5">
-                                    <p class="text-[#1F2937] text-sm font-medium">22 Mei 2025</p>
-                                    <p class="text-[#6B7280] text-xs">Kamis</p>
-                                </td>
-                                <td class="px-5 py-3.5">
-                                    <div class="flex items-center gap-1.5">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#6B7280] flex-shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                                        <span class="text-[#1F2937]">Jorong Batu Balang</span>
-                                    </div>
-                                </td>
-                                <td class="px-5 py-3.5">
-                                    <div class="flex items-center gap-1.5">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#6B7280] flex-shrink-0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                        <span class="text-[#6B7280]">09.00 – 13.00</span>
-                                    </div>
-                                </td>
-                                <td class="px-5 py-3.5 text-[#1F2937] font-medium">Sari Dewi</td>
-                                <td class="px-5 py-3.5">
-                                    <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-[#F3F4F6] text-[#6B7280]">Mendatang</span>
-                                </td>
-                            </tr>
-
-                            <tr class="border-b border-gray-50 hover:bg-[#F8FAFC] transition-colors">
-                                <td class="px-5 py-3.5">
-                                    <p class="text-[#1F2937] text-sm font-medium">29 Mei 2025</p>
-                                    <p class="text-[#6B7280] text-xs">Kamis</p>
-                                </td>
-                                <td class="px-5 py-3.5">
-                                    <div class="flex items-center gap-1.5">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#6B7280] flex-shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                                        <span class="text-[#1F2937]">Jorong Ranah</span>
-                                    </div>
-                                </td>
-                                <td class="px-5 py-3.5">
-                                    <div class="flex items-center gap-1.5">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#6B7280] flex-shrink-0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                        <span class="text-[#6B7280]">08.00 – 11.00</span>
-                                    </div>
-                                </td>
-                                <td class="px-5 py-3.5 text-[#1F2937] font-medium">Sari Dewi</td>
-                                <td class="px-5 py-3.5">
-                                    <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-[#F3F4F6] text-[#6B7280]">Mendatang</span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-gray-100 bg-[#F9FAFB]">
+                                    <th class="text-left px-6 py-4 text-[#6B7280] text-xs uppercase tracking-wider font-semibold">Tanggal</th>
+                                    <th class="text-left px-6 py-4 text-[#6B7280] text-xs uppercase tracking-wider font-semibold">Lokasi / Jorong</th>
+                                    <th class="text-left px-6 py-4 text-[#6B7280] text-xs uppercase tracking-wider font-semibold">Waktu</th>
+                                    <th class="text-left px-6 py-4 text-[#6B7280] text-xs uppercase tracking-wider font-semibold">Petugas</th>
+                                    <th class="text-left px-6 py-4 text-[#6B7280] text-xs uppercase tracking-wider font-semibold">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="jadwalTbody">
+                                <% if (typeof jadwal !== 'undefined' && jadwal.length > 0) { %>
+                                    <% 
+                                        const today = new Date();
+                                        today.setHours(0, 0, 0, 0);
+                                    %>
+                                    <% jadwal.forEach(item => { 
+                                        const tglKegiatan = new Date(item.tanggal_kegiatan);
+                                        tglKegiatan.setHours(0, 0, 0, 0);
+                                        
+                                        let statusText = 'Mendatang';
+                                        let statusClass = 'bg-gray-100 text-gray-600';
+                                        let rowClass = 'border-b border-gray-50 hover:bg-slate-50 transition-colors';
+                                        
+                                        if (tglKegiatan < today) {
+                                            statusText = 'Selesai';
+                                            statusClass = 'bg-emerald-100 text-emerald-700';
+                                        } else if (tglKegiatan.getTime() === today.getTime()) {
+                                            statusText = 'Hari Ini';
+                                            statusClass = 'bg-blue-100 text-blue-700';
+                                            rowClass += ' bg-blue-50/50';
+                                        }
+                                    %>
+                                        <tr class="<%= rowClass %>">
+                                            <td class="px-6 py-4">
+                                                <p class="text-[#1F2937] font-semibold">
+                                                    <%= tglKegiatan.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) %>
+                                                </p>
+                                                <p class="text-[#6B7280] text-xs capitalize">
+                                                    <%= tglKegiatan.toLocaleDateString('id-ID', { weekday: 'long' }) %>
+                                                </p>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <div class="flex items-center gap-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                                                    <span class="text-[#1F2937]">Jorong <%= item.nama_jorong %> (<%= item.lokasi %>)</span>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <span class="text-gray-500">08.00 – 12.00</span>
+                                            </td>
+                                            <td class="px-6 py-4 text-[#1F2937]">Kader Posbindu</td>
+                                            <td class="px-6 py-4">
+                                                <span class="px-3 py-1 rounded-full text-xs font-bold <%= statusClass %>">
+                                                    <%= statusText %>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-10 text-center text-gray-500 italic">
+                                            Belum ada jadwal kegiatan yang tersedia.
+                                        </td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <div class="flex items-start gap-2 bg-[#EFF6FF] border border-[#BFDBFE] rounded-xl p-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#2563EB] mt-0.5 flex-shrink-0">
-                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>
+                <div class="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-2xl p-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600 mt-0.5">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
                     </svg>
-                    <p class="text-[#1E40AF] text-sm">
-                        Jadwal kegiatan Posbindu ditetapkan oleh koordinator Puskesmas setiap awal bulan.
-                        Hubungi PJ PTM jika ada perubahan jadwal.
+                    <p class="text-blue-800 text-sm leading-relaxed">
+                        Jadwal kegiatan Posbindu ditetapkan oleh koordinator Puskesmas setiap awal bulan. 
+                        Hubungi <strong>PJ PTM</strong> jika terdapat perubahan jadwal mendadak.
                     </p>
                 </div>
 
             </div>
         </main>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropdown = document.getElementById('filterPeriode');
+            const tbody = document.getElementById('jadwalTbody');
+            const teksHitung = document.getElementById('jadwalCount');
+            
+            if (!dropdown || !tbody) return;
+
+            const barisJadwal = tbody.querySelectorAll('tr');
+
+            dropdown.addEventListener('change', function() {
+                const pilihan = this.value;
+                let count = 0;
+
+                barisJadwal.forEach(baris => {
+                    if (baris.querySelector('td[colspan]')) return;
+
+                    const teksTanggal = baris.querySelector('td').textContent;
+                    if (pilihan === 'Semua' || teksTanggal.includes(pilihan)) {
+                        baris.style.display = '';
+                        count++;
+                    } else {
+                        baris.style.display = 'none';
+                    }
+                });
+
+                if (teksHitung) teksHitung.textContent = count + ' jadwal ditemukan';
+            });
+        });
+    </script>
 </body>
 </html>

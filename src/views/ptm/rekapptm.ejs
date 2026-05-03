@@ -30,11 +30,11 @@
                 <h3 class="text-[#1F2937] font-poppins font-semibold mb-4">
                     Generate Laporan Baru
                 </h3>
-                <div class="flex flex-col sm:flex-row gap-4 items-end">
+                <form action="/ptm/laporan/generate" method="POST" class="flex flex-col sm:flex-row gap-4 items-end">
                     <div class="flex-1 w-full">
                         <label class="text-sm text-[#1F2937] font-medium mb-1.5 block">Bulan</label>
                         <div class="relative">
-                            <select class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-colors appearance-none cursor-pointer">
+                            <select name="periode_bulan" class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-colors appearance-none cursor-pointer">
                                 <option value="01">Januari</option>
                                 <option value="02">Februari</option>
                                 <option value="03">Maret</option>
@@ -54,19 +54,23 @@
                     <div class="flex-1 w-full">
                         <label class="text-sm text-[#1F2937] font-medium mb-1.5 block">Tahun</label>
                         <div class="relative">
-                            <select class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-colors appearance-none cursor-pointer">
-                                <option value="2025">2025</option>
-                                <option value="2024">2024</option>
-                                <option value="2023">2023</option>
+                            <select name="periode_tahun" class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-colors appearance-none cursor-pointer">
+                                <% 
+                                    // Membuat opsi tahun otomatis dari tahun ini mundur ke 2023
+                                    const tahunSekarang = new Date().getFullYear(); 
+                                    for(let t = tahunSekarang + 1; t >= 2023; t--) { 
+                                %>
+                                    <option value="<%= t %>" <%= t === tahunSekarang ? 'selected' : '' %>><%= t %></option>
+                                <% } %>
                             </select>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
                         </div>
                     </div>
-                    <a href="/ptm/laporan" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-2.5 rounded-xl text-sm transition-all font-medium whitespace-nowrap shadow-sm">
+                    <button type="submit" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-2.5 rounded-xl text-sm transition-all font-medium whitespace-nowrap shadow-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
                         Generate Laporan
-                    </a>
-                </div>
+                    </button>
+                </form>
             </div>
 
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -88,108 +92,40 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50">
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4 text-sm text-[#1F2937] font-medium">Desember 2024</td>
-                                <td class="px-6 py-4 text-sm text-center text-[#1F2937]">188</td>
-                                <td class="px-6 py-4 text-sm text-center text-[#EF4444] font-medium">70</td>
-                                <td class="px-6 py-4 text-sm text-center text-[#10B981] font-medium">71.4%</td>
-                                <td class="px-6 py-4">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D1FAE5] text-[#059669] text-xs font-semibold border border-[#A7F3D0]">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>Disahkan
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <button class="flex items-center gap-1.5 text-xs text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                                        PDF
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4 text-sm text-[#1F2937] font-medium">November 2024</td>
-                                <td class="px-6 py-4 text-sm text-center text-[#1F2937]">195</td>
-                                <td class="px-6 py-4 text-sm text-center text-[#EF4444] font-medium">78</td>
-                                <td class="px-6 py-4 text-sm text-center text-[#10B981] font-medium">69.2%</td>
-                                <td class="px-6 py-4">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D1FAE5] text-[#059669] text-xs font-semibold border border-[#A7F3D0]">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>Disahkan
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <button class="flex items-center gap-1.5 text-xs text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                                        PDF
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4 text-sm text-[#1F2937] font-medium">Oktober 2024</td>
-                                <td class="px-6 py-4 text-sm text-center text-[#1F2937]">172</td>
-                                <td class="px-6 py-4 text-sm text-center text-[#EF4444] font-medium">65</td>
-                                <td class="px-6 py-4 text-sm text-center text-[#10B981] font-medium">73.8%</td>
-                                <td class="px-6 py-4">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D1FAE5] text-[#059669] text-xs font-semibold border border-[#A7F3D0]">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>Disahkan
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <button class="flex items-center gap-1.5 text-xs text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                                        PDF
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4 text-sm text-[#1F2937] font-medium">September 2024</td>
-                                <td class="px-6 py-4 text-sm text-center text-[#1F2937]">185</td>
-                                <td class="px-6 py-4 text-sm text-center text-[#EF4444] font-medium">72</td>
-                                <td class="px-6 py-4 text-sm text-center text-[#10B981] font-medium">70.1%</td>
-                                <td class="px-6 py-4">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D1FAE5] text-[#059669] text-xs font-semibold border border-[#A7F3D0]">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>Disahkan
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <button class="flex items-center gap-1.5 text-xs text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                                        PDF
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4 text-sm text-[#1F2937] font-medium">Agustus 2024</td>
-                                <td class="px-6 py-4 text-sm text-center text-[#1F2937]">178</td>
-                                <td class="px-6 py-4 text-sm text-center text-[#EF4444] font-medium">68</td>
-                                <td class="px-6 py-4 text-sm text-center text-[#10B981] font-medium">68.9%</td>
-                                <td class="px-6 py-4">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D1FAE5] text-[#059669] text-xs font-semibold border border-[#A7F3D0]">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>Disahkan
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <button class="flex items-center gap-1.5 text-xs text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                                        PDF
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4 text-sm text-[#1F2937] font-medium">Juli 2024</td>
-                                <td class="px-6 py-4 text-sm text-center text-[#1F2937]">163</td>
-                                <td class="px-6 py-4 text-sm text-center text-[#EF4444] font-medium">60</td>
-                                <td class="px-6 py-4 text-sm text-center text-[#10B981] font-medium">72.5%</td>
-                                <td class="px-6 py-4">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D1FAE5] text-[#059669] text-xs font-semibold border border-[#A7F3D0]">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>Disahkan
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <button class="flex items-center gap-1.5 text-xs text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                                        PDF
-                                    </button>
-                                </td>
-                            </tr>
+                            <% if (typeof rekapData !== 'undefined' && rekapData.length > 0) { %>
+                                <% const namaBulan = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]; %>
+                                <% rekapData.forEach(row => { %>
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-6 py-4 text-sm text-[#1F2937] font-medium">
+                                            <%= namaBulan[row.periode_bulan] %> <%= row.periode_tahun %>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-center text-[#1F2937]">
+                                            <%= row.total_pasien_diperiksa %> Pasien
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-center text-[#EF4444] font-medium">
+                                            <%= row.total_kunjungan %> Total Kunjungan
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-center text-[#10B981] font-medium">
+                                            -
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#E0F2FE] text-[#0369A1] text-xs font-semibold border border-[#BAE6FD]">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-[#0EA5E9]"></span>Terekap
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <button class="flex items-center gap-1.5 text-xs text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors cursor-not-allowed opacity-50" title="Fitur PDF akan segera hadir">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                                PDF
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" class="px-6 py-8 text-center text-gray-500 text-sm">Belum ada data rekapitulasi skrining yang terverifikasi.</td>
+                                </tr>
+                            <% } %>
                         </tbody>
                     </table>
                 </div>

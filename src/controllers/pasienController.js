@@ -45,37 +45,62 @@ exports.renderTambahPasien = async (req, res) => {
 
 // 3. Proses Simpan Pasien Baru
 exports.handleTambahPasien = async (req, res) => {
-    // TAMBAHKAN id_jorong DI SINI 👇
-    const { nik, nama_pasien, id_jorong, tanggal_lahir, jenis_kelamin, alamat, no_hp, pekerjaan, agama } = req.body;
-    
-    // --- LOGIKA AUTO-INCREMENT ID PASIEN (PAS001, PAS002, dst) ---
-    let id_pasien = 'PAS001'; // Default jika tabel pasien masih kosong
-    
-    // Cari ID Pasien terakhir yang berawalan 'PAS'
-    const lastPasienResult = await pool.query(
-        "SELECT id_pasien FROM pasien WHERE id_pasien LIKE 'PAS%' ORDER BY id_pasien DESC LIMIT 1"
-    );
+    try {
+        // 1. Ambil data dari form EJS
+        const { id_jorong, nik, nama_pasien, usia, jenis_kelamin, alamat, no_hp, pekerjaan, agama } = req.body;
 
-    if (lastPasienResult.rows.length > 0) {
-        const lastId = lastPasienResult.rows[0].id_pasien; // Contoh: 'PAS002'
-        const lastNumber = parseInt(lastId.substring(3));  // Mengambil angka '002' menjadi 2
-        const nextNumber = lastNumber + 1;                 // 2 + 1 = 3
-        id_pasien = 'PAS' + String(nextNumber).padStart(3, '0'); // Menggabungkan jadi 'PAS003'
+        // ==========================================
+        // 2. JURUS PAMUNGKAS: BIKIN ID OTOMATIS!
+        // Membuat ID unik berdasarkan waktu saat ini agar tidak akan pernah duplikat
+        // ==========================================
+        const id_pasien = nik; 
+
+        // 3. Kalkulator Tahun Lahir
+        const tahunSekarang = new Date().getFullYear();
+        const tahun_lahir = tahunSekarang - parseInt(usia);
+
+        // 4. Query SQL (Kita masukkan kembali id_pasien di urutan PERTAMA)
+        const query = `
+            INSERT INTO pasien (id_pasien, id_jorong, nik, nama_pasien, usia, tahun_lahir, jenis_kelamin, alamat, no_hp, pekerjaan, agama) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        `;
+        
+        // 5. Susunan data (id_pasien di urutan paling depan sesuai $1)
+        const values = [id_pasien, id_jorong, nik, nama_pasien, usia, tahun_lahir, jenis_kelamin, alamat, no_hp, pekerjaan, agama];
+
+        // 6. Eksekusi ke Database
+        await pool.query(query, values);
+        
+        // 7. Jika sukses, kembali ke halaman pasien
+        res.redirect('/pasien');
+
+    } catch (err) {
+        console.error("ERROR SAAT SIMPAN PASIEN:", err); 
+        res.status(500).send("<script>alert('Gagal menambah pasien. Cek terminal untuk detailnya.'); window.history.back();</script>");
     }
-    // -----------------------------------------------------------
+};
+
+exports.tambahPasien = async (req, res) => {
+    // 1. Ambil data 'usia' dari form EJS
+    const { nik, nama_pasien, id_jorong, usia, jenis_kelamin, alamat, no_hp, pekerjaan, agama } = req.body;
 
     try {
-        const query = `
-            INSERT INTO pasien 
-            (id_pasien, id_jorong, nik, nama_pasien, tanggal_lahir, jenis_kelamin, alamat, no_hp, pekerjaan, agama) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        `;
-        const values = [id_pasien, id_jorong, nik, nama_pasien, tanggal_lahir, jenis_kelamin, alamat, no_hp, pekerjaan, agama];
-        
-        await pool.query(query, values);
-        res.redirect('/pasien'); // Kembali ke daftar pasien
+        // ==========================================
+        // TAMBAHAN LOGIKA PENGHITUNGAN TAHUN LAHIR
+        // ==========================================
+        const tahunSekarang = new Date().getFullYear();
+        const tahun_lahir = tahunSekarang - parseInt(usia); // Menghasilkan misal: 1981
+        // ==========================================
+
+        // Masukkan usia dan tahun_lahir langsung ke database
+        await pool.query(
+            'INSERT INTO pasien (nik, nama_pasien, usia, tahun_lahir, jenis_kelamin, id_jorong) VALUES ($1, $2, $3, $4, $5, $6)',
+            [nik, nama_pasien, usia, tahun_lahir, jenis_kelamin, id_jorong]
+        );
+
+        res.redirect('/pasien');
     } catch (err) {
         console.error(err);
-        res.status(500).send("Gagal menyimpan data pasien baru. Pastikan NIK tidak duplikat!");
+        res.status(500).send("Gagal menambah pasien.");
     }
 };
