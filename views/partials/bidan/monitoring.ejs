@@ -184,6 +184,22 @@
             const totalDiastole = arrDiastole.reduce((sum, v) => sum + v, 0);
             const rataDiastole  = (totalDiastole / jmlData).toFixed(1);
 
+            // -- [BARU] Hitung nilai sistolik tertinggi (Max) dan terendah (Min) dari seluruh riwayat
+            const sistoleMaks = Math.max(...arrSistole); // [BARU] nilai maks dari keseluruhan array
+            const sistoleMin  = Math.min(...arrSistole); // [BARU] nilai min dari keseluruhan array
+
+            // -- [BARU] Deteksi fluktuasi: cek apakah ada kenaikan DAN penurunan dalam riwayat
+            // Fluktuatif = pernah naik dan pernah turun (bukan hanya satu arah saja)
+            let adaKenaikan  = false; // [BARU]
+            let adaPenurunan = false; // [BARU]
+            if (jmlData >= 3) { // [BARU] minimal 3 titik data agar pola naik-turun bisa terdeteksi
+                for (let i = 1; i < jmlData; i++) { // [BARU] bandingkan tiap elemen dengan elemen sebelumnya
+                    if (arrSistole[i] > arrSistole[i - 1]) adaKenaikan  = true; // [BARU]
+                    if (arrSistole[i] < arrSistole[i - 1]) adaPenurunan = true; // [BARU]
+                }
+            }
+            const adalahFluktuatif = adaKenaikan && adaPenurunan; // [BARU] true jika kedua arah terdeteksi
+
             // -- Tentukan tren sistolik: bandingkan nilai terbaru vs sebelumnya
             let narasiTren = '';
             if (jmlData >= 2) {
@@ -210,14 +226,20 @@
             else if (sistolikTerbaru >= 120) kategori = 'Pra-Hipertensi (120–139 mmHg)';
             else                             kategori = 'Normal (<120 mmHg)';
 
-            // -- Susun narasi akhir: hanya fakta angka, tanpa rekomendasi
-            // Format mengikuti contoh dari dosen:
-            // "Rata-rata sistolik: X mmHg. Tren: naik/turun Y mmHg dari bulan sebelumnya."
+            // -- [DIUBAH] Susun narasi akhir: hanya fakta angka, tanpa rekomendasi
+            // Jika fluktuatif terdeteksi, sertakan keterangan fluktuatif + nilai maks & min.
+            // Jika tidak fluktuatif, format narasi tetap seperti semula.
+            const narasiRingkasanRiwayat = adalahFluktuatif // [BARU] pilih format berdasarkan pola
+                ? `Berdasarkan ${jmlData} kali pemeriksaan, tekanan darah terlihat fluktuatif` +
+                  ` dengan sistolik tertinggi mencapai ${sistoleMaks} mmHg dan terendah ${sistoleMin} mmHg.` +
+                  ` Rata-rata keseluruhan: ${rataSistole} mmHg.` // [BARU] narasi versi fluktuatif
+                : `Berdasarkan ${jmlData} kali pemeriksaan: rata-rata sistolik ${rataSistole} mmHg, ` +
+                  `rata-rata diastolik ${rataDiastole} mmHg.`; // tetap seperti semula jika tidak fluktuatif
+
             const narasi =
                 `Sistolik terbaru: ${sistolikTerbaru} mmHg / Diastolik terbaru: ${diastolikTerbaru} mmHg — ` +
                 `masuk kategori ${kategori}. ` +
-                `Berdasarkan ${jmlData} kali pemeriksaan: rata-rata sistolik ${rataSistole} mmHg, ` +
-                `rata-rata diastolik ${rataDiastole} mmHg. ` +
+                narasiRingkasanRiwayat + ' ' + // [DIUBAH] gunakan variabel yang sudah mempertimbangkan fluktuasi
                 narasiTren;
 
             return narasi;

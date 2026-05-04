@@ -54,6 +54,18 @@ function analisaTensiPasien(historiSistole) {
     const jumlahNilai  = historiSistole.reduce((sum, val) => sum + val, 0);
     const rataRata     = Math.round(jumlahNilai / historiSistole.length);
     const jumlahData   = historiSistole.length;
+    const nilaiMaks = Math.max(...historiSistole);
+    const nilaiMin = Math.min(...historiSistole);
+
+    let adaKenaikan = false; // [BARU] flag: apakah ada titik yang lebih tinggi dari sebelumnya
+    let adaPenurunan = false; // [BARU] flag: apakah ada titik yang lebih rendah dari sebelumnya
+    if (jumlahData >= 3) { // [BARU] minimal 3 data agar pola naik-turun bisa terdeteksi
+        for (let i = 1; i < jumlahData; i++) { // [BARU] bandingkan tiap elemen dengan elemen sebelumnya
+            if (historiSistole[i] > historiSistole[i - 1]) adaKenaikan  = true; // [BARU]
+            if (historiSistole[i] < historiSistole[i - 1]) adaPenurunan = true; // [BARU]
+        }
+    }
+    const adalahFluktuatif = adaKenaikan && adaPenurunan; 
 
     // --- TENTUKAN TREN (NAIK / TURUN / STABIL) ---
     // [REVISI] Tren hanya menyebutkan angka dan arah, TANPA penilaian klinis
@@ -74,8 +86,12 @@ function analisaTensiPasien(historiSistole) {
     // --- SUSUN NARASI DESKRIPTIF BERBASIS DATA ---
     // [REVISI] Format narasi: hanya menceritakan angka, rata-rata, dan tren.
     // Tidak ada kalimat anjuran, peringatan klinis, atau rekomendasi tindakan.
-    const narasiDataPemeriksaan = jumlahData > 1
-        ? ` Berdasarkan ${jumlahData} kali pemeriksaan, rata-rata sistolik: ${rataRata} mmHg.`
+     const narasiDataPemeriksaan = jumlahData > 1
+        ? adalahFluktuatif // [BARU] cabang: narasi berbeda jika pola fluktuatif terdeteksi
+            ? ` Berdasarkan ${jumlahData} kali pemeriksaan, tekanan darah terlihat fluktuatif` +
+              ` dengan sistolik tertinggi mencapai ${nilaiMaks} mmHg dan terendah ${nilaiMin} mmHg.` +
+              ` Rata-rata keseluruhan: ${rataRata} mmHg.` // [BARU] format narasi fluktuatif
+            : ` Berdasarkan ${jumlahData} kali pemeriksaan, rata-rata sistolik: ${rataRata} mmHg.` // tetap seperti semula jika tidak fluktuatif
         : '';
 
     // --- EVALUASI & HASILKAN DESKRIPSI BERDASARKAN NILAI TERBARU ---
