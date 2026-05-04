@@ -10,6 +10,33 @@
         .font-poppins { font-family: 'Poppins', sans-serif; }
         .font-inter { font-family: 'Inter', sans-serif; }
         .hidden-step { display: none; }
+
+        .ts-control {
+        border-radius: 0.75rem !important; /* rounded-xl */
+        border-color: #E5E7EB !important; /* border-gray-200 */
+        padding: 0.625rem 0.75rem 0.625rem 2.5rem !important; /* pl-10 untuk ikon */
+        background-color: #F9FAFB !important; /* bg-gray-50 */
+        font-size: 0.875rem !important; /* text-sm */
+    }
+        .ts-wrapper.focus .ts-control {
+            border-color: #2563EB !important; /* focus:border-blue-600 */
+            box-shadow: none !important;
+            background-color: white !important;
+        }
+
+        .ts-dropdown {
+            border-radius: 0.75rem !important;
+            margin-top: 5px !important;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1) !important;
+        }
+
+        .ts-wrapper.single .ts-control input {
+            width: 100% !important;
+        }
+
+        .ts-wrapper.single.has-items .ts-control input::placeholder {
+            color: transparent !important;
+        }
     </style>
 </head>
 <body class="bg-slate-50 font-inter antialiased text-slate-800 flex h-screen overflow-hidden">
@@ -57,13 +84,11 @@
                         
                         <div>
                             <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Pilih Pasien <span class="text-[#EF4444]">*</span></label>
-                            <select id="input-pasien" name="id_pasien" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white" required>
-                                <option value="">-- Pilih Pasien --</option>
-                                <% if (typeof pasien !== 'undefined') { %>
-                                    <% pasien.forEach(p => { %>
-                                        <option value="<%= p.id_pasien %>"><%= p.nama_pasien %> (<%= p.nik %>)</option>
-                                    <% }) %>
-                                <% } %>
+                            <select id="input-pasien" name="id_pasien" placeholder="Cari Nama atau NIK Pasien" border-gray-200 autocomplete="off" style="display: none;">
+                                <option value=""></option>
+                                <% pasien.forEach(p => { %>
+                                    <option value="<%= p.id_pasien %>"><%= p.nama_pasien %> (<%= p.nik %>)</option>
+                                <% }) %>
                             </select>
                         </div>
 
@@ -345,6 +370,24 @@
                 document.getElementById('skrining-form').submit();
             }, 500);
         }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
+    <script>
+        // [BARU] Inisialisasi Tom Select pada input pasien
+        new TomSelect("#input-pasien", {
+            create: false,
+            sortField: {
+                field: "text",
+                direction: "asc"
+            },
+            // Fitur pencarian otomatis akan mencari di Nama dan NIK karena keduanya ada di dalam teks option
+            render: {
+                option: function(data, escape) {
+                    return '<div class="py-2 px-3"> <div class="font-medium">' + escape(data.text) + '</div> </div>';
+                }
+            }
+        });
     </script>
 </body>
 </html>
