@@ -262,7 +262,7 @@ app.post('/ptm/pasien/delete/:id',
 
 app.get('/ptm/laporan/export/:id_laporan', 
     isAuthenticated, isAuthorized('pj_ptm'), 
-    laporanController.exportExcelKohort);
+    laporanController.exportLaporanExcel);
 
 
 // --- RUTE KEPALA PUSKESMAS (Hanya untuk role 'kepala_puskesmas') ---

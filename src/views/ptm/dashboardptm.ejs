@@ -20,47 +20,52 @@
        <%- include('../partials/header', { pageTitle: 'Dashboard Program PTM', role: 'ptm' }) %>
 
         <main class="p-8 space-y-6 w-full">
-            
-            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100 shadow-sm">
-                <h3 class="text-[#1E3A8A] font-poppins font-semibold flex items-center gap-2 mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                    Insight & Rekomendasi Perencanaan
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-white/90 backdrop-blur-sm rounded-xl p-4 flex gap-3 shadow-sm border border-blue-50">
-                        <div class="text-blue-500 mt-0.5 flex-shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-semibold text-gray-800">Evaluasi Target Skrining Tahunan</p>
-                            <p class="text-xs text-gray-600 mt-1 leading-relaxed">
-                                Target 2.000 pasien telah tercapai 81% (1.615 pasien). Sisa target 385 pasien. Laju bulanan saat ini <span class="font-bold text-green-600 bg-green-100 px-1.5 py-0.5 rounded">SANGAT AMAN</span> untuk mencapai target akhir tahun sebelum tenggat waktu.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="bg-white/90 backdrop-blur-sm rounded-xl p-4 flex gap-3 shadow-sm border border-blue-50">
-                        <div class="text-amber-500 mt-0.5 flex-shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-semibold text-gray-800">Prioritas Wilayah Bulan Depan</p>
-                            <p class="text-xs text-gray-600 mt-1 leading-relaxed">
-                                Nagari <strong class="text-gray-800">Sg. Tarab</strong> menyumbang kasus Hipertensi tertinggi (165 kasus). <strong class="text-[#2563EB]">Rekomendasi Tindakan:</strong> Jadwalkan penyuluhan masif dan alokasikan tambahan kit Posbindu ke wilayah ini untuk bulan Februari.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <div class="flex items-start justify-between mt-2">
                 <div>
                     <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Dashboard Program PTM</h2>
-                    <p class="text-[#6B7280] text-sm mt-1">Periode Januari 2025 · Puskesmas Sungai Tarab</p>
+                    <p class="text-[#6B7280] text-sm mt-1">Periode Januari 2025 · Puskesmas IV Koto/p>
                 </div>
                 <a href="/ptm/laporan" class="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-5 py-2.5 rounded-xl text-sm transition-all font-medium shadow-sm flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                     Generate Laporan
                 </a>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm flex flex-col items-center">
+                    <div class="w-full flex justify-start mb-4">
+                        <h3 class="text-[#1F2937] font-poppins font-semibold text-lg">Progres Target Tahunan</h3>
+                    </div>
+                    <div class="relative w-48 h-48">
+                        <canvas id="targetDonutChart"></canvas>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                            <span class="text-3xl font-poppins font-bold text-[#1F2937]">81%</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-2 mt-6 w-full">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-[#2563EB]"></span>
+                            <span class="text-sm text-[#4B5563] font-medium">Tercapai: 1.615 pasien</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-[#E5E7EB]"></span>
+                            <span class="text-sm text-[#4B5563] font-medium">Sisa: 385 pasien</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-[#1F2937] font-poppins font-semibold text-lg">Capaian Per Nagari</h3>
+                        <span class="text-xs text-gray-500 font-medium px-3 py-1 bg-gray-50 rounded-full border border-gray-100">Bulan Ini</span>
+                    </div>
+                    <div class="w-full h-[300px]">
+                        <canvas id="nagariChart"></canvas>
+                    </div>
+                </div>
+
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -115,28 +120,8 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-[#1F2937] font-poppins font-semibold">Capaian Target 2.000 Pasien</h3>
-                    <span class="text-[#2563EB] text-sm font-semibold">1.615/2.000</span>
-                </div>
-                <div class="h-4 bg-gray-100 rounded-full overflow-hidden mb-3">
-                    <div class="h-full rounded-full bg-gradient-to-r from-[#2563EB] to-[#10B981] transition-all" style="width: 81%;"></div>
-                </div>
-                <div class="flex justify-between text-xs text-[#6B7280]">
-                    <span>0</span>
-                    <span class="font-semibold text-[#10B981]">81% tercapai</span>
-                    <span>2.000</span>
-                </div>
-            </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                    <h3 class="text-[#1F2937] font-poppins font-semibold mb-6">Capaian per Nagari</h3>
-                    <div class="w-full h-[250px]">
-                        <canvas id="nagariChart"></canvas>
-                    </div>
-                </div>
 
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
                     <div class="px-6 py-5 border-b border-gray-100">
@@ -196,35 +181,25 @@
             Chart.defaults.font.family = "'Inter', sans-serif";
             Chart.defaults.color = '#6B7280';
 
-            const ctx = document.getElementById('nagariChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
+            // [BARU] Inisialisasi Donut Chart - Progres Target Tahunan
+            const donutCtx = document.getElementById('targetDonutChart').getContext('2d');
+            new Chart(donutCtx, {
+                type: 'doughnut',
                 data: {
-                    labels: ["Sg. Tarab", "Baringin", "Salimpaung", "Tigo Jangko", "Guguak"],
-                    datasets: [
-                        {
-                            label: 'Capaian',
-                            data: [420, 380, 310, 290, 215],
-                            backgroundColor: ["#2563EB", "#10B981", "#F59E0B", "#8B5CF6", "#EF4444"],
-                            borderRadius: { topLeft: 6, topRight: 6 },
-                            barPercentage: 0.6,
-                            categoryPercentage: 0.7
-                        },
-                        {
-                            label: 'Target',
-                            data: [500, 450, 400, 350, 300],
-                            backgroundColor: '#E5E7EB',
-                            borderRadius: { topLeft: 6, topRight: 6 },
-                            barPercentage: 0.6,
-                            categoryPercentage: 0.7
-                        }
-                    ]
+                    labels: ['Tercapai', 'Sisa Target'],
+                    datasets: [{
+                        data: [1615, 385],
+                        backgroundColor: ['#2563EB', '#E5E7EB'], // Biru untuk tercapai, Abu-abu untuk sisa
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    cutout: '75%', // Mengatur ketebalan donat agar ada ruang untuk teks persentase
                     plugins: {
-                        legend: { display: false },
+                        legend: { display: false }, // Legend disembunyikan karena sudah dibuat manual di HTML
                         tooltip: {
                             backgroundColor: 'white',
                             titleColor: '#1F2937',
@@ -232,17 +207,46 @@
                             borderColor: '#E5E7EB',
                             borderWidth: 1,
                             padding: 10,
-                            usePointStyle: true,
-                            titleFont: { family: "'Poppins', sans-serif" }
+                            bodyFont: { family: "'Inter', sans-serif" }
                         }
-                    },
+                    }
+                }
+            });
+
+            // [BARU] Menambahkan kembali inisialisasi Bar Chart Nagari yang terhapus
+            const nagariCtx = document.getElementById('nagariChart').getContext('2d');
+            new Chart(nagariCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Sg. Tarab', 'Baringin', 'Salimpaung', 'Tigo Jangko', 'Guguak'],
+                    datasets: [
+                        {
+                            label: 'Capaian',
+                            data: [420, 380, 310, 290, 215],
+                            backgroundColor: '#2563EB',
+                            borderRadius: 6,
+                            barPercentage: 0.6
+                        },
+                        {
+                            label: 'Target',
+                            data: [500, 450, 400, 350, 300],
+                            backgroundColor: '#E5E7EB',
+                            borderRadius: 6,
+                            barPercentage: 0.6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
                     scales: {
-                        x: { grid: { display: false, drawBorder: false } },
-                        y: { grid: { color: '#F3F4F6', drawBorder: false, strokeDash: [3, 3] }, min: 0 }
+                        x: { grid: { display: false } },
+                        y: { grid: { color: '#F3F4F6', strokeDash: [3, 3] }, min: 0 }
                     }
                 }
             });
         });
     </script>
 </body>
-</html>
+</html>  
