@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const ExcelJS = require('exceljs');
 
 // [BARU] Array nama bulan untuk konversi angka ke nama (index 0 = Januari)
 const NAMA_BULAN = [
@@ -135,5 +136,120 @@ exports.renderLaporanPTM = async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).send("Gagal memuat halaman laporan.");
+    }
+};
+
+// ============================================================
+// [BARU] 4. Export Laporan ke Excel (Format Kohort Puskesmas)
+// ============================================================
+exports.exportExcelKohort = async (req, res) => {
+    const { id_laporan } = req.params;
+
+    try {
+        // 1. Ambil data laporan dan periode
+        const laporanRes = await pool.query(`
+            SELECT l.*, p.periode_bulan, p.periode_tahun 
+            FROM laporan l 
+            JOIN periode p ON l.id_periode = p.periode_id 
+            WHERE l.id_laporan = $1
+        `, [id_laporan]);
+
+        if (laporanRes.rows.length === 0) {
+            return res.status(404).send("Laporan tidak ditemukan.");
+        }
+
+        const laporan = laporanRes.rows[0];
+        const namaBulan = NAMA_BULAN[laporan.periode_bulan - 1];
+        const namaFile = `Kohort_Hipertensi_${namaBulan}_${laporan.periode_tahun}.xlsx`;
+
+        // 2. Ambil detail data pasien (skrining) pada periode tersebut
+        const skriningRes = await pool.query(`
+            SELECT 
+                p.nik, p.nama_pasien, p.jenis_kelamin, p.tanggal_lahir, p.alamat, p.no_hp,
+                j.nama_jorong, n.nama_nagari,
+                k.tanggal_kegiatan,
+                s.sistole, s.diastole, s.berat_badan, s.tinggi_badan, s.lingkar_perut, s.imt,
+                s.merokok, s.kurang_aktivitas_fisik
+            FROM skrining s
+            JOIN pasien p ON s.id_pasien = p.nik
+            JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
+            JOIN jorong j ON p.id_jorong = j.id_jorong
+            JOIN nagari n ON j.id_nagari = n.id_nagari
+            WHERE k.id_periode = $1 AND s.status_validasi = 'terverifikasi'
+            ORDER BY k.tanggal_kegiatan ASC, p.nama_pasien ASC
+        `, [laporan.id_periode]);
+
+        const dataKohort = skriningRes.rows;
+
+        // 3. Setup Workbook & Worksheet Excel
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = 'SI-Posbindu PTM';
+        const worksheet = workbook.addWorksheet('Data Kohort');
+
+        // 4. Bikin Header Kolom Excel
+        worksheet.columns = [
+            { header: 'No', key: 'no', width: 5 },
+            { header: 'Tanggal Periksa', key: 'tgl', width: 15 },
+            { header: 'NIK', key: 'nik', width: 20 },
+            { header: 'Nama Pasien', key: 'nama', width: 25 },
+            { header: 'L/P', key: 'jk', width: 8 },
+            { header: 'Usia', key: 'usia', width: 8 },
+            { header: 'Alamat', key: 'alamat', width: 30 },
+            { header: 'Jorong', key: 'jorong', width: 15 },
+            { header: 'Nagari', key: 'nagari', width: 15 },
+            { header: 'Sistole', key: 'sistole', width: 10 },
+            { header: 'Diastole', key: 'diastole', width: 10 },
+            { header: 'BB (kg)', key: 'bb', width: 10 },
+            { header: 'TB (cm)', key: 'tb', width: 10 },
+            { header: 'IMT', key: 'imt', width: 10 },
+            { header: 'Merokok', key: 'rokok', width: 15 },
+            { header: 'Aktivitas Fisik', key: 'fisik', width: 20 }
+        ];
+
+        // Styling Header (Biar keren: background biru, teks putih, bold)
+        worksheet.getRow(1).eachCell((cell) => {
+            cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        });
+
+        // 5. Masukkan Data ke Excel
+        dataKohort.forEach((row, index) => {
+            // Hitung usia manual dari tanggal_lahir
+            const thnLahir = new Date(row.tanggal_lahir).getFullYear();
+            const thnPeriksa = new Date(row.tanggal_kegiatan).getFullYear();
+            const usia = thnPeriksa - thnLahir;
+
+            worksheet.addRow({
+                no: index + 1,
+                tgl: new Date(row.tanggal_kegiatan).toLocaleDateString('id-ID'),
+                nik: row.nik,
+                nama: row.nama_pasien,
+                jk: row.jenis_kelamin === 'Laki-Laki' ? 'L' : 'P',
+                usia: usia,
+                alamat: row.alamat,
+                jorong: row.nama_jorong,
+                nagari: row.nama_nagari,
+                sistole: row.sistole,
+                diastole: row.diastole,
+                bb: row.berat_badan,
+                tb: row.tinggi_badan,
+                imt: row.imt,
+                rokok: row.merokok ? 'Ya' : 'Tidak',
+                fisik: row.kurang_aktivitas_fisik ? 'Kurang' : 'Cukup'
+            });
+        });
+
+        // 6. Set Header Response agar langsung download file .xlsx
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename=${namaFile}`);
+
+        // Tulis ke response
+        await workbook.xlsx.write(res);
+        res.end();
+
+    } catch (err) {
+        console.error("Error export Excel:", err);
+        res.status(500).send("Gagal mengunduh Excel Kohort.");
     }
 };
