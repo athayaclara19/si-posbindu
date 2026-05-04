@@ -1,5 +1,46 @@
 const pool = require('../config/db');
 
+// [BARU] Array nama bulan untuk konversi angka ke nama (index 0 = Januari)
+const NAMA_BULAN = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+];
+
+/**
+ * [BARU] Fungsi: bentukNarasiLaporan()
+ * Menghasilkan string narasi deskriptif berbasis angka murni.
+ * TIDAK mengandung rekomendasi klinis — hanya fakta statistik.
+ *
+ * @param {number} bulan        - Angka bulan (1–12)
+ * @param {number} tahun        - Angka tahun (misal 2026)
+ * @param {number} totalPasien  - Jumlah pasien unik (COUNT DISTINCT)
+ * @param {number} totalSkrining- Jumlah total kunjungan skrining (COUNT)
+ * @returns {string}            - Kalimat narasi deskriptif
+ */
+function bentukNarasiLaporan(bulan, tahun, totalPasien, totalSkrining) {
+    // [BARU] Konversi angka bulan ke nama bulan menggunakan array NAMA_BULAN
+    const namaBulan = NAMA_BULAN[parseInt(bulan) - 1];
+
+    // [BARU] Hitung rata-rata kunjungan per pasien, dibulatkan 2 desimal
+    // Jaga dari pembagian nol jika totalPasien = 0
+    const rataRata = totalPasien > 0
+        ? (totalSkrining / totalPasien).toFixed(2)
+        : '0.00';
+
+    // [BARU] Format angka dengan pemisah ribuan (misal 1480 → "1.480")
+    // menggunakan locale 'id-ID' sesuai format Bahasa Indonesia
+    const pasienFormatted   = parseInt(totalPasien).toLocaleString('id-ID');
+    const skriningFormatted = parseInt(totalSkrining).toLocaleString('id-ID');
+
+    // [BARU] Susun kalimat narasi — hanya fakta angka, tanpa rekomendasi klinis
+    const narasi =
+        `Pada bulan ${namaBulan} ${tahun}, tercatat ${pasienFormatted} pasien ` +
+        `yang menjalani pemeriksaan dengan total ${skriningFormatted} kunjungan skrining. ` +
+        `Rata-rata kunjungan per pasien pada periode ini adalah ${rataRata} kali.`;
+
+    return narasi;
+}
+
 // 1. Generate laporan baru
 exports.generateLaporan = async (req, res) => {
     const { periode_bulan, periode_tahun } = req.body;
@@ -29,14 +70,28 @@ exports.generateLaporan = async (req, res) => {
             AND k.id_periode = $1
         `, [id_periode]);
 
-        // Buat atau update record laporan (status: draft)
+        // [BARU] Ambil nilai agregat dari hasil query ke variabel agar lebih mudah dibaca
+        const totalPasien   = agg.rows[0].total_pasien;
+        const totalSkrining = agg.rows[0].total_skrining;
+
+        // [BARU] Bentuk narasi deskriptif otomatis berdasarkan data agregat
+        const narasi = bentukNarasiLaporan(
+            periode_bulan,
+            periode_tahun,
+            totalPasien,
+            totalSkrining
+        );
+
+        // [DIUBAH] Tambah kolom narasi_laporan pada INSERT dan ON CONFLICT DO UPDATE
+        // Sebelumnya: INSERT (id_pj, id_periode, total_pasien, total_skrining, status)
+        // Sekarang  : INSERT (id_pj, id_periode, total_pasien, total_skrining, status, narasi_laporan)
         const laporan = await pool.query(`
-            INSERT INTO laporan (id_pj, id_periode, total_pasien, total_skrining, status)
-            VALUES ($1, $2, $3, $4, 'draft')
+            INSERT INTO laporan (id_pj, id_periode, total_pasien, total_skrining, status, narasi_laporan)
+            VALUES ($1, $2, $3, $4, 'draft', $5)
             ON CONFLICT (id_pj, id_periode) DO UPDATE 
-            SET total_pasien=$3, total_skrining=$4, status='draft'
+            SET total_pasien=$3, total_skrining=$4, status='draft', narasi_laporan=$5
             RETURNING id_laporan
-        `, [id_pj, id_periode, agg.rows[0].total_pasien, agg.rows[0].total_skrining]);
+        `, [id_pj, id_periode, totalPasien, totalSkrining, narasi]); // [DIUBAH] tambah narasi sebagai $5
 
         res.redirect('/ptm/laporan?generated=' + laporan.rows[0].id_laporan);
     } catch (err) {

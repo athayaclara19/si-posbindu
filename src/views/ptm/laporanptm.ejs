@@ -80,8 +80,7 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <button onclick="showDetail('Desember 2024')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[#2563EB] hover:bg-[#DBEAFE] text-xs font-medium transition-all">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                                            Detail
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>Detail
                                         </button>
                                     </td>
                                 </tr>
@@ -135,7 +134,7 @@
                     </div>
                 </div>
 
-                <div id="detail-container" class="hidden-el max-w-5xl mx-auto space-y-4">
+                <div id="detail-container" class="hidden-el w-full space-y-4">
                     <button onclick="hideDetail()" class="flex items-center gap-2 text-[#6B7280] hover:text-[#1F2937] text-sm font-medium transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                         Kembali ke List Laporan
@@ -180,7 +179,19 @@
                                     <p class="text-[#6B7280] text-xs mt-1.5 font-medium">Capaian Target</p>
                                 </div>
                             </div>
-                        </div>
+
+                            <div class="mt-5 bg-[#F0F9FF] border border-[#BAE6FD] rounded-xl p-4 flex gap-3">
+                                <div class="text-[#0284C7] mt-0.5 flex-shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+                                </div>
+                                <div>
+                                    <p class="text-[#0C4A6E] text-xs font-semibold mb-1">Narasi Laporan</p>
+                                    <p id="narasi-detail" class="text-[#0C4A6E] text-xs leading-relaxed">
+                                        Narasi belum tersedia.
+                                    </p>
+                                </div>
+                            </div>
+                            </div>
                         
                         <div class="px-8 py-5 bg-gray-50">
                             <button onclick="alert('Mengunduh PDF...')" class="flex items-center gap-2 border border-gray-200 bg-white text-[#6B7280] px-6 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-all font-medium shadow-sm">
@@ -193,7 +204,7 @@
             </div>
 
 
-            <div id="section-buat" class="hidden-el space-y-6 max-w-5xl mx-auto">
+            <div id="section-buat" class="hidden-el space-y-6 w-full">
                 
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-3 bg-gray-50">
@@ -230,7 +241,7 @@
                         <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-3 bg-gray-50">
                             <div id="badge-step-2" class="w-7 h-7 rounded-full flex items-center justify-center text-xs bg-[#2563EB] text-white font-bold transition-colors">2</div>
                             <h3 class="text-[#1F2937] font-poppins font-semibold">Preview Data Laporan</h3>
-                        </div>
+                         </div>
                         
                         <div class="bg-[#2563EB] px-8 py-6 text-white">
                             <div class="flex items-center gap-4 mb-5">
@@ -256,7 +267,19 @@
                                 <div class="bg-[#F8FAFC] rounded-xl p-4 text-center border border-gray-50"><p class="text-2xl font-poppins font-bold text-[#10B981]">71.8%</p><p class="text-[#6B7280] text-xs mt-1.5 font-medium">Tekanan Terkendali</p></div>
                                 <div class="bg-[#F8FAFC] rounded-xl p-4 text-center border border-gray-50"><p class="text-2xl font-poppins font-bold text-[#F59E0B]">80.7%</p><p class="text-[#6B7280] text-xs mt-1.5 font-medium">Capaian Target</p></div>
                             </div>
-                        </div>
+
+                            <div class="mt-5 bg-[#F0F9FF] border border-[#BAE6FD] rounded-xl p-4 flex gap-3">
+                                <div class="text-[#0284C7] mt-0.5 flex-shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+                                </div>
+                                <div>
+                                    <p class="text-[#0C4A6E] text-xs font-semibold mb-1">Narasi Laporan (Otomatis)</p>
+                                    <p id="narasi-preview" class="text-[#0C4A6E] text-xs leading-relaxed">
+                                        Narasi belum tersedia.
+                                    </p>
+                                </div>
+                            </div>
+                            </div>
 
                         <div class="px-8 py-6 border-b border-gray-100">
                             <h4 class="text-[#1F2937] mb-5 font-poppins font-semibold">Distribusi per Nagari</h4>
@@ -318,7 +341,6 @@
                 secList.classList.remove('hidden-el');
                 secBuat.classList.add('hidden-el');
                 headBtn.innerHTML = `<button onclick="switchTab('buat')" class="flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-5 py-2.5 rounded-xl text-sm transition-all font-medium shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg> Buat Laporan</button>`;
-                
                 // Pastikan kembali ke table view jika sedang di detail
                 detContainer.classList.add('hidden-el');
                 tableContainer.classList.remove('hidden-el');
@@ -337,6 +359,22 @@
             document.getElementById('detail-container').classList.remove('hidden-el');
             document.getElementById('detail-title').innerText = `Laporan Monitoring Hipertensi — ${periode}`;
             document.getElementById('det-periode').innerText = periode;
+            
+            // [BARU] Isi narasi-detail dari data daftarLaporan yang dikirim server.
+            // Cari laporan yang periode-nya cocok lalu tampilkan narasi_laporan-nya.
+            // Fallback ke "Narasi belum tersedia." jika null atau kosong.
+            const laporan = daftarLaporan.find(l => {
+                const labelPeriode = NAMA_BULAN[l.periode_bulan - 1] + ' ' + l.periode_tahun;
+                return labelPeriode === periode;
+            });
+            const narasiEl = document.getElementById('narasi-detail');
+            if (laporan && laporan.narasi_laporan) {
+                // [BARU] Tampilkan narasi dari database
+                narasiEl.textContent = laporan.narasi_laporan;
+            } else {
+                // [BARU] Fallback jika narasi kosong atau null
+                narasiEl.textContent = 'Narasi belum tersedia.';
+            }
         }
 
         function hideDetail() {
@@ -344,9 +382,44 @@
             document.getElementById('list-table-container').classList.remove('hidden-el');
         }
 
+        // [BARU] Array nama bulan di sisi klien — sama persis dengan yang ada di controller
+        // Digunakan untuk: (1) showDetail() mencari laporan, (2) hitungNarasiPreview()
+        const NAMA_BULAN = [
+            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+        
+        // [BARU] Data laporan dari server — digunakan oleh showDetail() untuk mencari narasi
+        // daftarLaporan dikirim dari renderLaporanPTM() sebagai variabel EJS
+        const daftarLaporan = <%- JSON.stringify(daftarLaporan) %>;
+        
+        /**
+         * [BARU] Fungsi: hitungNarasiPreview()
+         * Menghasilkan narasi deskriptif di sisi klien untuk preview sebelum disimpan.
+         * Logika identik dengan bentukNarasiLaporan() di controller — hanya fakta angka.
+         *
+         * @param {string} periodeTeks  - Teks periode dari dropdown, misal "Januari 2025"
+         * @param {number} totalPasien  - Jumlah pasien unik
+         * @param {number} totalSkrining- Jumlah total kunjungan
+         * @returns {string}            - Kalimat narasi deskriptif
+         */
+        function hitungNarasiPreview(periodeTeks, totalPasien, totalSkrining) {
+            // [BARU] Hitung rata-rata kunjungan per pasien, dibulatkan 2 desimal
+            const rataRata = totalPasien > 0 ? (totalSkrining / totalPasien).toFixed(2) : '0.00';
+            
+            // [BARU] Format angka dengan pemisah ribuan Bahasa Indonesia
+            const pasienFormatted   = parseInt(totalPasien).toLocaleString('id-ID');
+            const skriningFormatted = parseInt(totalSkrining).toLocaleString('id-ID');
+
+            // [BARU] Susun narasi — hanya fakta angka, tanpa rekomendasi klinis
+            return `Pada bulan ${periodeTeks}, tercatat ${pasienFormatted} pasien ` +
+                   `yang menjalani pemeriksaan dengan total ${skriningFormatted} kunjungan skrining. ` +
+                   `Rata-rata kunjungan per pasien pada periode ini adalah ${rataRata} kali.`;
+        }
+
         // Logika Generate Laporan Baru (Step 1, 2, 3)
         let chartInstance = null;
-
+        
         function resetPreview() {
             document.getElementById('step-preview').classList.add('hidden-el');
             document.getElementById('btn-generate').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg> Generate Preview Data`;
@@ -359,6 +432,9 @@
             document.getElementById('msg-success').classList.add('hidden-el');
             document.getElementById('badge-step-2').classList.remove('bg-[#10B981]');
             document.getElementById('badge-step-3').classList.remove('bg-[#10B981]');
+
+            // [BARU] Reset narasi preview ke placeholder saat periode diganti
+            document.getElementById('narasi-preview').textContent = 'Narasi belum tersedia.';
         }
 
         function generatePreview() {
@@ -368,7 +444,7 @@
                 return;
             }
             document.getElementById('error-periode').classList.add('hidden-el');
-
+            
             // Ubah UI Step 1 ke Selesai
             document.getElementById('btn-generate').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Data Ter-generate`;
             document.getElementById('btn-generate').classList.add('bg-[#10B981]', 'hover:bg-[#059669]');
@@ -378,6 +454,14 @@
             // Tampilkan Step 2 dan set teks
             document.getElementById('prev-periode').innerText = periode;
             document.getElementById('step-preview').classList.remove('hidden-el');
+
+            // [BARU] Hitung dan tampilkan narasi otomatis di preview
+            // Data dummy 1.615 pasien dan 1.745 skrining dipakai karena preview masih simulasi.
+            // Saat integrasi database selesai, ganti angka ini dengan data dari response server.
+            const totalPasienPreview   = 1615; // [BARU] placeholder — ganti dengan data real dari DB
+            const totalSkriningPreview = 1745; // [BARU] placeholder — ganti dengan data real dari DB
+            const narasiOtomatis = hitungNarasiPreview(periode, totalPasienPreview, totalSkriningPreview);
+            document.getElementById('narasi-preview').textContent = narasiOtomatis; // [BARU]
 
             // Inisialisasi Chart jika belum
             if(!chartInstance) {
