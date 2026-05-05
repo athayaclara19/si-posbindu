@@ -245,20 +245,39 @@ app.post('/ptm/jadwal/tambah',
 );
 
 
-app.get('/ptm/pasien', 
-    ptmController.renderKelolaPasien);
+// --- RUTE KELOLA PASIEN PTM ---
+// BUG FIX: Route sebelumnya tidak punya isAuthenticated & isAuthorized
+// sehingga saat user klik menu lain dari halaman kelolapasien, server
+// tidak tahu user siapa dan langsung tolak dengan 403.
+// Sekarang semua route /ptm/pasien dilindungi middleware yang benar.
 
-// 2. Form edit pasien (menggunakan NIK sebagai ID)
-app.get('/ptm/pasien/edit/:id', 
-    ptmController.renderEditPasien);
+// 1. Daftar semua pasien
+app.get('/ptm/pasien',
+    isAuthenticated,
+    isAuthorized('pj_ptm'),
+    ptmController.renderKelolaPasien
+);
+
+// 2. Form edit pasien
+app.get('/ptm/pasien/edit/:id',
+    isAuthenticated,
+    isAuthorized('pj_ptm'),
+    ptmController.renderEditPasien
+);
 
 // 3. Proses update data pasien
-app.post('/ptm/pasien/update', 
-    ptmController.handleUpdatePasien);
+app.post('/ptm/pasien/update',
+    isAuthenticated,
+    isAuthorized('pj_ptm'),
+    ptmController.handleUpdatePasien
+);
 
 // 4. Proses hapus data pasien
-app.post('/ptm/pasien/delete/:id', 
-    ptmController.handleDeletePasien);
+app.post('/ptm/pasien/delete/:id',
+    isAuthenticated,
+    isAuthorized('pj_ptm'),
+    ptmController.handleDeletePasien
+);
 
 app.get('/ptm/laporan/export/:id_laporan', 
     isAuthenticated, isAuthorized('pj_ptm'), 
