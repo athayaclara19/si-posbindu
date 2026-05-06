@@ -287,16 +287,15 @@
         // Aksi Verifikasi (Kirim ke Node.js Backend)
         function handleVerifikasi() {
             if(!currentSelectedId) return;
-            // Arahkan form ke URL ID skrining
+            if(!confirm('Yakin ingin memverifikasi dan menerima data skrining ini?')) return;
+            // Kirim status 'terverifikasi' sesuai nilai enum database
             document.getElementById('formValidasiReal').action = '/bidan/validasi/' + currentSelectedId;
             document.getElementById('inputStatusVal').value = 'terverifikasi';
             document.getElementById('inputCatatanVal').value = 'Telah diverifikasi oleh Bidan.';
-            
-            // Submit form
             document.getElementById('formValidasiReal').submit();
         }
 
-        // Aksi Revisi
+        // Aksi Revisi / Tolak
         function openRevisiModal() {
             document.getElementById('revisiModal').classList.remove('hidden-el');
             document.getElementById('revisiModal').classList.add('flex');
@@ -316,12 +315,10 @@
                 return;
             }
             if(currentSelectedId) {
-                // Arahkan form ke URL ID skrining
                 document.getElementById('formValidasiReal').action = '/bidan/validasi/' + currentSelectedId;
-                document.getElementById('inputStatusVal').value = 'revisi';
+                // Gunakan 'ditolak' sesuai nilai enum database (bukan 'revisi')
+                document.getElementById('inputStatusVal').value = 'ditolak';
                 document.getElementById('inputCatatanVal').value = text;
-                
-                // Submit form
                 document.getElementById('formValidasiReal').submit();
             }
         }

@@ -45,13 +45,23 @@ exports.handleActionValidasi = async (req, res) => {
         const { id_skrining } = req.params;
         const { status_validasi, catatan_bidan } = req.body;
         
-        // [PERBAIKAN] Mengambil id user dengan aman (mencegah crash jika session hilang)
+        // Mengambil id user dengan aman (mencegah crash jika session hilang)
         const id_validator = req.session.user ? req.session.user.id_user : null;
 
-        // Memastikan status berubah menjadi Valid
-        let finalStatus = status_validasi;
-        if (finalStatus === 'terverifikasi' || finalStatus === 'Valid') {
-            finalStatus = 'Valid';
+        // Mapping status dari form ke nilai enum yang valid di database:
+        // 'terverifikasi' -> diterima bidan
+        // 'ditolak'       -> dikembalikan / revisi ke kader
+        const statusMap = {
+            'terverifikasi': 'terverifikasi',
+            'Valid':         'terverifikasi',
+            'revisi':        'ditolak',
+            'ditolak':       'ditolak',
+        };
+
+        const finalStatus = statusMap[status_validasi] || null;
+
+        if (!finalStatus) {
+            return res.status(400).send(`Status validasi tidak valid: "${status_validasi}". Nilai yang diizinkan: terverifikasi, ditolak.`);
         }
 
         const query = `
@@ -67,7 +77,6 @@ exports.handleActionValidasi = async (req, res) => {
 
     } catch (err) {
         console.error("ERROR SAAT VALIDASI:", err);
-        // [BARU] Menampilkan error bawaan dari database/sistem ke browser
         res.status(500).send("Gagal memproses validasi. Penyebab: " + err.message);
     }
 };
