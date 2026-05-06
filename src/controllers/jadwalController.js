@@ -19,6 +19,7 @@ exports.renderJadwalKader = async (req, res) => {
 };
 
 // Render halaman jadwal PTM
+// Render halaman jadwal PTM
 exports.renderJadwalPTM = async (req, res) => {
     try {
         // Ambil semua jadwal kegiatan
@@ -33,10 +34,14 @@ exports.renderJadwalPTM = async (req, res) => {
 
         // Ambil data jorong untuk opsi form tambah
         const jorong = await pool.query('SELECT * FROM jorong ORDER BY nama_jorong ASC');
+        
+        // [BARU] Ambil data nagari untuk opsi form tambah (dropdown bertingkat)
+        const nagari = await pool.query('SELECT * FROM nagari ORDER BY nama_nagari ASC');
 
         res.render('ptm/jadwalptm', { 
             jadwal: kegiatan.rows, 
             jorong: jorong.rows, 
+            nagari: nagari.rows, // [BARU] Jangan lupa kirimkan data nagari ke EJS
             active: 'jadwal' // Untuk penanda menu sidebar
         });
     } catch (err) {

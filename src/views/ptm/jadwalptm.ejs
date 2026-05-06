@@ -182,21 +182,29 @@
             });
 
             // 3. Inisialisasi Kalender
+            // 3. Inisialisasi Kalender
             const calendarEl = document.getElementById('calendar');
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'id', // Bahasa Indonesia
                 firstDay: 1, // Kalender dimulai dari hari Senin
+                
+                // [DIUBAH] Menambahkan tombol untuk view Tahun (multiMonthYear) dan Schedule (listMonth)
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
-                    right: 'dayGridMonth,dayGridWeek' // Pilihan lihat bulanan/mingguan
+                    right: 'dayGridMonth,dayGridWeek,multiMonthYear,listMonth' 
                 },
+                
+                // [DIUBAH] Menambahkan teks terjemahan bahasa Indonesia untuk tombol baru
                 buttonText: {
                     today: 'Hari Ini',
                     month: 'Bulan',
-                    week: 'Minggu'
+                    week: 'Minggu',
+                    year: 'Tahun',   // Teks untuk tombol multiMonthYear
+                    list: 'Agenda'   // Teks untuk tombol listMonth (Schedule)
                 },
+                
                 events: calendarEvents, // Masukkan data jadwal yang sudah diformat
                 eventClick: function(info) {
                     // Kalau event di kalender diklik, munculkan SweetAlert

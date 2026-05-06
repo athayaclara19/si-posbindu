@@ -6,6 +6,17 @@
     <title>Manajemen Jadwal - PJ PTM</title>
     <link rel="stylesheet" href="/css/output.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        .fc-theme-standard .fc-scrollgrid { border: 1px solid #F3F4F6; border-radius: 0.75rem; overflow: hidden; }
+        .fc .fc-toolbar-title { font-family: 'Poppins', sans-serif; font-size: 1.25rem; font-weight: 600; color: #1F2937; }
+        .fc .fc-button-primary { background-color: #2563EB !important; border-color: #2563EB !important; text-transform: capitalize; border-radius: 0.5rem; }
+        .fc .fc-button-primary:hover { background-color: #1D4ED8 !important; }
+        .fc-daygrid-event { border-radius: 0.25rem; padding: 2px 4px; font-size: 0.75rem; font-weight: 500; cursor: pointer; }
+        .fc-col-header-cell-cushion { color: #6B7280; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
+        .fc-daygrid-day-number { color: #4B5563; font-weight: 500; font-size: 0.875rem; }
+    </style>
+
 </head>
 <body class="bg-slate-50 font-inter antialiased text-slate-800 flex h-screen overflow-hidden">
     
@@ -22,11 +33,11 @@
 
             <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
                 <h3 class="text-[#1F2937] font-poppins font-semibold mb-4">Buat Jadwal Baru</h3>
-                <form action="/ptm/jadwal/tambah" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <form action="/ptm/jadwal/tambah" method="POST" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 items-end">
                     
                     <div class="w-full">
                         <label class="text-sm text-[#1F2937] font-medium mb-1.5 block">Tanggal Kegiatan</label>
-                        <input type="date" name="tanggal_kegiatan" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-colors">
+                        <input type="date" id="input-tanggal-kegiatan" name="tanggal_kegiatan" onchange="validasiTanggal(this)" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-colors">
                     </div>
 
                     <div class="w-full">
@@ -35,11 +46,26 @@
                     </div>
 
                     <div class="w-full">
+                        <label class="text-sm text-[#1F2937] font-medium mb-1.5 block">Nagari</label>
+                        <select id="select-nagari" onchange="filterJorong()" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-colors cursor-pointer">
+                            <option value="">-- Pilih Nagari --</option>
+                            <% if (typeof nagari !== 'undefined') { %>
+                                <% nagari.forEach(n => { %>
+                                    <option value="<%= n.id_nagari %>"><%= n.nama_nagari %></option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
+
+                    <div class="w-full">
                         <label class="text-sm text-[#1F2937] font-medium mb-1.5 block">Jorong</label>
-                        <select name="id_jorong" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-colors cursor-pointer">
-                            <% jorong.forEach(j => { %>
-                                <option value="<%= j.id_jorong %>"><%= j.nama_jorong %></option>
-                            <% }) %>
+                        <select id="select-jorong" name="id_jorong" required disabled class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-100 cursor-not-allowed transition-colors">
+                            <option value="">-- Pilih Jorong --</option>
+                            <% if (typeof jorong !== 'undefined') { %>
+                                <% jorong.forEach(j => { %>
+                                    <option value="<%= j.id_jorong %>" data-nagari="<%= j.id_nagari %>"><%= j.nama_jorong %></option>
+                                <% }) %>
+                            <% } %>
                         </select>
                     </div>
 
@@ -47,6 +73,11 @@
                         + Tambah Jadwal
                     </button>
                 </form>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm mb-6">
+                <h3 class="text-[#1F2937] font-poppins font-semibold mb-4">Kalender Jadwal Posbindu</h3>
+                <div id="calendar" class="w-full font-inter"></div>
             </div>
 
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -81,5 +112,154 @@
             </div>
         </main>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputTanggal = document.getElementById('input-tanggal-kegiatan');
+            
+            // 1. BLOKIR TANGGAL MASA LALU
+            // Dapatkan tanggal hari ini dengan format YYYY-MM-DD
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const tanggalHariIni = `${yyyy}-${mm}-${dd}`;
+            
+            // Set atribut 'min' pada input
+            inputTanggal.min = tanggalHariIni;
+        });
+
+        // 2. BLOKIR HARI MINGGU DENGAN SWEETALERT
+        function validasiTanggal(input) {
+            if (!input.value) return; // Jika kosong, abaikan
+            
+            const selectedDate = new Date(input.value);
+            
+            // getDay() mengembalikan angka hari dalam seminggu (0 = Minggu, 1 = Senin, ... 6 = Sabtu)
+            if (selectedDate.getDay() === 0) {
+                // [DIUBAH] Menggunakan SweetAlert2 menggantikan alert bawaan browser
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Tidak Bisa Pilih Hari Minggu!',
+                    text: 'Jadwal kegiatan Posbindu hanya bisa dilakukan pada hari kerja (Senin - Sabtu).',
+                    confirmButtonColor: '#2563EB', // Menggunakan warna biru khas Tailwind kamu
+                    customClass: { 
+                        popup: 'rounded-2xl',
+                        title: 'font-poppins font-semibold text-gray-800',
+                        htmlContainer: 'font-inter text-sm text-gray-600'
+                    }
+                });
+                
+                input.value = ""; // Kosongkan kembali inputnya
+            }
+        }
+    </script>
+
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. Ambil data jadwal dari server (EJS) dan ubah ke format JSON
+            const rawJadwal = <%- JSON.stringify(jadwal || []) %>;
+            
+            // 2. Format data agar bisa dibaca oleh FullCalendar
+            const calendarEvents = rawJadwal.map(item => {
+                // Memastikan format tanggal YYYY-MM-DD
+                const tgl = new Date(item.tanggal_kegiatan);
+                const yyyy = tgl.getFullYear();
+                const mm = String(tgl.getMonth() + 1).padStart(2, '0');
+                const dd = String(tgl.getDate()).padStart(2, '0');
+                
+                return {
+                    title: item.lokasi + ' (' + item.nama_jorong + ')', // Judul event di kalender
+                    start: `${yyyy}-${mm}-${dd}`, // Tanggal event
+                    backgroundColor: '#EFF6FF', // Warna latar biru muda Tailwind
+                    borderColor: '#93C5FD', // Warna garis biru muda Tailwind
+                    textColor: '#1E3A8A' // Warna teks biru tua Tailwind
+                };
+            });
+
+            // 3. Inisialisasi Kalender
+            // 3. Inisialisasi Kalender
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'id', // Bahasa Indonesia
+                firstDay: 1, // Kalender dimulai dari hari Senin
+                
+                // [DIUBAH] Menambahkan tombol untuk view Tahun (multiMonthYear) dan Schedule (listMonth)
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,dayGridWeek,multiMonthYear,listMonth' 
+                },
+                
+                // [DIUBAH] Menambahkan teks terjemahan bahasa Indonesia untuk tombol baru
+                buttonText: {
+                    today: 'Hari Ini',
+                    month: 'Bulan',
+                    week: 'Minggu',
+                    year: 'Tahun',   // Teks untuk tombol multiMonthYear
+                    list: 'Agenda'   // Teks untuk tombol listMonth (Schedule)
+                },
+                
+                events: calendarEvents, // Masukkan data jadwal yang sudah diformat
+                eventClick: function(info) {
+                    // Kalau event di kalender diklik, munculkan SweetAlert
+                    Swal.fire({
+                        title: 'Detail Jadwal',
+                        text: info.event.title,
+                        icon: 'info',
+                        confirmButtonColor: '#2563EB',
+                        customClass: { popup: 'rounded-2xl font-inter' }
+                    });
+                }
+            });
+
+            // Tampilkan kalender
+            calendar.render();
+        });
+    </script>
+
+    <script>
+        // Simpan semua opsi jorong asli saat halaman pertama kali dimuat
+        let allJorongOptions = [];
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ambil semua elemen <option> yang ada di dalam select jorong dan punya atribut data-nagari
+            const jorongSelect = document.getElementById('select-jorong');
+            allJorongOptions = Array.from(jorongSelect.querySelectorAll('option[data-nagari]'));
+        });
+
+        function filterJorong() {
+            const nagariId = document.getElementById('select-nagari').value;
+            const jorongSelect = document.getElementById('select-jorong');
+            
+            // Bersihkan isi dropdown jorong dan kembalikan ke default "-- Pilih Jorong --"
+            jorongSelect.innerHTML = '<option value="">-- Pilih Jorong --</option>';
+
+            if (nagariId) {
+                // Jika ada nagari yang dipilih, aktifkan dropdown jorong
+                jorongSelect.disabled = false;
+                jorongSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                jorongSelect.classList.add('bg-gray-50', 'hover:bg-white', 'cursor-pointer');
+
+                // Masukkan kembali opsi jorong HANYA jika data-nagari nya sama dengan id_nagari yang dipilih
+                allJorongOptions.forEach(opt => {
+                    if (opt.getAttribute('data-nagari') === nagariId) {
+                        jorongSelect.appendChild(opt.cloneNode(true));
+                    }
+                });
+            } else {
+                // Jika nagari kosong (kembali ke default), matikan lagi dropdown jorong
+                jorongSelect.disabled = true;
+                jorongSelect.classList.add('bg-gray-100', 'cursor-not-allowed');
+                jorongSelect.classList.remove('bg-gray-50', 'hover:bg-white', 'cursor-pointer');
+            }
+        }
+    </script>
+
 </body>
 </html>

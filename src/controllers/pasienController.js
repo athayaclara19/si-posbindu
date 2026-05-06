@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 
 // 1. Tampilkan Daftar Pasien
+// 1. Tampilkan Daftar Pasien
 exports.renderDaftarPasien = async (req, res) => {
     try {
         // HAPUS filter "WHERE p.id_jorong = $1" agar Kader bisa melihat SEMUA pasien.
@@ -15,8 +16,25 @@ exports.renderDaftarPasien = async (req, res) => {
         `;
         const result = await pool.query(query);
 
+        // ==========================================
+        // [BARU] MENGAMBIL DATA NAGARI DAN JORONG UNTUK FILTER
+        // ==========================================
+        // Ambil data nagari
+        const nagari = await pool.query('SELECT * FROM nagari ORDER BY nama_nagari ASC');
+        
+        // Ambil data jorong beserta nama nagarinya (menggunakan JOIN)
+        const jorong = await pool.query(`
+            SELECT j.*, n.nama_nagari 
+            FROM jorong j 
+            JOIN nagari n ON j.id_nagari = n.id_nagari 
+            ORDER BY j.nama_jorong ASC
+        `);
+
+        // Render ke halaman EJS
         res.render('kader/pasien', { 
             daftarPasien: result.rows,
+            nagari: nagari.rows,   // [BARU] Kirim data nagari ke halaman pasien.ejs
+            jorong: jorong.rows,   // [BARU] Kirim data jorong ke halaman pasien.ejs
             active: 'pasien' 
         });
     } catch (err) {

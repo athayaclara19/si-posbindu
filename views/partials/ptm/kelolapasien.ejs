@@ -23,20 +23,6 @@
                 </div>
             </div>
 
-            <% if (typeof successMessage !== 'undefined' && successMessage) { %>
-            <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2 mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                <%= successMessage %>
-            </div>
-            <% } %>
-
-            <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
-            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2 mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4m0 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
-                <%= errorMessage %>
-            </div>
-            <% } %>
-
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -89,8 +75,8 @@
                                                     Edit
                                                 </a>
                                                 
-                                                <form action="/ptm/pasien/delete/<%= item.id_pasien %>" method="POST" onsubmit="return confirm('Yakin ingin menghapus data pasien ini? Tindakan ini tidak dapat dibatalkan.')" class="m-0">
-                                                    <button type="submit" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-all text-xs font-semibold border border-transparent hover:border-red-100">
+                                                <form id="form-delete-<%= item.id_pasien %>" action="/ptm/pasien/delete/<%= item.id_pasien %>" method="POST" class="m-0">
+                                                    <button type="button" onclick="konfirmasiHapus('<%= item.id_pasien %>')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-all text-xs font-semibold border border-transparent hover:border-red-100">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
                                                         Hapus
                                                     </button>
@@ -117,5 +103,59 @@
 
         </main>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        // [BARU] Fungsi Pop-up Konfirmasi Hapus
+        function konfirmasiHapus(idPasien) {
+            Swal.fire({
+                title: 'Yakin ingin menghapus?',
+                text: "Data pasien ini akan dihapus secara permanen!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#EF4444', // Merah Tailwind
+                cancelButtonColor: '#6B7280', // Abu-abu Tailwind
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal',
+                reverseButtons: true, // Biar tombol 'Batal' ada di kiri
+                customClass: {
+                    title: 'font-poppins font-semibold text-gray-800',
+                    popup: 'rounded-2xl'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Jika user klik "Ya", submit form secara manual
+                    document.getElementById('form-delete-' + idPasien).submit();
+                }
+            })
+        }
+
+        // [BARU] Memunculkan Pop-up otomatis jika ada pesan dari server
+        document.addEventListener('DOMContentLoaded', function() {
+            // Cek apakah ada pesan sukses dari backend
+            <% if (typeof successMessage !== 'undefined' && successMessage) { %>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: '<%= successMessage %>',
+                    timer: 3000, // Otomatis hilang dalam 3 detik
+                    showConfirmButton: false,
+                    customClass: { popup: 'rounded-2xl font-inter' }
+                });
+            <% } %>
+
+            // Cek apakah ada pesan error dari backend
+            <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Dihapus!',
+                    text: '<%= errorMessage %>',
+                    confirmButtonColor: '#2563EB', // Biru Tailwind
+                    customClass: { popup: 'rounded-2xl font-inter' }
+                });
+            <% } %>
+        });
+    </script>
 </body>
 </html>

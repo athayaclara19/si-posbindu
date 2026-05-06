@@ -11,31 +11,39 @@
         .font-inter { font-family: 'Inter', sans-serif; }
         .hidden-step { display: none; }
 
+        /* [DIUBAH] CSS Tom Select yang disempurnakan */
         .ts-control {
-        border-radius: 0.75rem !important; /* rounded-xl */
-        border-color: #E5E7EB !important; /* border-gray-200 */
-        padding: 0.625rem 0.75rem 0.625rem 2.5rem !important; /* pl-10 untuk ikon */
-        background-color: #F9FAFB !important; /* bg-gray-50 */
-        font-size: 0.875rem !important; /* text-sm */
-    }
+            border-radius: 0.75rem !important;
+            border-color: #E5E7EB !important;
+            padding: 0.625rem 0.75rem 0.625rem 2.5rem !important; /* Ruang untuk ikon di kiri */
+            background-color: #F9FAFB !important;
+            font-size: 0.875rem !important;
+            min-height: 42px !important;
+            display: flex !important;
+            align-items: center !important;
+        }
         .ts-wrapper.focus .ts-control {
-            border-color: #2563EB !important; /* focus:border-blue-600 */
+            border-color: #2563EB !important;
             box-shadow: none !important;
             background-color: white !important;
         }
-
         .ts-dropdown {
             border-radius: 0.75rem !important;
             margin-top: 5px !important;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1) !important;
         }
 
-        .ts-wrapper.single .ts-control input {
+        /* [BARU] Memaksa input full width HANYA jika belum ada pasien yang dipilih */
+        .ts-wrapper.single:not(.has-items) .ts-control input {
             width: 100% !important;
         }
 
-        .ts-wrapper.single.has-items .ts-control input::placeholder {
-            color: transparent !important;
+        /* [BARU] Menyembunyikan input ketikan yang bikin space kosong setelah pasien dipilih */
+        .ts-wrapper.single.has-items .ts-control input {
+            width: 0 !important;
+            opacity: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
     </style>
 </head>
@@ -46,8 +54,8 @@
     <div class="flex-1 flex flex-col h-screen overflow-y-auto">
         <%- include('../partials/header', { pageTitle: 'Input Skrining' }) %>
 
-        <main class="p-8 space-y-6 w-full">
-            <div class="w-full">
+        <main class="p-8 w-full">
+            <div class="w-full space-y-6">
             
                 <div id="form-header">
                     <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Form Input Skrining</h2>
@@ -85,22 +93,46 @@
                             
                             <div>
                                 <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Pilih Pasien <span class="text-[#EF4444]">*</span></label>
-                                <select id="input-pasien" name="id_pasien" placeholder="Cari Nama atau NIK Pasien" border-gray-200 autocomplete="off" style="display: none;">
-                                    <option value=""></option>
-                                    <% pasien.forEach(p => { %>
-                                        <option value="<%= p.id_pasien %>"><%= p.nama_pasien %> (<%= p.nik %>)</option>
-                                    <% }) %>
-                                </select>
+                                <div class="relative">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                    
+                                    <select id="input-pasien" name="id_pasien" placeholder="Cari Nama atau NIK Pasien..." autocomplete="off" style="display: none;">
+                                        <option value=""></option>
+                                        <% pasien.forEach(p => { %>
+                                            <option value="<%= p.id_pasien %>"><%= p.nama_pasien %> (<%= p.nik %>)</option>
+                                        <% }) %>
+                                    </select>
+                                </div>
                             </div>
 
                             <div>
                                 <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Kegiatan Posbindu <span class="text-[#EF4444]">*</span></label>
-                                <select id="input-kegiatan" name="id_kegiatan" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white" required>
-                                    <option value="">-- Pilih kegiatan --</option>
+                                <select id="input-kegiatan" name="id_kegiatan" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white" onchange="updateTanggal()" required>
+                                    <option value=""> Pilih kegiatan </option>
                                     <% if (typeof kegiatan !== 'undefined') { %>
-                                        <% kegiatan.forEach(k => { %>
-                                            <option value="<%= k.id_kegiatan %>"><%= k.lokasi %> (<%= k.tanggal_kegiatan.toISOString().split('T')[0] %>)</option>
-                                        <% }) %>
+                                        <% 
+                                        // [BARU] Dapatkan tanggal hari ini (tanpa jam) untuk filter
+                                        const today = new Date();
+                                        today.setHours(0, 0, 0, 0);
+                                        
+                                        kegiatan.forEach(k => { 
+                                            // Ubah ke format Date untuk perbandingan
+                                            const tglKegiatan = new Date(k.tanggal_kegiatan);
+                                            tglKegiatan.setHours(0, 0, 0, 0);
+                                            
+                                            // Format YYYY-MM-DD untuk ditampilkan dan disisipkan
+                                            const formattedDate = k.tanggal_kegiatan.toISOString().split('T')[0];
+
+                                            // [BARU] Hanya tampilkan jika kegiatan HARI INI atau DI MASA DEPAN (>= today)
+                                            if (tglKegiatan >= today) {
+                                        %>
+                                            <option value="<%= k.id_kegiatan %>" data-tanggal="<%= formattedDate %>">
+                                                <%= k.lokasi %> (<%= formattedDate %>)
+                                            </option>
+                                        <% 
+                                            } // end if
+                                        }) 
+                                        %>
                                     <% } %>
                                 </select>
                             </div>
@@ -147,8 +179,11 @@
 
                             <div id="box-kategori" class="sm:col-span-2 hidden-step">
                                 <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Kategori (Otomatis)</label>
-                                <div id="badge-kategori" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium">
-                                    <span id="text-kategori">-</span>
+                                <div>
+                                    <span id="badge-kategori" class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold shadow-sm border bg-gray-100 text-gray-600 border-gray-200">
+                                        -
+                                    </span>
+                                    <p id="text-kategori" class="text-xs text-gray-500 mt-2 font-medium">-</p>
                                 </div>
                             </div>
 
@@ -250,7 +285,20 @@
 
     <script>
         // Set tanggal hari ini otomatis
-        document.getElementById('input-tanggal').valueAsDate = new Date();
+        function updateTanggal() {
+            const selectKegiatan = document.getElementById('input-kegiatan');
+            const inputTanggal = document.getElementById('input-tanggal');
+            
+            // Ambil opsi (option) yang sedang dipilih pengguna
+            const selectedOption = selectKegiatan.options[selectKegiatan.selectedIndex];
+            
+            // Jika opsi tersebut punya data-tanggal, masukkan ke form input tanggal
+            if (selectedOption && selectedOption.getAttribute('data-tanggal')) {
+                inputTanggal.value = selectedOption.getAttribute('data-tanggal');
+            } else {
+                inputTanggal.value = ''; // Kosongkan jika memilih "-- Pilih kegiatan --"
+            }
+        }
 
         // Navigasi Antar Step
         function goToStep(step) {
@@ -258,13 +306,34 @@
             if (step === 2) {
                 const p = document.getElementById('input-pasien').value;
                 const k = document.getElementById('input-kegiatan').value;
-                if (!p || !k) return alert("Pilih pasien dan kegiatan terlebih dahulu!");
+                if (!p || !k) {
+                    // [DIUBAH] Menggunakan SweetAlert menggantikan alert biasa
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Data Belum Lengkap!',
+                        text: 'Pilih pasien dan kegiatan terlebih dahulu sebelum lanjut.',
+                        confirmButtonColor: '#2563EB',
+                        customClass: { popup: 'rounded-2xl font-inter' }
+                    });
+                    return; // Hentikan fungsi agar tidak pindah step
+                }
             }
+            
             // Validasi sederhana sebelum lanjut ke Step 3
             if (step === 3) {
                 const s = document.getElementById('input-sistole').value;
                 const d = document.getElementById('input-diastole').value;
-                if (!s || !d) return alert("Sistole dan Diastole wajib diisi!");
+                if (!s || !d) {
+                    // [DIUBAH] Menggunakan SweetAlert menggantikan alert biasa
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Data Belum Lengkap!',
+                        text: 'Sistole dan Diastole wajib diisi untuk menentukan kategori.',
+                        confirmButtonColor: '#2563EB',
+                        customClass: { popup: 'rounded-2xl font-inter' }
+                    });
+                    return; // Hentikan fungsi agar tidak pindah step
+                }
             }
 
             // Sembunyikan semua step
@@ -304,7 +373,6 @@
         const textKat = document.getElementById('text-kategori');
 
         function checkBP() {
-            // [DIUBAH] Membaca raw value terlebih dahulu sebelum diparse
             const sysInput = document.getElementById('input-sistole').value;
             const diaInput = document.getElementById('input-diastole').value;
             const sys = parseInt(sysInput);
@@ -313,43 +381,41 @@
             const badge = document.getElementById('badge-kategori');
             const text = document.getElementById('text-kategori');
 
-            // [DIUBAH] Pastikan logika hanya berjalan jika kedua input benar-benar terisi angka
+            // [DIUBAH] Menghapus pemanggilan elemen yang tidak ada agar script tidak crash
             if (sysInput && diaInput && !isNaN(sys) && !isNaN(dia)) {
-                // [BARU] Menghapus class hidden DAN hidden-step sekaligus untuk mencegah nyangkut
-                box.classList.remove('hidden', 'hidden-step');
-                document.getElementById('empty-kategori').classList.add('hidden');
+                box.classList.remove('hidden-step');
                 
                 let kategori = '';
                 let warnaClass = '';
+                let pesan = '';
 
                 if (sys >= 180 || dia >= 120) {
                     kategori = 'Krisis Hipertensi';
                     warnaClass = 'bg-red-100 text-red-700 border-red-200';
-                    text.innerText = 'Segera rujuk ke rumah sakit/faskes tingkat lanjut!';
+
                 } else if (sys >= 140 || dia >= 90) {
                     kategori = 'Hipertensi Tahap 2';
                     warnaClass = 'bg-orange-100 text-orange-700 border-orange-200';
-                    text.innerText = 'Tekanan darah tinggi signifikan. Perlu penanganan medis.';
+                    
                 } else if (sys >= 130 || dia >= 80) {
                     kategori = 'Hipertensi Tahap 1';
                     warnaClass = 'bg-yellow-100 text-yellow-700 border-yellow-200';
-                    text.innerText = 'Tekanan darah mulai tinggi. Pantau pola makan & aktivitas.';
+
                 } else if (sys >= 120 && dia < 80) {
                     kategori = 'Elevated (Meningkat)';
                     warnaClass = 'bg-blue-100 text-blue-700 border-blue-200';
-                    text.innerText = 'Tekanan darah di atas normal. Jaga gaya hidup sehat.';
+                    
                 } else {
                     kategori = 'Normal';
                     warnaClass = 'bg-green-100 text-green-700 border-green-200';
-                    text.innerText = 'Tekanan darah dalam batas normal. Pertahankan!';
                 }
 
+                // Update UI
                 badge.innerText = kategori;
-                badge.className = `px-4 py-1.5 rounded-full text-sm font-bold shadow-sm inline-block border ${warnaClass}`;
+                badge.className = `inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold shadow-sm border ${warnaClass}`;
+                text.innerText = pesan;
             } else {
-                box.classList.add('hidden');
-                // [BARU] Pastikan juga menghapus hidden-step jika masuk mode kosong
-                document.getElementById('empty-kategori').classList.remove('hidden', 'hidden-step');
+                box.classList.add('hidden-step');
             }
         }
 
@@ -453,5 +519,9 @@
             }
         });
     </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
 </body>
 </html>
