@@ -60,8 +60,8 @@
                                     // Set status untuk filter
                                     let filterStatus = 'Semua';
                                     if(r.status_validasi === 'menunggu') filterStatus = 'Menunggu Validasi';
-                                    if(r.status_validasi === 'diterima') filterStatus = 'Valid';
-                                    if(r.status_validasi === 'revisi') filterStatus = 'Perlu Revisi';
+                                    if(r.status_validasi === 'terverifikasi') filterStatus = 'Valid';
+                                    if(r.status_validasi === 'ditolak') filterStatus = 'Perlu Revisi';
                                 %>
                                 <tr class="hover:bg-gray-50 transition-colors data-row cursor-default" data-status="<%= filterStatus %>">
                                     <td class="px-5 py-3.5">
@@ -84,16 +84,18 @@
                                     <td class="px-5 py-3.5">
                                         <% if (r.status_validasi === 'menunggu') { %>
                                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FEF3C7] text-[#D97706] text-xs font-medium"><span class="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></span>Menunggu</span>
-                                        <% } else if (r.status_validasi === 'diterima') { %>
+                                        <% } else if (r.status_validasi === 'terverifikasi') { %>
                                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D1FAE5] text-[#059669] text-xs font-medium"><span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>Valid</span>
                                         <% } else { %>
                                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FEE2E2] text-[#DC2626] text-xs font-medium"><span class="w-1.5 h-1.5 rounded-full bg-[#EF4444]"></span>Revisi</span>
                                         <% } %>
                                     </td>
                                     <td class="px-5 py-3.5 flex items-center gap-1">
-                                        <button onclick="openDetailModal('<%= r.nama_pasien %>', '<%= r.nik %>', '<%= new Date(r.tanggal_kegiatan).toLocaleDateString('id-ID') %>', '<%= r.sistole %>', '<%= r.diastole %>', '<%= r.berat_badan %>', '<%= r.tinggi_badan %>', '<%= r.status_tekanan %>', '<%= filterStatus %>')" class="p-1.5 rounded-lg text-[#6B7280] hover:bg-[#DBEAFE] hover:text-[#2563EB] transition-all" title="Lihat Detail"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                                        <% if (r.status_validasi !== 'ditolak') { %>
+                                            <button onclick="openDetailModal('<%= r.nama_pasien %>', '<%= r.nik %>', '<%= new Date(r.tanggal_kegiatan).toLocaleDateString('id-ID') %>', '<%= r.sistole %>', '<%= r.diastole %>', '<%= r.berat_badan %>', '<%= r.tinggi_badan %>', '<%= r.status_tekanan %>', '<%= filterStatus %>')" class="p-1.5 rounded-lg text-[#6B7280] hover:bg-[#DBEAFE] hover:text-[#2563EB] transition-all" title="Lihat Detail"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                                        <% } %>
                                         
-                                        <% if (r.status_validasi === 'revisi') { %>
+                                        <% if (r.status_validasi === 'ditolak') { %>
                                             <a href="/skrining/edit/<%= r.id_skrining %>" class="inline-block p-1.5 rounded-lg text-[#6B7280] hover:bg-[#FEF3C7] hover:text-[#D97706] transition-all" title="Edit Data"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></a>
                                         <% } %>
                                     </td>
