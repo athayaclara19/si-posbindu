@@ -41,21 +41,34 @@ exports.renderValidasi = async (req, res) => {
  
 // 3. Proses Validasi (Terima / Tolak)
 exports.handleActionValidasi = async (req, res) => {
-    const { id_skrining }                  = req.params;
-    const { status_validasi, catatan_bidan } = req.body;
-    const id_validator                     = req.session.user.id_user;
     try {
+        const { id_skrining } = req.params;
+        const { status_validasi, catatan_bidan } = req.body;
+        
+        // [PERBAIKAN] Mengambil id user dengan aman (mencegah crash jika session hilang)
+        const id_validator = req.session.user ? req.session.user.id_user : null;
+
+        // Memastikan status berubah menjadi Valid
+        let finalStatus = status_validasi;
+        if (finalStatus === 'terverifikasi' || finalStatus === 'Valid') {
+            finalStatus = 'Valid';
+        }
+
         const query = `
             UPDATE skrining
             SET status_validasi=$1, catatan_bidan=$2,
                 id_validator=$3, tanggal_validasi=NOW()
             WHERE id_skrining=$4
         `;
-        await pool.query(query, [status_validasi, catatan_bidan||null, id_validator, id_skrining]);
+        
+        await pool.query(query, [finalStatus, catatan_bidan || null, id_validator, id_skrining]);
+        
         res.redirect('/bidan/validasi');
+
     } catch (err) {
-        console.error(err);
-        res.status(500).send("Gagal memproses validasi.");
+        console.error("ERROR SAAT VALIDASI:", err);
+        // [BARU] Menampilkan error bawaan dari database/sistem ke browser
+        res.status(500).send("Gagal memproses validasi. Penyebab: " + err.message);
     }
 };
  

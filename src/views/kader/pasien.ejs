@@ -69,31 +69,42 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse min-w-max">
                         <thead>
-                            <tr class="bg-gray-50 border-b border-gray-100 text-sm text-gray-500">
-                                <th class="p-4 font-semibold">ID / NIK</th>
-                                <th class="p-4 font-semibold">Nama Pasien</th>
-                                <th class="p-4 font-semibold">Jorong</th>
-                                <th class="p-4 font-semibold">L/P</th>
-                                <th class="p-4 font-semibold text-center">Aksi</th>
+                            <tr class="bg-gray-50 border-b border-gray-100">
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-10">NO</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ID / NIK</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Nama Pasien</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Jorong</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">L/P</th>
+                                <th class="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap w-32">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody class="text-sm">
+                        <tbody id="pasienTableBody">
                             <% if (typeof daftarPasien !== 'undefined' && daftarPasien.length > 0) { %>
-                                <% daftarPasien.forEach(p => { %>
+                                <% daftarPasien.forEach((p, index) => { %>
                                     <tr class="border-b border-gray-50 hover:bg-slate-50 transition-colors baris-pasien" data-jorong="<%= p.nama_jorong %>" data-nagari="<%= p.nama_nagari || '' %>">
-                                        <td class="p-4">
-                                            <p class="font-semibold text-gray-800"><%= p.id_pasien %></p>
-                                            <p class="text-xs text-gray-500"><%= p.nik %></p>
+                                        
+                                        <td class="px-6 py-4 text-sm text-[#6B7280] font-medium">
+                                            <%= index + 1 %>
                                         </td>
-                                        <td class="p-4 font-medium text-gray-700"><%= p.nama_pasien %></td>
+
+                                        <td class="px-6 py-4">
+                                            <p class="text-sm font-bold text-gray-800"><%= p.id_pasien %></p>
+                                            <p class="text-xs text-gray-400"><%= p.nik %></p>
+                                        </td>
+                                        
+                                        <td class="px-6 py-4">
+                                            <p class="text-sm font-medium text-gray-800"><%= p.nama_pasien %></p>
+                                        </td>
+
                                         <td class="p-4">
                                             <span class="px-2.5 py-1 bg-blue-50 text-[#2563EB] rounded-lg text-xs font-medium border border-blue-100">
                                                 <%= p.nama_jorong %>
                                             </span>
                                         </td>
                                         <td class="p-4"><%= p.jenis_kelamin === 'Laki-laki' ? 'L' : 'P' %></td>
-                                        <td class="p-4 text-center">
-                                            <a href="/skrining" class="text-xs font-medium text-[#2563EB] bg-[#DBEAFE] hover:bg-blue-200 px-3 py-1.5 rounded-lg transition-colors inline-block">
+                                        <td class="px-6 py-4 text-center align-middle whitespace-nowrap">
+                                            <a href="/kader/skrining/<%= p.id_pasien %>" class="text-sm font-semibold text-[#2563EB] bg-blue-50 border border-blue-100 hover:bg-[#DBEAFE] hover:text-[#1D4ED8] px-4 py-2 rounded-xl transition-all shadow-sm inline-flex items-center justify-center gap-1.5">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                                                 Input Tensi
                                             </a>
                                         </td>

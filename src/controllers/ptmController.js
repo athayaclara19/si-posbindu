@@ -94,31 +94,38 @@ exports.handleUpdatePasien = async (req, res) => {
 /**
  * 4. Memproses Hapus Data Pasien
  */
+/**
+ * 4. Memproses Hapus Data Pasien
+ */
 exports.handleDeletePasien = async (req, res) => {
     const { id } = req.params;
     try {
-        // [BARU] 1. Hapus semua riwayat skrining milik pasien ini terlebih dahulu
-        // Asumsi nama tabel riwayat pemeriksaannya adalah 'skrining'
+        // 1. Hapus semua riwayat skrining
         await pool.query('DELETE FROM skrining WHERE id_pasien = $1', [id]);
         
-        // [DIUBAH] 2. Setelah data skrining bersih, baru hapus data induknya (pasien)
+        // 2. Hapus data induknya (pasien)
         await pool.query('DELETE FROM pasien WHERE id_pasien = $1', [id]);
         
-        // Kembalikan ke halaman kelola pasien jika berhasil
-        res.redirect('/ptm/pasien');
+        // [DIUBAH] Ambil ulang data dan render halaman dengan membawa successMessage
+        const query = `
+            SELECT p.*, j.nama_jorong 
+            FROM pasien p 
+            JOIN jorong j ON p.id_jorong = j.id_jorong 
+            ORDER BY p.nama_pasien ASC
+        `;
+        const result = await pool.query(query);
+
+        res.render('ptm/kelolapasien', { 
+            pasien: result.rows,
+            active: 'pasien',
+            successMessage: 'Data pasien beserta riwayatnya berhasil dihapus permanen!' // [BARU] Pesan sukses
+        });
     } catch (err) {
         console.error("ERROR DELETE PASIEN:", err);
-        
-        // Jika masih ada error lain dari database, tangkap dan tampilkan SweetAlert
+        // ... (kode error tangkapan catch tetap sama seperti sebelumnya)
         try {
-            const query = `
-                SELECT p.*, j.nama_jorong 
-                FROM pasien p 
-                JOIN jorong j ON p.id_jorong = j.id_jorong 
-                ORDER BY p.nama_pasien ASC
-            `;
+            const query = `SELECT p.*, j.nama_jorong FROM pasien p JOIN jorong j ON p.id_jorong = j.id_jorong ORDER BY p.nama_pasien ASC`;
             const result = await pool.query(query);
-
             res.render('ptm/kelolapasien', { 
                 pasien: result.rows,
                 active: 'pasien',
