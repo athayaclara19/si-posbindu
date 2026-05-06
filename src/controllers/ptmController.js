@@ -88,22 +88,37 @@ exports.handleUpdatePasien = async (req, res) => {
 /**
  * 4. Memproses Hapus Data Pasien
  */
+/**
+ * 4. Memproses Hapus Data Pasien
+ */
 exports.handleDeletePasien = async (req, res) => {
     const { id } = req.params;
     try {
-        // Hapus pasien berdasarkan ID/NIK
+        // Coba hapus pasien berdasarkan ID/NIK
         await pool.query('DELETE FROM pasien WHERE id_pasien = $1', [id]);
         
         res.redirect('/ptm/pasien');
     } catch (err) {
         console.error("ERROR DELETE PASIEN:", err);
         
-        // Jika error karena Foreign Key (pasien sudah punya data skrining)
-        res.status(500).send(`
-            <script>
-                alert('Gagal menghapus! Pasien ini sudah memiliki riwayat skrining di database.');
-                window.location.href = '/ptm/pasien';
-            </script>
-        `);
+        // [DIUBAH] Jangan pakai res.send alert script. 
+        // Kita ambil ulang data pasien dan lempar pesan error ke halaman kelolapasien.ejs
+        try {
+            const query = `
+                SELECT p.*, j.nama_jorong 
+                FROM pasien p 
+                JOIN jorong j ON p.id_jorong = j.id_jorong 
+                ORDER BY p.nama_pasien ASC
+            `;
+            const result = await pool.query(query);
+
+            res.render('ptm/kelolapasien', { 
+                pasien: result.rows,
+                active: 'pasien',
+                errorMessage: 'Gagal menghapus! Pasien ini tidak bisa dihapus karena sudah memiliki riwayat skrining.' // [BARU] Kirim pesan error
+            });
+        } catch (fetchErr) {
+            res.status(500).send("Terjadi kesalahan sistem.");
+        }
     }
 };

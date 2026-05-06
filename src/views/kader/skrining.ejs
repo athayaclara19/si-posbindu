@@ -95,12 +95,32 @@
 
                             <div>
                                 <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Kegiatan Posbindu <span class="text-[#EF4444]">*</span></label>
-                                <select id="input-kegiatan" name="id_kegiatan" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white" required>
-                                    <option value="">-- Pilih kegiatan --</option>
+                                <select id="input-kegiatan" name="id_kegiatan" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white" onchange="updateTanggal()" required>
+                                    <option value=""> Pilih kegiatan </option>
                                     <% if (typeof kegiatan !== 'undefined') { %>
-                                        <% kegiatan.forEach(k => { %>
-                                            <option value="<%= k.id_kegiatan %>"><%= k.lokasi %> (<%= k.tanggal_kegiatan.toISOString().split('T')[0] %>)</option>
-                                        <% }) %>
+                                        <% 
+                                        // [BARU] Dapatkan tanggal hari ini (tanpa jam) untuk filter
+                                        const today = new Date();
+                                        today.setHours(0, 0, 0, 0);
+                                        
+                                        kegiatan.forEach(k => { 
+                                            // Ubah ke format Date untuk perbandingan
+                                            const tglKegiatan = new Date(k.tanggal_kegiatan);
+                                            tglKegiatan.setHours(0, 0, 0, 0);
+                                            
+                                            // Format YYYY-MM-DD untuk ditampilkan dan disisipkan
+                                            const formattedDate = k.tanggal_kegiatan.toISOString().split('T')[0];
+
+                                            // [BARU] Hanya tampilkan jika kegiatan HARI INI atau DI MASA DEPAN (>= today)
+                                            if (tglKegiatan >= today) {
+                                        %>
+                                            <option value="<%= k.id_kegiatan %>" data-tanggal="<%= formattedDate %>">
+                                                <%= k.lokasi %> (<%= formattedDate %>)
+                                            </option>
+                                        <% 
+                                            } // end if
+                                        }) 
+                                        %>
                                     <% } %>
                                 </select>
                             </div>
@@ -250,7 +270,20 @@
 
     <script>
         // Set tanggal hari ini otomatis
-        document.getElementById('input-tanggal').valueAsDate = new Date();
+        function updateTanggal() {
+            const selectKegiatan = document.getElementById('input-kegiatan');
+            const inputTanggal = document.getElementById('input-tanggal');
+            
+            // Ambil opsi (option) yang sedang dipilih pengguna
+            const selectedOption = selectKegiatan.options[selectKegiatan.selectedIndex];
+            
+            // Jika opsi tersebut punya data-tanggal, masukkan ke form input tanggal
+            if (selectedOption && selectedOption.getAttribute('data-tanggal')) {
+                inputTanggal.value = selectedOption.getAttribute('data-tanggal');
+            } else {
+                inputTanggal.value = ''; // Kosongkan jika memilih "-- Pilih kegiatan --"
+            }
+        }
 
         // Navigasi Antar Step
         function goToStep(step) {
