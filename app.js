@@ -220,6 +220,13 @@ app.get('/ptm/laporan',
     laporanController.renderLaporanPTM
 );
 
+app.get('/ptm/laporan/preview',
+    isAuthenticated,
+    isAuthorized('pj_ptm'),
+    laporanController.getPreviewData
+);
+
+
 app.post('/ptm/laporan/generate',
     isAuthenticated, 
     isAuthorized('pj_ptm'), 
