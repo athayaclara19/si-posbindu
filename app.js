@@ -318,6 +318,30 @@ app.get('/api/peta-hipertensi',
 const pasienController = require('./src/controllers/pasienController.js');
 
 // --- RUTE MANAJEMEN PASIEN (Kader) ---
+// --- UBAH PASSWORD (semua role) ---
+app.post('/ubah-password', isAuthenticated, async (req, res) => {
+    const { password_lama, password_baru, konfirmasi_password } = req.body;
+    const id_user = req.session.user.id_user;
+    try {
+        if (password_baru !== konfirmasi_password) {
+            return res.redirect('back');
+        }
+        const result = await pool.query('SELECT * FROM "user" WHERE id_user=$1', [id_user]);
+        const user = result.rows[0];
+        const bcrypt = require('bcryptjs');
+        const isMatch = await bcrypt.compare(password_lama, user.password);
+        if (!isMatch) return res.redirect('back');
+        const hash = await bcrypt.hash(password_baru, 10);
+        await pool.query('UPDATE "user" SET password=$1 WHERE id_user=$2', [hash, id_user]);
+        // Redirect ke dashboard sesuai role
+        const roleMap = { kader:'/', bidan:'/bidan', pj_ptm:'/ptm', kepala_puskesmas:'/kepala' };
+        res.redirect(roleMap[req.session.user.role] || '/');
+    } catch (err) {
+        console.error(err);
+        res.redirect('back');
+    }
+});
+
 app.get('/pasien', isAuthenticated, isAuthorized('kader'), pasienController.renderDaftarPasien);
 app.get('/pasien/tambah', isAuthenticated, isAuthorized('kader'), pasienController.renderTambahPasien);
 app.post('/pasien/tambah', isAuthenticated, isAuthorized('kader'), pasienController.handleTambahPasien);

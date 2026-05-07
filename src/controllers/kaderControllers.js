@@ -61,20 +61,100 @@ exports.handleInputSkrining = async (req, res) => {
 
 // 3. Render Dashboard Kader
 exports.renderDashboard = async (req, res) => {
-    const id_kader = req.session.user.id_user;
+    const id_kader   = req.session.user.id_user;
+    const id_jorong  = req.session.user.id_jorong;
     try {
-        const total    = await pool.query("SELECT COUNT(*) FROM skrining WHERE id_kader=$1", [id_kader]);
-        const menunggu = await pool.query("SELECT COUNT(*) FROM skrining WHERE id_kader=$1 AND status_validasi='menunggu'", [id_kader]);
-        const revisi   = await pool.query("SELECT COUNT(*) FROM skrining WHERE id_kader=$1 AND status_validasi='ditolak'", [id_kader]);
+        // Total pasien terdaftar di jorong kader
+        const totalPasien = await pool.query(
+            "SELECT COUNT(*) FROM pasien WHERE id_jorong=$1", [id_jorong]);
+
+        // Jumlah pasien baru bulan ini (dari skrining pertama kali bulan ini)
+        const pasienBaru = await pool.query(
+            `SELECT COUNT(DISTINCT s.id_pasien) FROM skrining s
+             JOIN pasien p ON s.id_pasien = p.id_pasien
+             WHERE p.id_jorong=$1
+             AND EXTRACT(MONTH FROM s.tanggal_skrining)=EXTRACT(MONTH FROM CURRENT_DATE)
+             AND EXTRACT(YEAR FROM s.tanggal_skrining)=EXTRACT(YEAR FROM CURRENT_DATE)`, [id_jorong]);
+
+        // Skrining yang dibuat kader ini bulan ini
+        const skriningBulanIni = await pool.query(
+            `SELECT COUNT(*) FROM skrining WHERE id_kader=$1
+             AND EXTRACT(MONTH FROM tanggal_skrining)=EXTRACT(MONTH FROM CURRENT_DATE)
+             AND EXTRACT(YEAR FROM tanggal_skrining)=EXTRACT(YEAR FROM CURRENT_DATE)`, [id_kader]);
+
+        // Pending validasi (menunggu)
+        const menunggu = await pool.query(
+            "SELECT COUNT(*) FROM skrining WHERE id_kader=$1 AND status_validasi='menunggu'", [id_kader]);
+
+        // Perlu revisi (ditolak)
+        const revisi = await pool.query(
+            "SELECT COUNT(*) FROM skrining WHERE id_kader=$1 AND status_validasi='ditolak'", [id_kader]);
+
+        // Tren skrining 6 bulan terakhir
+        const trenQuery = await pool.query(`
+            SELECT TO_CHAR(tanggal_skrining, 'Mon') AS bulan,
+                   EXTRACT(MONTH FROM tanggal_skrining) AS bulan_num,
+                   EXTRACT(YEAR FROM tanggal_skrining) AS tahun,
+                   COUNT(*) AS jumlah
+            FROM skrining
+            WHERE id_kader=$1
+              AND tanggal_skrining >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '5 months'
+            GROUP BY bulan, bulan_num, tahun
+            ORDER BY tahun ASC, bulan_num ASC`, [id_kader]);
+
+        // Jadwal hari ini berdasarkan jorong kader
+        const jadwalHariIni = await pool.query(`
+            SELECT k.tanggal_kegiatan, k.lokasi, j.nama_jorong
+            FROM kegiatan k
+            JOIN jorong j ON k.id_jorong = j.id_jorong
+            WHERE DATE(k.tanggal_kegiatan) = CURRENT_DATE
+              AND k.id_jorong = $1
+            ORDER BY k.tanggal_kegiatan ASC
+            LIMIT 5`, [id_jorong]);
+
+        // Notifikasi: skrining ditolak yang belum diperbaiki
+        const notifRevisi = await pool.query(`
+            SELECT s.id_skrining, p.nama_pasien, s.tanggal_skrining, s.catatan_bidan
+            FROM skrining s
+            JOIN pasien p ON s.id_pasien = p.id_pasien
+            WHERE s.id_kader=$1 AND s.status_validasi='ditolak'
+            ORDER BY s.tanggal_skrining DESC LIMIT 10`, [id_kader]);
+
+        // Notifikasi: skrining terverifikasi terbaru (5 hari terakhir)
+        const notifDisetujui = await pool.query(`
+            SELECT s.id_skrining, p.nama_pasien, s.tanggal_skrining
+            FROM skrining s
+            JOIN pasien p ON s.id_pasien = p.id_pasien
+            WHERE s.id_kader=$1 AND s.status_validasi='terverifikasi'
+            ORDER BY s.tanggal_skrining DESC LIMIT 10`, [id_kader]);
+
+        const notifikasi = [
+            ...notifRevisi.rows.map(n => ({
+                tipe: 'revisi',
+                pesan: `Skrining ${n.nama_pasien} ditolak: ${n.catatan_bidan || 'Perlu diperbaiki'}`,
+                id_skrining: n.id_skrining
+            })),
+            ...notifDisetujui.rows.map(n => ({
+                tipe: 'disetujui',
+                pesan: `Skrining ${n.nama_pasien} telah disetujui`,
+                id_skrining: n.id_skrining
+            }))
+        ];
+
         res.render('kader/dashboard', {
             active: 'dashboard',
-            totalSkrining: total.rows[0].count,
+            totalPasien: totalPasien.rows[0].count,
+            pasienBaru: pasienBaru.rows[0].count,
+            skriningBulanIni: skriningBulanIni.rows[0].count,
             menungguValidasi: menunggu.rows[0].count,
             perluRevisi: revisi.rows[0].count,
+            trenSkrining: trenQuery.rows,
+            jadwalHariIni: jadwalHariIni.rows,
+            notifikasi: notifikasi,
         });
     } catch (err) {
         console.error(err);
-        res.status(500).send("Gagal memuat dashboard.");
+        res.status(500).send("Gagal memuat dashboard: " + err.message);
     }
 };
 
