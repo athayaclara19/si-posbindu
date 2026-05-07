@@ -7,6 +7,7 @@ const path    = require('path');
 const session = require('express-session'); // BARU: Session management
 require('dotenv').config();                 // BARU: Memuat file .env
 const pool = require('./src/config/db');
+const petaController = require('./src/controllers/petaController');
 
 const app = express();
 
@@ -306,6 +307,17 @@ app.get('/kepala/grafikkunjungan',
     isAuthenticated,
     isAuthorized('kepala_puskesmas'),
     (req, res) => res.render('kepala/grafikkunjungan')
+);
+
+app.get('/kepala/peta-hipertensi',
+    isAuthenticated,
+    isAuthorized('kepala_puskesmas'),
+    petaController.renderPetaHipertensi
+);
+app.get('/api/peta-hipertensi',
+    isAuthenticated,
+    isAuthorized('kepala_puskesmas'),
+    petaController.getDataPetaHipertensi
 );
 
 const pasienController = require('./src/controllers/pasienController.js');

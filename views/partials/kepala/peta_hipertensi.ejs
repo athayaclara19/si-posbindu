@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peta Persebaran Hipertensi - IV Koto</title>
+
+    <%/* CSS project */%>
+    <link rel="stylesheet" href="/css/output.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <%/* Leaflet CSS */%>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+        .font-inter   { font-family: 'Inter', sans-serif; }
+
+        /* ── Kontainer peta ── */
+        #map {
+            width: 100%;
+            height: 480px;
+            border-radius: 1rem;
+            z-index: 0;
+        }
+
+        /* ── Legend ── */
+        .map-legend {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.15);
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            line-height: 1.8;
+            min-width: 160px;
+        }
+        .map-legend .legend-title {
+            font-weight: 700;
+            font-size: 13px;
+            margin-bottom: 6px;
+            color: #1f2937;
+        }
+        .legend-item { display: flex; align-items: center; gap: 8px; }
+        .legend-box {
+            width: 18px; height: 18px;
+            border-radius: 4px;
+            border: 1px solid rgba(0,0,0,.15);
+            flex-shrink: 0;
+        }
+
+        /* ── Tooltip ── */
+        .leaflet-tooltip-custom {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 8px 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,.12);
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            pointer-events: none;
+        }
+
+        /* ── Loading overlay ── */
+        #map-loading {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(248,250,252,.85);
+            border-radius: 1rem;
+            z-index: 10;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 font-inter antialiased text-slate-800 flex h-screen overflow-hidden">
+
+    <%/* Sidebar — ganti role sesuai halaman ini (kepala/bidan/ptm) */%>
+    <%- include('../partials/sidebar', { active: 'peta', role: 'kepala' }) %>
+
+    <div class="flex-1 flex flex-col h-screen overflow-y-auto relative">
+        <%- include('../partials/header', { pageTitle: 'Peta Persebaran Hipertensi', role: 'kepala' }) %>
+
+        <main class="p-8 space-y-6 w-full">
+
+            <%/* ── Judul halaman ── */%>
+            <div>
+                <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">
+                    Peta Persebaran Hipertensi
+                </h2>
+                <p class="text-[#6B7280] text-sm mt-1">
+                    Kecamatan IV Koto, Kabupaten Agam · ditampilkan per nagari
+                </p>
+            </div>
+
+            <%/* ── Filter Bulan & Tahun ── */%>
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <div class="flex flex-wrap items-end gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Bulan</label>
+                        <select id="filterBulan"
+                                class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                            <option value="">Semua</option>
+                            <% const namaBulan = ['Januari','Februari','Maret','April','Mei','Juni',
+                                                  'Juli','Agustus','September','Oktober','November','Desember']; %>
+                            <% namaBulan.forEach((b, i) => { %>
+                                <option value="<%= i+1 %>"><%= b %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Tahun</label>
+                        <select id="filterTahun"
+                                class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                            <% for (let y = new Date().getFullYear(); y >= 2023; y--) { %>
+                                <option value="<%= y %>"><%= y %></option>
+                            <% } %>
+                        </select>
+                    </div>
+                    <button id="btnFilter"
+                            class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors">
+                        Tampilkan
+                    </button>
+                    <button id="btnReset"
+                            class="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold rounded-xl transition-colors">
+                        Semua Data
+                    </button>
+                </div>
+            </div>
+
+            <%/* ── Ringkasan angka ── */%>
+            <div id="summaryCards" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <%/* Diisi JavaScript */%>
+            </div>
+
+            <%/* ── Peta Leaflet ── */%>
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <h3 class="font-poppins font-semibold text-base text-gray-800 mb-4">
+                    Peta Per Nagari
+                </h3>
+                <div class="relative">
+                    <div id="map-loading">
+                        <div class="text-center">
+                            <svg class="animate-spin w-8 h-8 text-blue-500 mx-auto mb-2"
+                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                        stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                      d="M4 12a8 8 0 018-8v8z"></path>
+                            </svg>
+                            <p class="text-sm text-gray-500">Memuat peta…</p>
+                        </div>
+                    </div>
+                    <div id="map"></div>
+                </div>
+            </div>
+
+            <%/* ── Tabel ringkasan ── */%>
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <h3 class="font-poppins font-semibold text-base text-gray-800 mb-4">
+                    Rincian Per Nagari
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-100">
+                                <th class="text-left py-3 px-4 font-semibold text-gray-500">Nagari</th>
+                                <th class="text-right py-3 px-4 font-semibold text-gray-500">Total Pasien</th>
+                                <th class="text-right py-3 px-4 font-semibold text-gray-500">Hipertensi</th>
+                                <th class="text-right py-3 px-4 font-semibold text-gray-500">% Hipertensi</th>
+                                <th class="py-3 px-4 font-semibold text-gray-500">Risiko</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelNagari">
+                            <tr>
+                                <td colspan="5" class="text-center py-8 text-gray-400">
+                                    Memuat data…
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div><%/* end flex-1 */%>
+
+    <%/* ── Scripts ── */%>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+    // ============================================================
+    // GeoJSON batas nagari IV Koto
+    // Diambil dari: public/geojson/ivkoto.geojson (static file)
+    // ============================================================
+    let GEOJSON_IV_KOTO = null; // akan diisi setelah fetch selesai
+
+    // ============================================================
+    // Skala warna berdasarkan persentase hipertensi
+    // ============================================================
+    function getColor(persen) {
+        if (persen === null || persen === undefined) return '#E5E7EB'; // abu — tidak ada data
+        if (persen >= 60) return '#DC2626';   // merah tua  — sangat tinggi
+        if (persen >= 45) return '#F97316';   // oranye     — tinggi
+        if (persen >= 30) return '#EAB308';   // kuning     — sedang
+        if (persen >= 15) return '#84CC16';   // hijau muda — rendah
+        return '#22C55E';                      // hijau      — sangat rendah
+    }
+
+    // Label risiko
+    function getRisikoLabel(persen) {
+        if (persen === null) return { text: 'Tidak ada data', cls: 'bg-gray-100 text-gray-500' };
+        if (persen >= 60)    return { text: 'Sangat Tinggi',  cls: 'bg-red-100 text-red-700' };
+        if (persen >= 45)    return { text: 'Tinggi',         cls: 'bg-orange-100 text-orange-700' };
+        if (persen >= 30)    return { text: 'Sedang',         cls: 'bg-yellow-100 text-yellow-700' };
+        if (persen >= 15)    return { text: 'Rendah',         cls: 'bg-lime-100 text-lime-700' };
+        return                      { text: 'Sangat Rendah',  cls: 'bg-green-100 text-green-700' };
+    }
+
+    // ============================================================
+    // Inisialisasi peta Leaflet
+    // ============================================================
+    const map = L.map('map').setView([-0.3338, 100.3156], 12);
+
+    // Base tile — OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 18
+    }).addTo(map);
+
+    // Layer GeoJSON (akan diperbarui setiap fetch)
+    let geoLayer = null;
+
+    // ============================================================
+    // Legend
+    // ============================================================
+    const legend = L.control({ position: 'bottomright' });
+    legend.onAdd = () => {
+        const div = L.DomUtil.create('div', 'map-legend');
+        div.innerHTML = `
+            <div class="legend-title">% Hipertensi</div>
+            ${[
+                ['#22C55E', '< 15% — Sangat Rendah'],
+                ['#84CC16', '15–29% — Rendah'],
+                ['#EAB308', '30–44% — Sedang'],
+                ['#F97316', '45–59% — Tinggi'],
+                ['#DC2626', '≥ 60% — Sangat Tinggi'],
+                ['#E5E7EB', 'Tidak ada data'],
+            ].map(([c, l]) => `
+                <div class="legend-item">
+                    <div class="legend-box" style="background:${c}"></div>
+                    <span>${l}</span>
+                </div>
+            `).join('')}
+        `;
+        return div;
+    };
+    legend.addTo(map);
+
+    // ============================================================
+    // Fungsi utama: fetch data → render peta + tabel + kartu
+    // ============================================================
+    async function loadData(bulan, tahun) {
+        document.getElementById('map-loading').style.display = 'flex';
+
+        let url = '/api/peta-hipertensi';
+        if (bulan && tahun) url += `?bulan=${bulan}&tahun=${tahun}`;
+
+        try {
+            const res  = await fetch(url);
+            const json = await res.json();
+
+            if (!json.success) throw new Error(json.error || 'Gagal mengambil data');
+
+            const dataMap = {};
+            json.data.forEach(d => {
+                dataMap[d.nama_nagari.toUpperCase()] = d;
+            });
+
+            renderMap(dataMap);
+            renderTable(json.data);
+            renderSummaryCards(json.data);
+
+        } catch (err) {
+            console.error('Gagal memuat data peta:', err);
+            alert('Gagal memuat data. Periksa koneksi atau hubungi administrator.');
+        } finally {
+            document.getElementById('map-loading').style.display = 'none';
+        }
+    }
+
+    // ── Render layer GeoJSON ──────────────────────────────────────
+    function renderMap(dataMap) {
+        if (geoLayer) map.removeLayer(geoLayer);
+
+        geoLayer = L.geoJSON(GEOJSON_IV_KOTO, {
+            style: feature => {
+                const nama  = feature.properties.NAMOBJ || feature.properties.nama_nagari || '';
+                const row   = dataMap[nama.toUpperCase()];
+                const persen = row ? row.persen_hipertensi : null;
+                return {
+                    fillColor:   getColor(persen),
+                    fillOpacity: 0.75,
+                    color:       '#FFFFFF',
+                    weight:      2
+                };
+            },
+            onEachFeature: (feature, layer) => {
+                const nama   = feature.properties.NAMOBJ || feature.properties.nama_nagari || '';
+                const row    = dataMap[nama.toUpperCase()];
+                const risiko = row ? getRisikoLabel(row.persen_hipertensi) : getRisikoLabel(null);
+
+                // Tooltip saat hover
+                layer.bindTooltip(`
+                    <div class="leaflet-tooltip-custom">
+                        <div style="font-weight:700;font-size:14px;margin-bottom:4px">${nama}</div>
+                        ${row ? `
+                            <div>Total Pasien: <b>${row.total_pasien.toLocaleString('id-ID')}</b></div>
+                            <div>Hipertensi: <b>${row.total_hipertensi.toLocaleString('id-ID')}</b></div>
+                            <div>Persentase: <b>${row.persen_hipertensi}%</b></div>
+                            <div style="margin-top:4px">
+                                <span style="
+                                    display:inline-block;padding:2px 8px;border-radius:6px;
+                                    font-size:11px;font-weight:600;background:#FEF2F2;color:#DC2626
+                                ">${risiko.text}</span>
+                            </div>
+                        ` : '<div style="color:#9CA3AF">Tidak ada data</div>'}
+                    </div>
+                `, { sticky: true, opacity: 1 });
+
+                // Highlight saat hover
+                layer.on({
+                    mouseover: e => {
+                        e.target.setStyle({ weight: 3, color: '#1D4ED8', fillOpacity: 0.9 });
+                        e.target.bringToFront();
+                    },
+                    mouseout: e => geoLayer.resetStyle(e.target)
+                });
+            }
+        }).addTo(map);
+
+        // Fit peta ke batas wilayah
+        map.fitBounds(geoLayer.getBounds(), { padding: [20, 20] });
+    }
+
+    // ── Render tabel ─────────────────────────────────────────────
+    function renderTable(data) {
+        const tbody = document.getElementById('tabelNagari');
+        if (!data.length) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-gray-400">
+                Tidak ada data untuk periode ini
+            </td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = data.map(d => {
+            const risiko = getRisikoLabel(d.persen_hipertensi);
+            return `
+            <tr class="border-b border-gray-50 hover:bg-slate-50 transition-colors">
+                <td class="py-3 px-4 font-medium text-gray-800">${d.nama_nagari}</td>
+                <td class="py-3 px-4 text-right text-gray-600">${d.total_pasien.toLocaleString('id-ID')}</td>
+                <td class="py-3 px-4 text-right font-semibold text-red-600">${d.total_hipertensi.toLocaleString('id-ID')}</td>
+                <td class="py-3 px-4 text-right text-gray-600">
+                    <div class="flex items-center justify-end gap-2">
+                        <div class="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full" style="width:${Math.min(d.persen_hipertensi,100)}%;background:${getColor(d.persen_hipertensi)}"></div>
+                        </div>
+                        ${d.persen_hipertensi}%
+                    </div>
+                </td>
+                <td class="py-3 px-4">
+                    <span class="px-2.5 py-1 rounded-lg text-xs font-semibold ${risiko.cls}">${risiko.text}</span>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    // ── Render kartu ringkasan ────────────────────────────────────
+    function renderSummaryCards(data) {
+        const totalPasien    = data.reduce((s, d) => s + d.total_pasien, 0);
+        const totalHipertensi= data.reduce((s, d) => s + d.total_hipertensi, 0);
+        const persen         = totalPasien > 0
+            ? ((totalHipertensi / totalPasien) * 100).toFixed(1)
+            : '0.0';
+        const nagariTertinggi= data.length
+            ? data.sort((a,b) => b.persen_hipertensi - a.persen_hipertensi)[0]
+            : null;
+
+        document.getElementById('summaryCards').innerHTML = `
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <p class="text-xs font-semibold text-gray-500 mb-1">Total Pasien</p>
+                <p class="text-3xl font-poppins font-bold text-gray-800">${totalPasien.toLocaleString('id-ID')}</p>
+                <p class="text-xs text-gray-400 mt-1">pasien terskrining</p>
+            </div>
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <p class="text-xs font-semibold text-gray-500 mb-1">Total Hipertensi</p>
+                <p class="text-3xl font-poppins font-bold text-red-600">${totalHipertensi.toLocaleString('id-ID')}</p>
+                <p class="text-xs text-gray-400 mt-1">sistole ≥140 atau diastole ≥90</p>
+            </div>
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <p class="text-xs font-semibold text-gray-500 mb-1">Prevalensi</p>
+                <p class="text-3xl font-poppins font-bold text-orange-500">${persen}%</p>
+                <p class="text-xs text-gray-400 mt-1">dari total pasien skrining</p>
+            </div>
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <p class="text-xs font-semibold text-gray-500 mb-1">Nagari Tertinggi</p>
+                <p class="text-xl font-poppins font-bold text-gray-800 leading-tight mt-1">
+                    ${nagariTertinggi ? nagariTertinggi.nama_nagari : '—'}
+                </p>
+                <p class="text-xs text-gray-400 mt-1">
+                    ${nagariTertinggi ? nagariTertinggi.persen_hipertensi + '% hipertensi' : 'Tidak ada data'}
+                </p>
+            </div>
+        `;
+    }
+
+    // ============================================================
+    // Event listener tombol filter
+    // ============================================================
+    document.getElementById('btnFilter').addEventListener('click', () => {
+        const bulan = document.getElementById('filterBulan').value;
+        const tahun = document.getElementById('filterTahun').value;
+        if (!bulan) {
+            alert('Pilih bulan terlebih dahulu, atau klik "Semua Data" untuk melihat semua.');
+            return;
+        }
+        loadData(bulan, tahun);
+    });
+
+    document.getElementById('btnReset').addEventListener('click', () => {
+        document.getElementById('filterBulan').value = '';
+        loadData(null, null);
+    });
+
+    // ============================================================
+    // Inisialisasi: fetch GeoJSON dulu, baru load data hipertensi
+    // GeoJSON diambil dari public/geojson/ivkoto.geojson
+    // ============================================================
+    fetch('/geojson/ivkoto.geojson')
+        .then(res => {
+            if (!res.ok) throw new Error('File GeoJSON tidak ditemukan di /geojson/ivkoto.geojson');
+            return res.json();
+        })
+        .then(geojson => {
+            GEOJSON_IV_KOTO = geojson;
+            loadData(null, null); // jalankan setelah GeoJSON siap
+        })
+        .catch(err => {
+            console.error('Gagal memuat GeoJSON:', err);
+            document.getElementById('map-loading').innerHTML = `
+                <div class="text-center p-4">
+                    <p class="text-red-500 font-semibold text-sm">Gagal memuat batas wilayah</p>
+                    <p class="text-gray-400 text-xs mt-1">${err.message}</p>
+                </div>`;
+        });
+    </script>
+
+</body>
+</html>
