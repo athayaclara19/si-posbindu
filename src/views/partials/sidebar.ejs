@@ -21,16 +21,16 @@
     <div class="bg-[#2563EB]/20 rounded-xl px-3 py-2 border border-[#2563EB]/30">
       <% if (currentRole === 'bidan') { %>
         <p class="text-[#93C5FD] text-[11px] font-medium uppercase tracking-wider mb-0.5">Bidan Desa</p>
-        <p class="text-white text-sm font-semibold">Bidan Ratna</p>
+        <p class="text-white text-sm font-semibold"><%= currentUser ? currentUser.nama : '-' %></p>
       <% } else if (currentRole === 'pj_ptm') { %>
         <p class="text-[#93C5FD] text-[11px] font-medium uppercase tracking-wider mb-0.5">PJ Program PTM</p>
-        <p class="text-white text-sm font-semibold">Dr. Hendra</p>
+        <p class="text-white text-sm font-semibold"><%= currentUser ? currentUser.nama : '-' %></p>
       <% } else if (currentRole === 'kepala_puskesmas') { %>
         <p class="text-[#93C5FD] text-[11px] font-medium uppercase tracking-wider mb-0.5">Kepala Puskesmas</p>
-        <p class="text-white text-sm font-semibold">Dr. Amelia</p>
+        <p class="text-white text-sm font-semibold"><%= currentUser ? currentUser.nama : '-' %></p>
       <% } else { %>
         <p class="text-[#93C5FD] text-[11px] font-medium uppercase tracking-wider mb-0.5">Kader Posbindu</p>
-        <p class="text-white text-sm font-semibold">Sari Dewi</p>
+        <p class="text-white text-sm font-semibold"><%= currentUser ? currentUser.nama : '-' %></p>
       <% } %>
     </div>
   </div>

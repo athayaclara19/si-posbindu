@@ -121,7 +121,9 @@
                                             tglKegiatan.setHours(0, 0, 0, 0);
                                             
                                             // Format YYYY-MM-DD untuk ditampilkan dan disisipkan
-                                            const formattedDate = k.tanggal_kegiatan.toISOString().split('T')[0];
+                                            const formattedDate = k.tanggal_kegiatan
+                                                ? new Date(k.tanggal_kegiatan).toISOString().split('T')[0]
+                                                : '';
 
                                             // [BARU] Hanya tampilkan jika kegiatan HARI INI atau DI MASA DEPAN (>= today)
                                             if (tglKegiatan >= today) {
@@ -501,7 +503,6 @@
             }, 500);
         }
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 
     <script>
         // [BARU] Inisialisasi Tom Select pada input pasien

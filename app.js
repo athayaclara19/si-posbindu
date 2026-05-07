@@ -121,13 +121,8 @@ app.use('/', require('./src/routes/auth'));
 const kaderController = require('./src/controllers/kaderControllers');
 const jadwalController = require('./src/controllers/jadwalController');
 
-app.get('/kader/dashboard', isAuthenticated, isAuthorized('kader'), kaderController.renderDashboard);
+app.get('/', isAuthenticated, isAuthorized('kader'), kaderController.renderDashboard);
 
-app.get('/',
-    isAuthenticated,
-    isAuthorized('kader'),
-    (req, res) => res.render('kader/dashboard')
-);
 app.get('/jadwal',
     isAuthenticated,
     isAuthorized('kader'),

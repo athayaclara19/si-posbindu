@@ -14,7 +14,7 @@ const pool = require('../config/db');
 exports.renderPetaHipertensi = async (req, res) => {
     try {
         res.render('kepala/peta_hipertensi', {
-            active: 'peta',
+            active: 'peta-hipertensi',
             pageTitle: 'Peta Persebaran Hipertensi'
         });
     } catch (err) {

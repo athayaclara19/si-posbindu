@@ -176,42 +176,6 @@ exports.kirimLaporan = async (req, res) => {
     }
 };
 
-// 3. Render halaman laporan PTM
-exports.renderLaporanPTM = async (req, res) => {
-    const id_pj = req.session.user.id_user;
-    try {
-        const laporan = await pool.query(`
-            SELECT l.*, per.periode_bulan, per.periode_tahun
-            FROM laporan l
-            JOIN periode per ON l.id_periode = per.periode_id
-            WHERE l.id_pj = $1
-            ORDER BY per.periode_tahun DESC, per.periode_bulan DESC
-        `, [id_pj]);
-
-        // Ambil semua periode yang punya data skrining terverifikasi
-        // agar dropdown hanya tampilkan bulan yang ada datanya
-        const periodeAda = await pool.query(`
-            SELECT DISTINCT
-                per.periode_id,
-                per.periode_bulan,
-                per.periode_tahun
-            FROM periode per
-            JOIN kegiatan k ON k.id_periode = per.periode_id
-            JOIN skrining s ON s.id_kegiatan = k.id_kegiatan
-            WHERE s.status_validasi = 'terverifikasi'
-            ORDER BY per.periode_tahun DESC, per.periode_bulan DESC
-        `);
-
-        res.render('ptm/laporanptm', {
-            daftarLaporan: laporan.rows,
-            periodeAda: periodeAda.rows,
-            active: 'laporan'
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).send("Gagal memuat halaman laporan: " + err.message);
-    }
-};
 
 exports.exportExcelKohort = async (req, res) => {
     const { id_laporan } = req.params;

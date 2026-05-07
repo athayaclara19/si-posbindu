@@ -98,27 +98,4 @@ exports.handleTambahPasien = async (req, res) => {
     }
 };
 
-exports.tambahPasien = async (req, res) => {
-    // 1. Ambil data 'usia' dari form EJS
-    const { nik, nama_pasien, id_jorong, usia, jenis_kelamin, alamat, no_hp, pekerjaan, agama } = req.body;
 
-    try {
-        // ==========================================
-        // TAMBAHAN LOGIKA PENGHITUNGAN TAHUN LAHIR
-        // ==========================================
-        const tahunSekarang = new Date().getFullYear();
-        const tahun_lahir = tahunSekarang - parseInt(usia); // Menghasilkan misal: 1981
-        // ==========================================
-
-        // Masukkan usia dan tahun_lahir langsung ke database
-        await pool.query(
-            'INSERT INTO pasien (nik, nama_pasien, usia, tahun_lahir, jenis_kelamin, id_jorong) VALUES ($1, $2, $3, $4, $5, $6)',
-            [nik, nama_pasien, usia, tahun_lahir, jenis_kelamin, id_jorong]
-        );
-
-        res.redirect('/pasien');
-    } catch (err) {
-        console.error(err);
-        res.status(500).send("Gagal menambah pasien.");
-    }
-};
