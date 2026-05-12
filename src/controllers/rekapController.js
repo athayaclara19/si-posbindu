@@ -1,24 +1,62 @@
 const pool = require('../config/db');
 
 // 1. Rekap Wilayah untuk Bidan (F.20)
+// 1. Rekap Wilayah untuk Bidan (F.20)
 exports.renderRekapBidan = async (req, res) => {
     try {
-        // Menghitung jumlah pasien dan total skrining berdasarkan jorong
-        const query = `
-            SELECT j.nama_jorong,
-                   COUNT(DISTINCT p.id_pasien) AS total_pasien,
-                   COUNT(s.id_skrining) AS total_skrining
+        // A. Data Kartu (Bulan Ini)
+        const queryCards = `
+            SELECT 
+                COUNT(s.id_skrining) AS total_pasien,
+                COUNT(CASE WHEN s.sistole >= 140 THEN 1 END) AS hipertensi,
+                COUNT(CASE WHEN s.sistole < 140 THEN 1 END) AS terkendali
+            FROM skrining s
+            JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
+            WHERE s.status_validasi = 'terverifikasi'
+              AND EXTRACT(MONTH FROM k.tanggal_kegiatan) = EXTRACT(MONTH FROM CURRENT_DATE)
+              AND EXTRACT(YEAR FROM k.tanggal_kegiatan) = EXTRACT(YEAR FROM CURRENT_DATE)
+        `;
+        const resultCards = await pool.query(queryCards);
+        const cards = resultCards.rows[0];
+
+        // B. Data Rekap per Jorong (Untuk Tabel & Chart Horizontal)
+        const queryJorong = `
+            SELECT 
+                j.nama_jorong,
+                COUNT(s.id_skrining) AS total,
+                COUNT(CASE WHEN s.sistole >= 140 THEN 1 END) AS hipertensi,
+                COUNT(CASE WHEN s.sistole < 140 THEN 1 END) AS terkendali
             FROM jorong j
             LEFT JOIN pasien p ON j.id_jorong = p.id_jorong
             LEFT JOIN skrining s ON p.id_pasien = s.id_pasien AND s.status_validasi = 'terverifikasi'
-            GROUP BY j.id_jorong, j.nama_jorong
+            GROUP BY j.nama_jorong
             ORDER BY j.nama_jorong ASC
         `;
-        const result = await pool.query(query);
+        const resultJorong = await pool.query(queryJorong);
+
+        // C. Data Tren 6 Bulan Terakhir (Untuk Line Chart)
+        const queryTrend = `
+            SELECT 
+                TO_CHAR(k.tanggal_kegiatan, 'Mon YYYY') as bulan_label,
+                EXTRACT(MONTH FROM k.tanggal_kegiatan) as bulan_angka,
+                EXTRACT(YEAR FROM k.tanggal_kegiatan) as tahun_angka,
+                COUNT(s.id_skrining) AS total,
+                COUNT(CASE WHEN s.sistole >= 140 THEN 1 END) AS hipertensi,
+                COUNT(CASE WHEN s.sistole < 140 THEN 1 END) AS terkendali
+            FROM skrining s
+            JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
+            WHERE s.status_validasi = 'terverifikasi'
+            GROUP BY bulan_label, tahun_angka, bulan_angka
+            ORDER BY tahun_angka ASC, bulan_angka ASC
+            LIMIT 6
+        `;
+        const resultTrend = await pool.query(queryTrend);
 
         res.render('bidan/rekapbidan', {
-            rekapData: result.rows,
-            active: 'rekap' // Menyalakan menu Rekap Wilayah di sidebar
+            active: 'rekap',
+            cards: cards,
+            rekapJorong: resultJorong.rows,
+            trendBulanan: resultTrend.rows
         });
     } catch (err) {
         console.error(err);

@@ -2,16 +2,69 @@ const pool    = require('../config/db');
 const ExcelJS = require('exceljs');
  
 // 1. Dashboard Bidan
+// 1. Dashboard Bidan
 exports.renderDashboard = async (req, res) => {
     try {
-        const menunggu     = await pool.query("SELECT COUNT(*) FROM skrining WHERE status_validasi='menunggu'");
+        // A. Hitung metrik card atas
+        const menunggu      = await pool.query("SELECT COUNT(*) FROM skrining WHERE status_validasi='menunggu'");
         const terverifikasi = await pool.query("SELECT COUNT(*) FROM skrining WHERE status_validasi='terverifikasi'");
-        const ditolak      = await pool.query("SELECT COUNT(*) FROM skrining WHERE status_validasi='ditolak'");
+        const ditolak       = await pool.query("SELECT COUNT(*) FROM skrining WHERE status_validasi='ditolak'");
+        
+        const jumlahMenunggu      = parseInt(menunggu.rows[0].count) || 0;
+        const jumlahTerverifikasi = parseInt(terverifikasi.rows[0].count) || 0;
+        const jumlahDitolak       = parseInt(ditolak.rows[0].count) || 0;
+        const totalData           = jumlahMenunggu + jumlahTerverifikasi + jumlahDitolak;
+
+        // B. Ambil 3 data antrean terbaru untuk list "Data Belum Diverifikasi"
+        const queryAntrean = `
+            SELECT s.*, p.nama_pasien, p.nik, k.tanggal_kegiatan, j.nama_jorong
+            FROM skrining s
+            JOIN pasien  p ON s.id_pasien   = p.id_pasien
+            JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
+            JOIN jorong  j ON p.id_jorong   = j.id_jorong
+            WHERE s.status_validasi = 'menunggu'
+            ORDER BY k.tanggal_kegiatan ASC
+            LIMIT 3
+        `;
+        const antreanResult = await pool.query(queryAntrean);
+
+        // C. Ambil statistik per Jorong untuk Chart dan List
+        const queryJorong = `
+            SELECT 
+                j.nama_jorong, 
+                COUNT(s.id_skrining) as total_pasien,
+                COUNT(CASE WHEN s.sistole >= 140 THEN 1 END) as hipertensi,
+                COUNT(CASE WHEN s.status_validasi = 'menunggu' THEN 1 END) as menunggu
+            FROM jorong j
+            LEFT JOIN pasien p ON j.id_jorong = p.id_jorong
+            LEFT JOIN skrining s ON p.id_pasien = s.id_pasien
+            GROUP BY j.nama_jorong
+            ORDER BY j.nama_jorong
+        `;
+        const jorongStats = await pool.query(queryJorong);
+
+        // D. Ambil statistik Tensi Darah untuk progress bar
+        const queryTensi = `
+            SELECT 
+                COUNT(CASE WHEN sistole < 120 THEN 1 END) as normal,
+                COUNT(CASE WHEN sistole >= 120 AND sistole < 140 THEN 1 END) as terkendali,
+                COUNT(CASE WHEN sistole >= 140 THEN 1 END) as hipertensi,
+                COUNT(id_skrining) as total
+            FROM skrining
+            WHERE sistole IS NOT NULL
+        `;
+        const tensiStats = await pool.query(queryTensi);
+
+        // Kirim semua data ke EJS
         res.render('bidan/dashboardbidan', {
             active: 'dashboard',
-            jumlahMenunggu:      menunggu.rows[0].count,
-            jumlahTerverifikasi: terverifikasi.rows[0].count,
-            jumlahDitolak:       ditolak.rows[0].count,
+            totalData,
+            jumlahMenunggu,
+            jumlahTerverifikasi,
+            jumlahDitolak,
+            antreanValidasi: antreanResult.rows,
+            jorongStats: jorongStats.rows,
+            tensiStats: tensiStats.rows[0]
         });
     } catch (err) {
         console.error(err);
