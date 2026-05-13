@@ -3,253 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Kepala Puskesmas</title>
+    <title>Grafik Kunjungan & Capaian - Kepala Puskesmas</title>
     <link rel="stylesheet" href="/css/output.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .font-poppins { font-family: 'Poppins', sans-serif; }
         .font-inter { font-family: 'Inter', sans-serif; }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-slate-50 font-inter antialiased text-slate-800 flex h-screen overflow-hidden">
     
-    <%- include('../partials/sidebar', { active: 'dashboard', role: 'kepala' }) %>
+    <%- include('../partials/sidebar', { active: 'grafikkunjungan', role: 'kepala' }) %>
 
     <div class="flex-1 flex flex-col h-screen overflow-y-auto relative">
-        <%- include('../partials/header', { pageTitle: 'Dashboard', role: 'kepala' }) %>
+        <%- include('../partials/header', { pageTitle: 'Grafik & Rekap Capaian', role: 'kepala' }) %>
 
         <main class="p-8 space-y-6 w-full">
             <div>
-                <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Dashboard Kepala Puskesmas</h2>
-                <p class="text-[#6B7280] text-sm mt-1">Puskesmas Sungai Tarab · Rabu, 25 Januari 2025</p>
+                <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Grafik Kunjungan & Capaian Program PTM</h2>
+                <p class="text-[#6B7280] text-sm mt-1">Rekap tingkat eksekutif — semua data dari pasien terverifikasi</p>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col justify-between">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        </div>
-                        <span class="px-2 py-1 bg-amber-50 text-amber-600 border border-amber-200 text-[10px] font-semibold rounded-md">Perlu Tindakan</span>
-                    </div>
-                    <div><p class="text-3xl font-poppins font-bold text-gray-800">1</p><p class="text-gray-500 text-xs font-medium mt-1">Laporan Menunggu</p></div>
-                </div>
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col justify-between">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="w-10 h-10 rounded-xl bg-green-100 text-green-600 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                        </div>
-                    </div>
-                    <div><p class="text-3xl font-poppins font-bold text-gray-800">11</p><p class="text-gray-500 text-xs font-medium mt-1">Laporan Disahkan <span class="text-gray-400 font-normal ml-1">Tahun 2024-2025</span></p></div>
-                </div>
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col justify-between">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
-                        </div>
-                    </div>
-                    <div><p class="text-3xl font-poppins font-bold text-gray-800">1</p><p class="text-gray-500 text-xs font-medium mt-1">Laporan Ditolak</p></div>
-                </div>
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col justify-between">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        </div>
-                    </div>
-                    <div><p class="text-3xl font-poppins font-bold text-gray-800">13</p><p class="text-gray-500 text-xs font-medium mt-1">Total Laporan</p></div>
-                </div>
-            </div>
-
+            <!-- GRAFIK KUNJUNGAN PASIEN (Activity 34) -->
             <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <div class="flex items-center justify-between mb-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div>
-                        <h3 class="text-[#1F2937] font-poppins font-semibold text-lg">Grafik Kunjungan Pasien Hipertensi</h3>
-                        <p class="text-[#6B7280] text-sm mt-0.5">Perbandingan jumlah pendaftar vs yang diperiksa per bulan</p>
+                        <h3 class="text-[#1F2937] font-poppins font-semibold text-lg">Grafik Kunjungan Pasien per Bulan</h3>
+                        <p class="text-[#6B7280] text-sm mt-0.5">Total pasien unik &amp; total kunjungan skrining per periode</p>
                     </div>
-                    <div class="flex items-center gap-4 text-sm font-medium">
-                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-[#FBBF24]"></div><span class="text-[#6B7280]">Kunjungan (Mendaftar)</span></div>
-                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-[#10B981]"></div><span class="text-[#6B7280]">Pemeriksaan (Diskrinning)</span></div>
+                    <div class="flex flex-wrap items-center gap-4 text-xs font-medium">
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-[#3B82F6]"></div><span class="text-[#6B7280]">Total Pasien</span></div>
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-[#10B981]"></div><span class="text-[#6B7280]">Total Skrining</span></div>
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-[#EF4444]"></div><span class="text-[#6B7280]">Hipertensi</span></div>
                     </div>
                 </div>
-                <div class="w-full h-[320px]">
+                <% if (grafikData.length === 0) { %>
+                <div class="text-center py-16 text-gray-400 text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-3 text-gray-300"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
+                    Belum ada data kunjungan yang tersedia
+                </div>
+                <% } else { %>
+                <div class="w-full h-[300px]">
                     <canvas id="kunjunganChart"></canvas>
                 </div>
+                <% } %>
             </div>
 
-            <div class="bg-[#FEF3C7] border border-[#F59E0B]/30 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div class="flex items-start gap-4">
-                    <div class="w-10 h-10 bg-[#F59E0B] rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    </div>
-                    <div>
-                        <p class="text-[#92400E] font-semibold text-sm sm:text-base">Terdapat 1 laporan menunggu persetujuan Anda</p>
-                        <p class="text-[#92400E]/80 text-xs sm:text-sm mt-0.5">Laporan Januari 2025 dari Dr. Hendra · diterima 25 Jan 2025</p>
-                    </div>
+            <!-- REKAP PER PERIODE — EXEC LEVEL (Activity 29) -->
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-100">
+                    <h3 class="text-[#1F2937] font-poppins font-semibold">Rekap Data Per Periode (Tingkat Eksekutif)</h3>
+                    <p class="text-[#6B7280] text-xs mt-0.5">Rekapitulasi capaian program PTM per bulan — hanya data terverifikasi</p>
                 </div>
-                <a href="/kepala/persetujuan" class="bg-[#F59E0B] hover:bg-[#D97706] text-white px-5 py-2.5 rounded-xl text-sm transition-all font-medium whitespace-nowrap shadow-sm w-full sm:w-auto text-center">
-                    Review Sekarang
-                </a>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-[#F8FAFC] border-b border-gray-100">
+                                <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Periode</th>
+                                <th class="text-right px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Total Pasien</th>
+                                <th class="text-right px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Total Skrining</th>
+                                <th class="text-right px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Hipertensi</th>
+                                <th class="text-right px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Terkendali</th>
+                                <th class="text-right px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">% Capaian</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            <% if (rekapPeriode.length === 0) { %>
+                            <tr><td colspan="6" class="text-center py-12 text-gray-400 text-sm">Belum ada data rekap</td></tr>
+                            <% } %>
+                            <% rekapPeriode.forEach(function(r) { %>
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 text-sm text-[#1F2937] font-medium"><%= r.nama_bulan %> <%= r.periode_tahun %></td>
+                                <td class="px-6 py-4 text-sm text-[#1F2937] text-right font-medium"><%= parseInt(r.total_pasien).toLocaleString('id-ID') %></td>
+                                <td class="px-6 py-4 text-sm text-[#6B7280] text-right"><%= parseInt(r.total_skrining).toLocaleString('id-ID') %></td>
+                                <td class="px-6 py-4 text-sm text-[#EF4444] text-right font-medium"><%= parseInt(r.hipertensi).toLocaleString('id-ID') %></td>
+                                <td class="px-6 py-4 text-sm text-[#10B981] text-right font-medium"><%= parseInt(r.terkendali).toLocaleString('id-ID') %></td>
+                                <td class="px-6 py-4 text-right">
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
+                                        <%= parseFloat(r.persen_capaian) >= 60 ? 'bg-green-100 text-green-700' : parseFloat(r.persen_capaian) >= 40 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700' %>">
+                                        <%= r.persen_capaian %>%
+                                    </span>
+                                </td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div class="px-6 py-5 border-b border-gray-100">
-                        <h3 class="text-[#1F2937] font-poppins font-semibold">Laporan Masuk</h3>
-                    </div>
-                    <div class="p-5">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 bg-[#FEF3C7] rounded-xl flex items-center justify-center flex-shrink-0">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#D97706]"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
-                                </div>
-                                <div>
-                                    <p class="text-[#1F2937] font-semibold text-sm">Laporan Januari 2025</p>
-                                    <p class="text-[#6B7280] text-xs mt-0.5">Diajukan oleh Dr. Hendra · 25 Jan 2025</p>
-                                </div>
+            <!-- CAPAIAN PER NAGARI -->
+            <% if (capaianNagari.length > 0) { %>
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-100">
+                    <h3 class="text-[#1F2937] font-poppins font-semibold">Capaian per Nagari (Kumulatif)</h3>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-3">
+                        <% capaianNagari.forEach(function(n) { %>
+                        <% const pct = n.total_pasien > 0 ? Math.round((n.terkendali / n.total_pasien) * 100) : 0; %>
+                        <div class="flex items-center gap-4">
+                            <div class="w-28 text-sm text-[#1F2937] font-medium truncate flex-shrink-0"><%= n.nama_nagari %></div>
+                            <div class="flex-1 bg-gray-100 rounded-full h-2.5">
+                                <div class="h-2.5 rounded-full <%= pct >= 60 ? 'bg-green-500' : pct >= 40 ? 'bg-amber-400' : 'bg-red-400' %>"
+                                     style="width: <%= Math.min(pct, 100) %>%"></div>
                             </div>
-                            <div class="flex flex-wrap items-center gap-4">
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FEF3C7] text-[#D97706] text-xs font-semibold border border-[#FDE68A]">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></span>Menunggu Persetujuan
-                                </span>
-                                <a href="/kepala/persetujuan" class="text-sm font-semibold text-[#2563EB] hover:text-[#1D4ED8] hover:underline flex items-center gap-1 transition-colors">
-                                    Review <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                                </a>
+                            <div class="w-28 text-xs text-[#6B7280] flex-shrink-0 text-right">
+                                <%= n.terkendali %>/<%= n.total_pasien %> (<%= pct %>% terkendali)
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div class="px-6 py-5 border-b border-gray-100">
-                        <h3 class="text-[#1F2937] font-poppins font-semibold">Riwayat Laporan</h3>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead>
-                                <tr class="bg-[#F8FAFC] border-b border-gray-100">
-                                    <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Periode</th>
-                                    <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Tanggal</th>
-                                    <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Oleh</th>
-                                    <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-50">
-                                <tr class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-6 py-3.5 text-sm text-[#1F2937] font-medium">Desember 2024</td>
-                                    <td class="px-6 py-3.5 text-sm text-[#6B7280]">10 Jan 2025</td>
-                                    <td class="px-6 py-3.5 text-sm text-[#6B7280]">Dr. Hendra</td>
-                                    <td class="px-6 py-3.5"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D1FAE5] text-[#059669] text-[11px] font-bold border border-[#A7F3D0]"><span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>Disahkan</span></td>
-                                </tr>
-                                <tr class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-6 py-3.5 text-sm text-[#1F2937] font-medium">November 2024</td>
-                                    <td class="px-6 py-3.5 text-sm text-[#6B7280]">12 Des 2024</td>
-                                    <td class="px-6 py-3.5 text-sm text-[#6B7280]">Dr. Hendra</td>
-                                    <td class="px-6 py-3.5"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D1FAE5] text-[#059669] text-[11px] font-bold border border-[#A7F3D0]"><span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>Disahkan</span></td>
-                                </tr>
-                                <tr class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-6 py-3.5 text-sm text-[#1F2937] font-medium">Oktober 2024</td>
-                                    <td class="px-6 py-3.5 text-sm text-[#6B7280]">8 Nov 2024</td>
-                                    <td class="px-6 py-3.5 text-sm text-[#6B7280]">Dr. Hendra</td>
-                                    <td class="px-6 py-3.5"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FEE2E2] text-[#DC2626] text-[11px] font-bold border border-[#FECACA]"><span class="w-1.5 h-1.5 rounded-full bg-[#EF4444]"></span>Ditolak</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <% }) %>
                     </div>
                 </div>
             </div>
-
+            <% } %>
         </main>
     </div>
 
+    <% if (grafikData.length > 0) { %>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            
-            // Konfigurasi Umum Font Chart
-            Chart.defaults.font.family = "'Inter', sans-serif";
-            Chart.defaults.color = '#6B7280';
+    document.addEventListener('DOMContentLoaded', function() {
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#6B7280';
 
-            // CHART GRAFIK KUNJUNGAN (Kuning & Hijau)
-            const ctxKunjungan = document.getElementById('kunjunganChart').getContext('2d');
-            new Chart(ctxKunjungan, {
-                type: 'bar',
-                data: {
-                    // Label bulan (misal 6 bulan terakhir)
-                    labels: ["Agustus", "September", "Oktober", "November", "Desember", "Januari"],
-                    datasets: [
-                        {
-                            label: 'Kunjungan (Mendaftar)',
-                            data: [121, 97, 124, 89, 158, 161], // Data simulasi (angka diperkecil agar relevan dgn HT)
-                            backgroundColor: '#FBBF24', // Warna Kuning
-                            borderRadius: 2,
-                            barPercentage: 0.6,
-                            categoryPercentage: 0.4
-                        },
-                        {
-                            label: 'Pemeriksaan (Diskrinning)',
-                            data: [121, 97, 124, 89, 155, 160], // Data simulasi (biasanya = atau < kunjungan)
-                            backgroundColor: '#10B981', // Warna Hijau
-                            borderRadius: 2,
-                            barPercentage: 0.6,
-                            categoryPercentage: 0.4
-                        }
-                    ]
+        const labels = [<% grafikData.forEach(function(d,i){ %>"<%= d.label %>"<%= i < grafikData.length-1 ? ',' : '' %><% }) %>];
+        const dataPasien   = [<% grafikData.forEach(function(d,i){ %><%= d.total_pasien %><%= i < grafikData.length-1 ? ',' : '' %><% }) %>];
+        const dataSkrining = [<% grafikData.forEach(function(d,i){ %><%= d.total_skrining %><%= i < grafikData.length-1 ? ',' : '' %><% }) %>];
+        const dataHT       = [<% grafikData.forEach(function(d,i){ %><%= d.hipertensi %><%= i < grafikData.length-1 ? ',' : '' %><% }) %>];
+
+        new Chart(document.getElementById('kunjunganChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Total Pasien', data: dataPasien, backgroundColor: '#3B82F6', borderRadius: 3, barPercentage: 0.5, categoryPercentage: 0.6 },
+                    { label: 'Total Skrining', data: dataSkrining, backgroundColor: '#10B981', borderRadius: 3, barPercentage: 0.5, categoryPercentage: 0.6 },
+                    { label: 'Hipertensi', data: dataHT, backgroundColor: '#EF4444', borderRadius: 3, barPercentage: 0.5, categoryPercentage: 0.6 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { backgroundColor: 'white', titleColor: '#1F2937', bodyColor: '#4B5563', borderColor: '#E5E7EB', borderWidth: 1, padding: 12 }
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { 
-                            display: false // Disembunyikan karena kita buat legend custom di atas chart
-                        },
-                        tooltip: { 
-                            backgroundColor: 'white', 
-                            titleColor: '#1F2937', 
-                            bodyColor: '#4B5563', 
-                            borderColor: '#E5E7EB', 
-                            borderWidth: 1, 
-                            padding: 12, 
-                            usePointStyle: true, 
-                            titleFont: { family: "'Poppins', sans-serif" } 
-                        },
-                        // Menambahkan angka di atas bar chart (seperti referensi asli)
-                        animation: {
-                            onComplete: function() {
-                                const chartInstance = this;
-                                const ctx = chartInstance.ctx;
-                                ctx.font = "10px Inter";
-                                ctx.textAlign = 'center';
-                                ctx.textBaseline = 'bottom';
-                                ctx.fillStyle = '#4B5563';
-
-                                chartInstance.data.datasets.forEach(function(dataset, i) {
-                                    const meta = chartInstance.getDatasetMeta(i);
-                                    meta.data.forEach(function(bar, index) {
-                                        const data = dataset.data[index];
-                                        // Jangan print 0
-                                        if (data > 0) {
-                                            ctx.fillText(data, bar.x, bar.y - 5);
-                                        }
-                                    });
-                                });
-                            }
-                        }
-                    },
-                    scales: {
-                        x: { 
-                            grid: { display: false, drawBorder: false } 
-                        },
-                        y: { 
-                            grid: { color: '#F3F4F6', drawBorder: false, strokeDash: [3, 3] }, 
-                            min: 0,
-                            suggestedMax: 200 // Diberi ruang agar angka di atas bar tidak terpotong
-                        }
-                    },
-                    interaction: { mode: 'index', intersect: false }
-                }
-            });
-
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { grid: { color: '#F3F4F6' }, min: 0 }
+                },
+                interaction: { mode: 'index', intersect: false }
+            }
         });
+    });
     </script>
+    <% } %>
 </body>
 </html>

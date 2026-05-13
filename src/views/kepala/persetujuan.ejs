@@ -23,176 +23,242 @@
         <main class="p-8 space-y-6 w-full">
             <div>
                 <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Persetujuan Laporan</h2>
-                <p id="header-subtitle" class="text-[#D97706] text-sm mt-1 font-medium">1 laporan menunggu persetujuan Anda</p>
+                <p class="text-sm mt-1 <% if (laporanList.filter(l => l.status === 'dikirim').length > 0) { %>text-[#D97706]<% } else { %>text-[#10B981]<% } %> font-medium">
+                    <% const jumlahMenunggu = laporanList.filter(l => l.status === 'dikirim').length; %>
+                    <% if (jumlahMenunggu > 0) { %><%= jumlahMenunggu %> laporan menunggu persetujuan Anda<% } else { %>Semua laporan telah diproses<% } %>
+                </p>
             </div>
 
-            <div id="section-list" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <!-- DETAIL LAPORAN (tampil jika ada ?id=) -->
+            <% if (detailLaporan) { %>
+            <div class="max-w-5xl mx-auto space-y-5 pb-10">
+                <a href="/kepala/persetujuan" class="flex items-center gap-2 text-[#6B7280] hover:text-[#1F2937] text-sm font-medium transition-colors w-fit">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    Kembali ke List Laporan
+                </a>
+
+                <!-- Banner status -->
+                <% if (detailLaporan.status === 'disahkan') { %>
+                <div class="bg-[#D1FAE5] border border-[#10B981]/30 rounded-2xl p-4 flex items-center gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#10B981] flex-shrink-0"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <div>
+                        <p class="text-[#065F46] text-sm font-semibold">Laporan Disahkan — Terkunci</p>
+                        <p class="text-[#065F46] text-xs mt-0.5">Laporan ini telah disahkan dan dikunci. Tidak dapat diubah kembali.</p>
+                    </div>
+                </div>
+                <% } else if (detailLaporan.status === 'ditolak') { %>
+                <div class="bg-[#FEE2E2] border border-[#EF4444]/30 rounded-2xl p-4 space-y-1.5">
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#EF4444] flex-shrink-0"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                        <p class="text-[#7F1D1D] text-sm font-medium">Laporan ini telah <strong>Ditolak</strong>. PJ Program PTM perlu memperbaiki laporan.</p>
+                    </div>
+                    <p class="text-[#DC2626] text-xs ml-6 font-medium">Catatan: <%= detailLaporan.catatan_tolak || '-' %></p>
+                </div>
+                <% } %>
+
+                <!-- Kartu laporan -->
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="px-8 py-6 border-b border-gray-100">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="text-[#1F2937] font-poppins font-semibold text-lg">
+                                    Laporan <%= detailLaporan.nama_bulan %> <%= detailLaporan.periode_tahun %>
+                                </h3>
+                                <p class="text-[#6B7280] text-sm mt-0.5">Oleh: <%= detailLaporan.nama_pj %> · Dikirim: <%= detailLaporan.dikirim_pada ? new Date(detailLaporan.dikirim_pada).toLocaleDateString('id-ID') : '-' %></p>
+                            </div>
+                            <div class="flex gap-4 text-center">
+                                <div class="bg-blue-50 rounded-xl px-4 py-2">
+                                    <p class="text-2xl font-poppins font-bold text-blue-700"><%= detailLaporan.total_pasien ? parseInt(detailLaporan.total_pasien).toLocaleString('id-ID') : 0 %></p>
+                                    <p class="text-xs text-blue-600">Total Pasien</p>
+                                </div>
+                                <div class="bg-green-50 rounded-xl px-4 py-2">
+                                    <p class="text-2xl font-poppins font-bold text-green-700"><%= detailLaporan.total_skrining ? parseInt(detailLaporan.total_skrining).toLocaleString('id-ID') : 0 %></p>
+                                    <p class="text-xs text-green-600">Total Skrining</p>
+                                </div>
+                            </div>
+                        </div>
+                        <% if (detailLaporan.narasi) { %>
+                        <p class="text-[#6B7280] text-sm leading-relaxed bg-slate-50 rounded-xl p-4 border border-slate-100">
+                            <%= detailLaporan.narasi %>
+                        </p>
+                        <% } %>
+                    </div>
+
+                    <!-- Distribusi per nagari -->
+                    <% if (distribusiNagari.length > 0) { %>
+                    <div class="px-8 py-6 border-b border-gray-100">
+                        <h4 class="text-[#1F2937] mb-4 font-poppins font-semibold">Distribusi per Nagari</h4>
+                        <div class="w-full h-[200px]">
+                            <canvas id="detailChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="px-8 py-6 border-b border-gray-100">
+                        <h4 class="text-[#1F2937] mb-4 font-poppins font-semibold">Rekap Detail per Nagari</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="border-b-2 border-gray-200">
+                                        <th class="text-left py-3 px-2 text-[#1F2937] font-semibold">Nagari</th>
+                                        <th class="text-center py-3 px-2 text-[#1F2937] font-semibold">Total Pasien</th>
+                                        <th class="text-center py-3 px-2 text-[#1F2937] font-semibold">Hipertensi</th>
+                                        <th class="text-center py-3 px-2 text-[#1F2937] font-semibold">Terkendali</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    <% distribusiNagari.forEach(function(n) { %>
+                                    <tr>
+                                        <td class="py-3 px-2 text-[#1F2937] font-medium"><%= n.nama_nagari %></td>
+                                        <td class="py-3 px-2 text-center text-[#6B7280]"><%= n.total_pasien %></td>
+                                        <td class="py-3 px-2 text-center text-[#EF4444] font-medium"><%= n.hipertensi %></td>
+                                        <td class="py-3 px-2 text-center text-[#10B981] font-medium"><%= n.terkendali %></td>
+                                    </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <% } %>
+
+                    <!-- Tombol aksi -->
+                    <% if (detailLaporan.status === 'dikirim') { %>
+                    <div class="px-8 py-6 flex flex-col sm:flex-row items-center justify-end gap-3 border-t border-gray-100">
+                        <!-- Tolak -->
+                        <button onclick="document.getElementById('modal-tolak').classList.remove('hidden-el')"
+                            class="flex items-center justify-center gap-2 border border-[#EF4444] text-[#EF4444] px-6 py-2.5 rounded-full text-sm hover:bg-[#FEE2E2] transition-all font-medium bg-white w-full sm:w-auto">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                            Tolak Laporan
+                        </button>
+                        <!-- Setujui -->
+                        <form method="POST" action="/kepala/persetujuan/setujui/<%= detailLaporan.id_laporan %>"
+                              onsubmit="return confirm('Apakah Anda yakin ingin menyetujui dan mengesahkan laporan ini?')">
+                            <button type="submit" class="flex items-center justify-center gap-2 bg-[#10B981] hover:bg-[#059669] text-white px-6 py-2.5 rounded-full text-sm transition-all font-medium w-full sm:w-auto">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                Setujui &amp; Sahkan
+                            </button>
+                        </form>
+                    </div>
+                    <% } else { %>
+                    <div class="px-8 py-4 border-t border-gray-100 text-center text-sm text-gray-400">
+                        Laporan ini sudah diproses dan tidak dapat diubah.
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- MODAL TOLAK -->
+            <div id="modal-tolak" class="hidden-el fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm" onclick="document.getElementById('modal-tolak').classList.add('hidden-el')"></div>
+                <div class="bg-white rounded-2xl w-full max-w-md p-7 shadow-2xl z-10 relative">
+                    <h3 class="text-[#1F2937] font-poppins font-semibold text-lg mb-1">Tolak Laporan</h3>
+                    <p class="text-[#6B7280] text-xs mb-5">Laporan akan dikembalikan ke PJ Program PTM untuk diperbaiki.</p>
+                    <form method="POST" action="/kepala/persetujuan/tolak/<%= detailLaporan.id_laporan %>">
+                        <label class="text-sm text-[#1F2937] font-medium mb-2 block">Catatan Penolakan <span class="text-[#EF4444]">*</span></label>
+                        <textarea name="catatan_tolak" required placeholder="Jelaskan alasan mengapa laporan ini ditolak..." rows="4"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#EF4444] resize-none transition-all"></textarea>
+                        <div class="flex gap-3 mt-5">
+                            <button type="button" onclick="document.getElementById('modal-tolak').classList.add('hidden-el')"
+                                class="flex-1 border border-gray-200 text-[#6B7280] py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-all font-medium">Batal</button>
+                            <button type="submit" class="flex-1 bg-[#EF4444] hover:bg-[#DC2626] text-white py-2.5 rounded-xl text-sm transition-all font-medium shadow-sm">Tolak Laporan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <% if (distribusiNagari.length > 0) { %>
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Chart.defaults.font.family = "'Inter', sans-serif";
+                const ctx = document.getElementById('detailChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: [<% distribusiNagari.forEach(function(n,i){ %>"<%= n.nama_nagari %>"<%= i < distribusiNagari.length-1 ? ',' : '' %><% }) %>],
+                        datasets: [{
+                            label: 'Total Pasien',
+                            data: [<% distribusiNagari.forEach(function(n,i){ %><%= n.total_pasien %><%= i < distribusiNagari.length-1 ? ',' : '' %><% }) %>],
+                            backgroundColor: '#EF4444',
+                            borderRadius: 4,
+                            barPercentage: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { x: { grid: { display: false } }, y: { grid: { color: '#F3F4F6' }, min: 0 } }
+                    }
+                });
+            });
+            </script>
+            <% } %>
+
+            <% } else { %>
+            <!-- DAFTAR SEMUA LAPORAN -->
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead>
                             <tr class="bg-[#F8FAFC] border-b border-gray-100">
                                 <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Periode</th>
                                 <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Dibuat Oleh</th>
-                                <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Tanggal Ajukan</th>
+                                <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Tanggal Kirim</th>
                                 <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Total Pasien</th>
                                 <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Status</th>
                                 <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody id="table-body" class="divide-y divide-gray-50">
-                            </tbody>
+                        <tbody class="divide-y divide-gray-50">
+                            <% if (laporanList.length === 0) { %>
+                            <tr><td colspan="6" class="text-center py-12 text-gray-400 text-sm">Belum ada laporan yang dikirimkan</td></tr>
+                            <% } %>
+                            <% laporanList.forEach(function(l) { %>
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 text-sm text-[#1F2937] font-medium">
+                                    <%= l.nama_bulan %> <%= l.periode_tahun %>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-[#6B7280]"><%= l.nama_pj %></td>
+                                <td class="px-6 py-4 text-sm text-[#6B7280]">
+                                    <%= l.dikirim_pada ? new Date(l.dikirim_pada).toLocaleDateString('id-ID') : '-' %>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-[#1F2937] font-medium">
+                                    <%= l.total_pasien ? parseInt(l.total_pasien).toLocaleString('id-ID') : '-' %>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <% if (l.status === 'dikirim') { %>
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></span>Menunggu
+                                    </span>
+                                    <% } else if (l.status === 'disahkan') { %>
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border bg-[#D1FAE5] text-[#059669] border-[#A7F3D0]">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>Disahkan
+                                    </span>
+                                    <% } else { %>
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border bg-[#FEE2E2] text-[#DC2626] border-[#FECACA]">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-[#EF4444]"></span>Ditolak
+                                    </span>
+                                    <% } %>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <a href="/kepala/persetujuan?id=<%= l.id_laporan %>"
+                                        class="flex items-center gap-1.5 text-[#2563EB] hover:text-[#1D4ED8] text-xs font-medium transition-all">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                        Detail
+                                    </a>
+                                </td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
                     </table>
                 </div>
                 <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50">
-                    <p id="table-footer-text" class="text-[#6B7280] text-xs">4 laporan total · 2 disetujui · 1 menunggu</p>
+                    <p class="text-[#6B7280] text-xs">
+                        <%= laporanList.length %> laporan total ·
+                        <%= laporanList.filter(l => l.status === 'disahkan').length %> disahkan ·
+                        <%= laporanList.filter(l => l.status === 'dikirim').length %> menunggu ·
+                        <%= laporanList.filter(l => l.status === 'ditolak').length %> ditolak
+                    </p>
                 </div>
             </div>
-
-            <div id="section-detail" class="hidden-el max-w-5xl mx-auto space-y-5 pb-10">
-                <button onclick="hideDetail()" class="flex items-center gap-2 text-[#6B7280] hover:text-[#1F2937] text-sm font-medium transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                    Kembali ke List Laporan
-                </button>
-
-                <div id="banner-disetujui" class="hidden-el bg-[#D1FAE5] border border-[#10B981]/30 rounded-2xl p-4 flex items-center gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#10B981] flex-shrink-0"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                    <div>
-                        <p class="text-[#065F46] text-sm font-semibold">Laporan Disahkan — Terkunci</p>
-                        <p class="text-[#065F46] text-xs mt-0.5">Laporan ini telah disahkan dan dikunci. Tidak dapat diubah atau diedit kembali.</p>
-                    </div>
-                </div>
-
-                <div id="banner-ditolak" class="hidden-el bg-[#FEE2E2] border border-[#EF4444]/30 rounded-2xl p-4 space-y-1.5">
-                    <div class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#EF4444] flex-shrink-0"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                        <p class="text-[#7F1D1D] text-sm font-medium">Laporan ini telah <strong class="font-bold">Ditolak</strong>. PJ Program PTM perlu memperbaiki laporan.</p>
-                    </div>
-                    <p id="teks-catatan-tolak" class="text-[#DC2626] text-xs ml-6 font-medium">Catatan: -</p>
-                </div>
-
-                <div id="laporan-card" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-opacity duration-300">
-                    
-                    <div class="bg-white px-8 py-8 border-b border-gray-100">
-                        <p id="det-narasi" class="text-[#6B7280] text-sm leading-relaxed">
-                            Program PTM Puskesmas Sungai Tarab pada periode <strong class="text-[#1F2937]">Januari 2025</strong> telah berhasil melakukan skrining terhadap <strong class="text-[#1F2937]">1.615 pasien</strong> dari target 2.000 pasien (81%). Prevalensi hipertensi tercatat sebesar 39% dengan tingkat terkendali 71.8%.
-                        </p>
-                    </div>
-
-                    <div class="px-8 py-8 border-b border-gray-100">
-                        <h4 class="text-[#1F2937] mb-6 font-poppins font-semibold text-lg">Distribusi per Nagari</h4>
-                        <div class="w-full h-[250px]">
-                            <canvas id="detailChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="px-8 py-8">
-                        <h4 class="text-[#1F2937] mb-6 font-poppins font-semibold text-lg">Rekap Detail per Nagari</h4>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm">
-                                <thead>
-                                    <tr class="border-b-2 border-gray-300">
-                                        <th class="text-left py-3 px-2 text-[#1F2937] font-semibold">Nagari</th>
-                                        <th class="text-center py-3 px-2 text-[#1F2937] font-semibold">Total</th>
-                                        <th class="text-center py-3 px-2 text-[#1F2937] font-semibold">Hipertensi</th>
-                                        <th class="text-center py-3 px-2 text-[#1F2937] font-semibold">Terkendali</th>
-                                        <th class="text-center py-3 px-2 text-[#1F2937] font-semibold">% Capaian</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-100">
-                                    <tr>
-                                        <td class="py-4 px-2 text-[#1F2937] font-medium">Sg. Tarab</td>
-                                        <td class="py-4 px-2 text-center text-[#6B7280]">420</td>
-                                        <td class="py-4 px-2 text-center text-[#EF4444] font-medium">165</td>
-                                        <td class="py-4 px-2 text-center text-[#10B981] font-medium">115</td>
-                                        <td class="py-4 px-2 text-center text-[#3B82F6] font-medium">105%</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="py-4 px-2 text-[#1F2937] font-medium">Baringin</td>
-                                        <td class="py-4 px-2 text-center text-[#6B7280]">380</td>
-                                        <td class="py-4 px-2 text-center text-[#EF4444] font-medium">148</td>
-                                        <td class="py-4 px-2 text-center text-[#10B981] font-medium">104</td>
-                                        <td class="py-4 px-2 text-center text-[#3B82F6] font-medium">95%</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="py-4 px-2 text-[#1F2937] font-medium">Salimpaung</td>
-                                        <td class="py-4 px-2 text-center text-[#6B7280]">310</td>
-                                        <td class="py-4 px-2 text-center text-[#EF4444] font-medium">122</td>
-                                        <td class="py-4 px-2 text-center text-[#10B981] font-medium">85</td>
-                                        <td class="py-4 px-2 text-center text-[#3B82F6] font-medium">78%</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="py-4 px-2 text-[#1F2937] font-medium">Tigo Jangko</td>
-                                        <td class="py-4 px-2 text-center text-[#6B7280]">290</td>
-                                        <td class="py-4 px-2 text-center text-[#EF4444] font-medium">110</td>
-                                        <td class="py-4 px-2 text-center text-[#10B981] font-medium">77</td>
-                                        <td class="py-4 px-2 text-center text-[#3B82F6] font-medium">73%</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="py-4 px-2 text-[#1F2937] font-medium">Guguak</td>
-                                        <td class="py-4 px-2 text-center text-[#6B7280]">215</td>
-                                        <td class="py-4 px-2 text-center text-[#EF4444] font-medium">83</td>
-                                        <td class="py-4 px-2 text-center text-[#10B981] font-medium">58</td>
-                                        <td class="py-4 px-2 text-center text-[#3B82F6] font-medium">54%</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div id="action-menunggu" class="px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-100">
-                        <button onclick="alert('Mengunduh PDF...')" class="w-full sm:w-auto flex items-center justify-center gap-2 border border-gray-200 bg-white text-[#6B7280] px-6 py-2.5 rounded-full text-sm hover:bg-gray-50 transition-all font-medium">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                            Unduh PDF
-                        </button>
-                        
-                        <div class="flex w-full sm:w-auto gap-4 sm:ml-auto">
-                            <button onclick="openTolakModal()" class="flex-1 sm:flex-none flex items-center justify-center gap-2 border border-[#EF4444] text-[#EF4444] px-6 py-2.5 rounded-full text-sm hover:bg-[#FEE2E2] transition-all font-medium bg-white">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                                Tolak Laporan
-                            </button>
-                            <button onclick="handleSetujui()" class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[#10B981] hover:bg-[#059669] text-white px-6 py-2.5 rounded-full text-sm transition-all font-medium">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                                Setujui & Sahkan
-                            </button>
-                        </div>
-                    </div>
-
-                    <div id="action-selesai" class="hidden-el px-8 py-6 flex items-center gap-3 border-t border-gray-100">
-                        <button onclick="alert('Mengunduh PDF...')" class="flex items-center justify-center gap-2 border border-gray-200 bg-white text-[#6B7280] px-6 py-2.5 rounded-full text-sm hover:bg-gray-50 transition-all font-medium">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                            Unduh PDF
-                        </button>
-                    </div>
-
-                </div>
-            </div>
-
-            <div id="modal-tolak" class="hidden-el fixed inset-0 z-50 flex items-center justify-center p-4">
-                <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm" onclick="closeTolakModal()"></div>
-                <div class="bg-white rounded-2xl w-full max-w-md p-7 shadow-2xl z-10 relative">
-                    <div class="flex items-center gap-4 mb-5">
-                        <div class="w-12 h-12 bg-[#FEE2E2] rounded-full flex items-center justify-center flex-shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#EF4444]"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                        </div>
-                        <div>
-                            <h3 class="text-[#1F2937] font-poppins font-semibold text-lg">Tolak Laporan</h3>
-                            <p class="text-[#6B7280] text-xs mt-0.5">Laporan akan dikembalikan ke PJ Program PTM</p>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-sm text-[#1F2937] font-medium mb-2 block">Catatan Penolakan <span class="text-[#EF4444]">*</span></label>
-                        <textarea id="tolak-alasan" placeholder="Jelaskan alasan mengapa laporan ini ditolak..." rows="4" class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#EF4444] resize-none transition-all"></textarea>
-                        <p id="tolak-error" class="hidden-el text-[#EF4444] text-xs mt-1.5 font-medium flex items-center gap-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Alasan penolakan wajib diisi
-                        </p>
-                    </div>
-                    <div class="flex gap-3 mt-6">
-                        <button onclick="closeTolakModal()" class="flex-1 border border-gray-200 text-[#6B7280] py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-all font-medium">Batal</button>
-                        <button onclick="submitTolak()" class="flex-1 bg-[#EF4444] hover:bg-[#DC2626] text-white py-2.5 rounded-xl text-sm transition-all font-medium shadow-sm">Tolak Laporan</button>
-                    </div>
-                </div>
-            </div>
-
+            <% } %>
         </main>
     </div>
 

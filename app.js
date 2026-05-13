@@ -290,14 +290,33 @@ app.get('/ptm/laporan/export/:id_laporan',
 // --- RUTE KEPALA PUSKESMAS (Hanya untuk role 'kepala_puskesmas') ---
 const kepalaController = require('./src/controllers/kepalaController');
 
-// PASTIKAN memanggil fungsi renderDashboardKepala!
-app.get('/kepala', isAuthenticated, kepalaController.renderDashboardKepala);
+// Dashboard Kepala Puskesmas
+app.get('/kepala',
+    isAuthenticated,
+    isAuthorized('kepala_puskesmas'),
+    kepalaController.renderDashboardKepala
+);
 
+// Persetujuan laporan (Activity 30–33)
 app.get('/kepala/persetujuan',
     isAuthenticated,
     isAuthorized('kepala_puskesmas'),
     kepalaController.renderPersetujuan
 );
+
+app.post('/kepala/persetujuan/setujui/:id_laporan',
+    isAuthenticated,
+    isAuthorized('kepala_puskesmas'),
+    kepalaController.handleSetujuiLaporan
+);
+
+app.post('/kepala/persetujuan/tolak/:id_laporan',
+    isAuthenticated,
+    isAuthorized('kepala_puskesmas'),
+    kepalaController.handleTolakLaporan
+);
+
+// Grafik kunjungan & rekap per periode - Activity 34 & 29
 app.get('/kepala/grafikkunjungan',
     isAuthenticated,
     isAuthorized('kepala_puskesmas'),
