@@ -85,18 +85,8 @@ exports.handleUpdatePasien = async (req, res) => {
     }
 };
 
-/**
- * 4. Memproses Hapus Data Pasien
- */
-/**
- * 4. Memproses Hapus Data Pasien
- */
-/**
- * 4. Memproses Hapus Data Pasien
- */
-/**
- * 4. Memproses Hapus Data Pasien
- */
+
+ //4. Memproses Hapus Data Pasien
 exports.handleDeletePasien = async (req, res) => {
     const { id } = req.params;
     try {
@@ -134,5 +124,100 @@ exports.handleDeletePasien = async (req, res) => {
         } catch (fetchErr) {
             res.status(500).send("Terjadi kesalahan sistem.");
         }
+    }
+};
+
+/**
+ * 5. Menampilkan Halaman Dashboard PTM
+ */
+exports.renderDashboardPTM = async (req, res) => {
+    try {
+        const tahunIni = new Date().getFullYear();
+        
+        // Asumsi Target Tahunan Puskesmas adalah 2000
+        const TARGET_TAHUNAN = 2000;
+        
+        // Target spesifik per Nagari (sesuaikan dengan nama Nagari di Database kamu)
+        const targetNagari = {
+            'Sungai Tarab': 500,
+            'Baringin': 450,
+            'Salimpaung': 400,
+            'Tigo Jangko': 350,
+            'Guguak': 300
+        };
+
+        // 1. Total Skrining Tahun Ini (Capaian)
+        const qCapaian = `
+            SELECT COUNT(DISTINCT s.id_pasien) as total_tercapai
+            FROM skrining s
+            JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
+            WHERE s.status_validasi = 'terverifikasi'
+              AND EXTRACT(YEAR FROM k.tanggal_kegiatan) = $1
+        `;
+        const resCapaian = await pool.query(qCapaian, [tahunIni]);
+        const totalTercapai = parseInt(resCapaian.rows[0].total_tercapai) || 0;
+        const sisaTarget = Math.max(0, TARGET_TAHUNAN - totalTercapai);
+        const persenTarget = Math.round((totalTercapai / TARGET_TAHUNAN) * 100);
+
+        // 2. Metrik Hipertensi & Terkendali (Tahun Ini)
+        const qMetrik = `
+            SELECT 
+                COUNT(DISTINCT CASE WHEN s.sistole >= 140 OR s.diastole >= 90 THEN s.id_pasien END) as hipertensi,
+                COUNT(DISTINCT CASE WHEN s.sistole < 140 AND s.diastole < 90 THEN s.id_pasien END) as terkendali
+            FROM skrining s
+            JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
+            WHERE s.status_validasi = 'terverifikasi'
+              AND EXTRACT(YEAR FROM k.tanggal_kegiatan) = $1
+        `;
+        const resMetrik = await pool.query(qMetrik, [tahunIni]);
+        const totalHipertensi = parseInt(resMetrik.rows[0].hipertensi) || 0;
+        const totalTerkendali = parseInt(resMetrik.rows[0].terkendali) || 0;
+        const persenHipertensi = totalTercapai > 0 ? ((totalHipertensi / totalTercapai) * 100).toFixed(1) : 0;
+        const persenTerkendali = totalTercapai > 0 ? ((totalTerkendali / totalTercapai) * 100).toFixed(1) : 0;
+
+        // 3. Capaian per Nagari
+        const qNagari = `
+            SELECT 
+                n.nama_nagari,
+                COUNT(DISTINCT s.id_pasien) as capaian
+            FROM nagari n
+            LEFT JOIN jorong j ON n.id_nagari = j.id_nagari
+            LEFT JOIN pasien p ON j.id_jorong = p.id_jorong
+            LEFT JOIN skrining s ON p.id_pasien = s.id_pasien AND s.status_validasi = 'terverifikasi'
+            LEFT JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan AND EXTRACT(YEAR FROM k.tanggal_kegiatan) = $1
+            GROUP BY n.nama_nagari
+            ORDER BY capaian DESC
+        `;
+        const resNagari = await pool.query(qNagari, [tahunIni]);
+        
+        // Format data gabungan dengan target
+        const dataNagari = resNagari.rows.map(row => {
+            const target = targetNagari[row.nama_nagari] || 400; // Default 400 jika nama tidak cocok
+            const capaian = parseInt(row.capaian) || 0;
+            return {
+                nama_nagari: row.nama_nagari,
+                capaian: capaian,
+                target: target,
+                persentase: Math.round((capaian / target) * 100)
+            };
+        });
+
+        // Lempar ke EJS
+        res.render('ptm/dashboardptm', {
+            active: 'dashboard',
+            tahunIni,
+            TARGET_TAHUNAN,
+            totalTercapai,
+            sisaTarget,
+            persenTarget,
+            totalHipertensi,
+            persenHipertensi,
+            persenTerkendali,
+            dataNagari
+        });
+
+    } catch (err) {
+        console.error("ERROR RENDER DASHBOARD PTM:", err);
+        res.status(500).send("Gagal memuat dashboard PTM.");
     }
 };

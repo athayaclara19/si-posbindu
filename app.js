@@ -199,11 +199,11 @@ app.get('/bidan/laporan/export',
 // --- RUTE PJ PTM (Hanya untuk role 'pj_ptm') ---
 const ptmController = require('./src/controllers/ptmController');
 
-app.get('/ptm',
-    isAuthenticated,
-    isAuthorized('pj_ptm'),
-    (req, res) => res.render('ptm/dashboardptm')
-);
+// KODE BARU
+app.get('/ptm', 
+    isAuthenticated, 
+    ptmController.renderDashboardPTM);
+
 app.get('/ptm/rekap',
     isAuthenticated,
     isAuthorized('pj_ptm'),
@@ -288,20 +288,20 @@ app.get('/ptm/laporan/export/:id_laporan',
 
 
 // --- RUTE KEPALA PUSKESMAS (Hanya untuk role 'kepala_puskesmas') ---
-app.get('/kepala',
-    isAuthenticated,
-    isAuthorized('kepala_puskesmas'),
-    (req, res) => res.render('kepala/dashboardkepala')
-);
+const kepalaController = require('./src/controllers/kepalaController');
+
+// PASTIKAN memanggil fungsi renderDashboardKepala!
+app.get('/kepala', isAuthenticated, kepalaController.renderDashboardKepala);
+
 app.get('/kepala/persetujuan',
     isAuthenticated,
     isAuthorized('kepala_puskesmas'),
-    (req, res) => res.render('kepala/persetujuan')
+    kepalaController.renderPersetujuan
 );
 app.get('/kepala/grafikkunjungan',
     isAuthenticated,
     isAuthorized('kepala_puskesmas'),
-    (req, res) => res.render('kepala/grafikkunjungan')
+    kepalaController.renderGrafikKunjungan
 );
 
 app.get('/kepala/peta-hipertensi',
