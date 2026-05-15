@@ -56,24 +56,42 @@
                         <tbody class="divide-y divide-gray-50">
                             
                             <% if (typeof riwayat !== 'undefined' && riwayat.length > 0) { %>
-                                <% riwayat.forEach(r => { 
-                                    // Set status untuk filter
-                                    let filterStatus = 'Semua';
-                                    if(r.status_validasi === 'menunggu') filterStatus = 'Menunggu Validasi';
-                                    if(r.status_validasi === 'terverifikasi') filterStatus = 'Valid';
-                                    if(r.status_validasi === 'ditolak') filterStatus = 'Perlu Revisi';
+                                <%
+                                    // ============================================================
+                                    // ATURAN PENTING EJS:
+                                    // Semua logika JavaScript (<% %>) harus selesai SEBELUM
+                                    // tag HTML <tr> dibuka. Jangan taruh <div> atau HTML
+                                    // di dalam blok forEach sebelum <tr>.
+                                    // ============================================================
+                                    riwayat.forEach(r => {
+
+                                        // PERBAIKAN: filterStatus diisi sesuai nilai DB yang sebenarnya
+                                        // Nilai di DB: 'menunggu', 'terverifikasi', 'revisi'
+                                        let filterStatus = 'Semua';
+                                        if (r.status_validasi === 'menunggu')      filterStatus = 'Menunggu Validasi';
+                                        if (r.status_validasi === 'terverifikasi') filterStatus = 'Valid';
+                                        if (r.status_validasi === 'revisi')        filterStatus = 'Perlu Revisi';
                                 %>
                                 <tr class="hover:bg-gray-50 transition-colors data-row cursor-default" data-status="<%= filterStatus %>">
+                                    
+                                    <!-- Kolom 1: Nama & NIK -->
                                     <td class="px-5 py-3.5">
                                         <p class="text-[#1F2937] text-sm font-medium search-target"><%= r.nama_pasien %></p>
                                         <p class="text-[#6B7280] text-xs font-mono search-target"><%= r.nik %></p>
                                     </td>
+
+                                    <!-- Kolom 2: Tanggal -->
                                     <td class="px-5 py-3.5 text-sm text-[#6B7280]">
                                         <%= new Date(r.tanggal_kegiatan).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) %>
                                     </td>
+
+                                    <!-- Kolom 3: Tekanan Darah -->
                                     <td class="px-5 py-3.5">
-                                        <span class="text-[#1F2937] text-sm font-medium"><%= r.sistole %>/<%= r.diastole %></span><span class="text-[#6B7280] text-xs ml-1">mmHg</span>
+                                        <span class="text-[#1F2937] text-sm font-medium"><%= r.sistole %>/<%= r.diastole %></span>
+                                        <span class="text-[#6B7280] text-xs ml-1">mmHg</span>
                                     </td>
+
+                                    <!-- Kolom 4: Kategori Tekanan -->
                                     <td class="px-5 py-3.5">
                                         <% if (r.status_tekanan === 'Tidak Terkendali') { %>
                                             <span class="text-xs text-[#DC2626] font-medium">Tidak Terkendali</span>
@@ -81,24 +99,57 @@
                                             <span class="text-xs text-[#D97706] font-medium"><%= r.status_tekanan || 'Terkendali' %></span>
                                         <% } %>
                                     </td>
+
+                                    <!-- Kolom 5: Badge Status Validasi -->
                                     <td class="px-5 py-3.5">
                                         <% if (r.status_validasi === 'menunggu') { %>
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FEF3C7] text-[#D97706] text-xs font-medium"><span class="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></span>Menunggu</span>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FEF3C7] text-[#D97706] text-xs font-medium">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></span>Menunggu
+                                            </span>
                                         <% } else if (r.status_validasi === 'terverifikasi') { %>
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D1FAE5] text-[#059669] text-xs font-medium"><span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>Valid</span>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D1FAE5] text-[#059669] text-xs font-medium">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>Valid
+                                            </span>
                                         <% } else { %>
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FEE2E2] text-[#DC2626] text-xs font-medium"><span class="w-1.5 h-1.5 rounded-full bg-[#EF4444]"></span>Revisi</span>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FEE2E2] text-[#DC2626] text-xs font-medium">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-[#EF4444]"></span>Revisi
+                                            </span>
                                         <% } %>
                                     </td>
-                                    <td class="px-5 py-3.5 flex items-center gap-1">
-                                        <% if (r.status_validasi !== 'ditolak') { %>
-                                            <button onclick="openDetailModal('<%= r.nama_pasien %>', '<%= r.nik %>', '<%= new Date(r.tanggal_kegiatan).toLocaleDateString('id-ID') %>', '<%= r.sistole %>', '<%= r.diastole %>', '<%= r.berat_badan %>', '<%= r.tinggi_badan %>', '<%= r.status_tekanan %>', '<%= filterStatus %>')" class="p-1.5 rounded-lg text-[#6B7280] hover:bg-[#DBEAFE] hover:text-[#2563EB] transition-all" title="Lihat Detail"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
-                                        <% } %>
-                                        
-                                        <% if (r.status_validasi === 'ditolak') { %>
-                                            <a href="/skrining/edit/<%= r.id_skrining %>" class="inline-block p-1.5 rounded-lg text-[#6B7280] hover:bg-[#FEF3C7] hover:text-[#D97706] transition-all" title="Edit Data"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></a>
-                                        <% } %>
+
+                                    <!-- Kolom 6: Tombol Aksi
+                                         - status 'revisi'  = tombol PERBAIKI (kuning)
+                                         - status lainnya   = tombol LIHAT (biru) -->
+                                    <td class="px-5 py-3.5">
+                                        <div class="flex items-center gap-1">
+                                            <% if (r.status_validasi === 'revisi') { %>
+                                                <!-- Tombol Perbaiki -->
+                                                <a href="/skrining/edit/<%= r.id_skrining %>"
+                                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FEF3C7] text-[#D97706] hover:bg-[#FDE68A] text-xs font-medium transition-all"
+                                                   title="Perbaiki Data Skrining">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                                                    Perbaiki
+                                                </a>
+                                            <% } else { %>
+                                                <!-- Tombol Lihat -->
+                                                <button onclick="openDetailModal(
+                                                    '<%= r.nama_pasien %>',
+                                                    '<%= r.nik %>',
+                                                    '<%= new Date(r.tanggal_kegiatan).toLocaleDateString("id-ID") %>',
+                                                    '<%= r.sistole %>',
+                                                    '<%= r.diastole %>',
+                                                    '<%= r.berat_badan %>',
+                                                    '<%= r.tinggi_badan %>',
+                                                    '<%= r.status_tekanan %>',
+                                                    '<%= filterStatus %>')"
+                                                   class="p-1.5 rounded-lg text-[#6B7280] hover:bg-[#DBEAFE] hover:text-[#2563EB] transition-all"
+                                                   title="Lihat Detail">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                                </button>
+                                            <% } %>
+                                        </div>
                                     </td>
+
                                 </tr>
                                 <% }) %>
                             <% } else { %>
@@ -182,14 +233,13 @@
         const rows = document.querySelectorAll('.data-row');
         const rowCountText = document.getElementById('rowCountText');
 
-        // Fungsi Filter
         function filterTable() {
             const searchTerm = searchInput.value.toLowerCase();
             const filterValue = statusFilter.value;
             let visibleCount = 0;
 
             rows.forEach(row => {
-                const textData = row.querySelector('.search-target') ? row.innerText.toLowerCase() : '';
+                const textData = row.innerText.toLowerCase();
                 const rowStatus = row.getAttribute('data-status');
                 
                 const matchesSearch = textData.includes(searchTerm);
@@ -206,21 +256,16 @@
             rowCountText.innerText = `Menampilkan ${visibleCount} data`;
         }
         
-        // Jalankan saat pertama load
         filterTable();
-
         searchInput.addEventListener('input', filterTable);
         statusFilter.addEventListener('change', filterTable);
 
-        // FUNGSI UNTUK MEMBUKA & MENUTUP MODAL DINAMIS
         function openDetailModal(nama, nik, tanggal, sistole, diastole, bb, tb, kategori, status) {
-            // Update Teks Modal
             document.getElementById('modalNama').innerText = nama;
             document.getElementById('modalNik').innerText = nik;
             document.getElementById('modalTanggal').innerText = tanggal;
             document.getElementById('modalTensi').innerText = sistole + ' / ' + diastole;
             
-            // Handle null/kosong untuk BB dan TB
             bb = bb && bb !== 'null' ? bb : '-';
             tb = tb && tb !== 'null' ? tb : '-';
             document.getElementById('modalFisik').innerText = `${bb} kg / ${tb} cm`;
@@ -228,7 +273,6 @@
             document.getElementById('modalKategori').innerText = kategori || 'Terkendali';
             document.getElementById('modalStatus').innerText = status;
 
-            // Buat Inisial Nama (Misal: "Budi Santoso" jadi "BS")
             let inisial = nama.substring(0, 2).toUpperCase();
             if(nama.includes(' ')) {
                 const words = nama.split(' ');
@@ -236,7 +280,6 @@
             }
             document.getElementById('modalInisial').innerText = inisial.toUpperCase();
 
-            // Tampilkan Modal
             const modal = document.getElementById('detailModal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');

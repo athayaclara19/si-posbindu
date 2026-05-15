@@ -62,7 +62,15 @@
                     <% }) } %>
                 </div>
                 <div class="px-4 py-2.5 border-t border-gray-100">
-                    <a href="/riwayat" class="text-xs text-[#2563EB] hover:underline">Lihat semua riwayat →</a>
+                    <%
+                    const riwayatUrl = currentUser && currentUser.role === 'kader' ? '/riwayat' :
+                                        currentUser && currentUser.role === 'bidan' ? '/bidan/validasi' :
+                                        currentUser && currentUser.role === 'pj_ptm' ? '/ptm/laporan' :
+                                        currentUser && currentUser.role === 'kepala_puskesmas' ? '/kepala/persetujuan' : '/';
+                    %>
+                    <a href="<%= riwayatUrl %>" class="text-xs text-[#2563EB] hover:underline">
+                    Lihat semua riwayat →
+                    </a>
                 </div>
             </div>
         </div>
