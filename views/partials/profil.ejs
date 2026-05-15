@@ -1,0 +1,164 @@
+<div id="profilModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+    <div class="bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] px-6 py-5 flex items-center justify-between">
+      <h2 class="text-white font-semibold text-lg">Profil Saya</h2>
+      <button onclick="closeModal('profilModal')" class="text-white/70 hover:text-white">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="p-6">
+      <!-- Avatar Inisial -->
+      <div class="flex items-center gap-4 mb-6">
+        <div class="w-16 h-16 rounded-full bg-[#2563EB] text-white flex items-center justify-center font-bold text-2xl shadow-md">
+          <% if (typeof currentUser !== 'undefined' && currentUser) { %><%= currentUser.nama.charAt(0).toUpperCase() %><% } else { %>U<% } %>
+        </div>
+        <div>
+          <p class="font-semibold text-[#1F2937] text-base">
+            <% if (typeof currentUser !== 'undefined' && currentUser) { %><%= currentUser.nama %><% } %>
+          </p>
+          <p class="text-sm text-[#6B7280]">
+            <% if (typeof currentUser !== 'undefined' && currentUser) { %><%= currentUser.username %><% } %>
+          </p>
+          <span class="text-[10px] px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full font-medium">
+            <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+              <% if (currentUser.role === 'bidan') { %>Bidan Desa
+              <% } else if (currentUser.role === 'pj_ptm') { %>PJ Program PTM
+              <% } else if (currentUser.role === 'kepala_puskesmas') { %>Kepala Puskesmas
+              <% } else { %>Kader Posbindu<% } %>
+            <% } %>
+          </span>
+        </div>
+      </div>
+      <!-- Info profil (tampilan saja, tidak bisa edit di sini) -->
+      <div class="space-y-3">
+        <div class="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <div>
+            <p class="text-xs text-gray-400">Nama Lengkap</p>
+            <p class="text-sm font-medium text-[#1F2937]"><%= typeof currentUser !== 'undefined' && currentUser ? currentUser.nama : '-' %></p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          <div>
+            <p class="text-xs text-gray-400">Username</p>
+            <p class="text-sm font-medium text-[#1F2937]"><%= typeof currentUser !== 'undefined' && currentUser ? currentUser.username : '-' %></p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <div>
+            <p class="text-xs text-gray-400">Role / Jabatan</p>
+            <p class="text-sm font-medium text-[#1F2937]">
+              <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+                <% if (currentUser.role === 'bidan') { %>Bidan Desa
+                <% } else if (currentUser.role === 'pj_ptm') { %>PJ Program PTM
+                <% } else if (currentUser.role === 'kepala_puskesmas') { %>Kepala Puskesmas
+                <% } else { %>Kader Posbindu<% } %>
+              <% } %>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button type="button" onclick="closeModal('profilModal')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-medium py-2.5 rounded-xl text-sm transition-colors">Tutup</button>
+        <button type="button" onclick="closeModal('profilModal'); openUbahPasswordModal();" class="flex-1 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-medium py-2.5 rounded-xl text-sm transition-colors">Ubah Password</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================== -->
+<!-- MODAL UBAH PASSWORD                                         -->
+<!-- =========================================================== -->
+<div id="ubahPasswordModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+    <div class="bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] px-6 py-5 flex items-center justify-between">
+      <h2 class="text-white font-semibold text-lg">Ubah Password</h2>
+      <button onclick="closeModal('ubahPasswordModal')" class="text-white/70 hover:text-white">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <form action="/ubah-password" method="POST" class="p-6 space-y-4" id="formUbahPassword">
+      <div>
+        <label class="block text-sm font-medium text-[#374151] mb-1.5">Password Lama</label>
+        <input type="password" name="password_lama" required placeholder="Masukkan password lama"
+          class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-[#374151] mb-1.5">Password Baru</label>
+        <input type="password" name="password_baru" id="inputPasswordBaru" required placeholder="Minimal 6 karakter" minlength="6"
+          class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-[#374151] mb-1.5">Konfirmasi Password Baru</label>
+        <input type="password" name="konfirmasi_password" id="inputKonfirmasi" required placeholder="Ulangi password baru" minlength="6"
+          class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent">
+        <p id="pesanKonfirmasi" class="text-xs text-red-500 mt-1 hidden">Password tidak cocok!</p>
+      </div>
+      <div class="flex gap-3 pt-1">
+        <button type="button" onclick="closeModal('ubahPasswordModal')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-medium py-2.5 rounded-xl text-sm transition-colors">Batal</button>
+        <button type="submit" id="btnSimpanPassword" class="flex-1 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-medium py-2.5 rounded-xl text-sm transition-colors">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- =========================================================== -->
+<!-- SCRIPT: fungsi buka/tutup modal + validasi konfirmasi pw    -->
+<!-- =========================================================== -->
+<script>
+  // Buka modal Profil
+  function openProfilModal() {
+    var m = document.getElementById('profilModal');
+    if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+  }
+  // Buka modal Ubah Password
+  function openUbahPasswordModal() {
+    var m = document.getElementById('ubahPasswordModal');
+    if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
+  }
+  // Tutup modal (generik)
+  function closeModal(id) {
+    var m = document.getElementById(id);
+    if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+  }
+  // Tutup modal saat klik luar area
+  ['profilModal','ubahPasswordModal'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('click', function(e) {
+        if (e.target === el) closeModal(id);
+      });
+    }
+  });
+  // Validasi konfirmasi password sebelum submit
+  var formPw = document.getElementById('formUbahPassword');
+  if (formPw) {
+    formPw.addEventListener('submit', function(e) {
+      var baru = document.getElementById('inputPasswordBaru').value;
+      var conf = document.getElementById('inputKonfirmasi').value;
+      var pesan = document.getElementById('pesanKonfirmasi');
+      if (baru !== conf) {
+        e.preventDefault();
+        pesan.classList.remove('hidden');
+
+        // SweetAlert jika tersedia, fallback ke alert biasa
+        if (typeof Swal !== 'undefined') {
+          Swal.fire({ icon: 'error', title: 'Password Tidak Cocok', text: 'Password baru dan konfirmasi tidak sama.', confirmButtonColor: '#2563EB' });
+        }
+      } else {
+        pesan.classList.add('hidden');
+      }
+    });
+    document.getElementById('inputKonfirmasi').addEventListener('input', function() {
+      var baru = document.getElementById('inputPasswordBaru').value;
+      var pesan = document.getElementById('pesanKonfirmasi');
+      if (this.value && this.value !== baru) {
+        pesan.classList.remove('hidden');
+      } else {
+        pesan.classList.add('hidden');
+      }
+    });
+  }
+</script>
