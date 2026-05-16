@@ -9,7 +9,8 @@ exports.renderInputSkrining = async (req, res) => {
             pasien: pasien.rows, kegiatan: kegiatan.rows,
             error: null, active: 'skrining',
             notifikasi: [],
-            currentUser: req.session.user || null
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'kader'
         });
     } catch (err) {
         console.error(err);
@@ -154,6 +155,7 @@ exports.renderDashboard = async (req, res) => {
             jadwalHariIni: jadwalHariIni.rows,
             notifikasi: notifikasi,
             currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'kader'
         });
     } catch (err) {
         console.error(err);
@@ -175,7 +177,13 @@ exports.renderRiwayat = async (req, res) => {
             ORDER BY k.tanggal_kegiatan DESC
         `;
         const result = await pool.query(query, [id_kader]);
-        res.render('kader/riwayat', { riwayat: result.rows, active: 'riwayat', notifikasi: [], currentUser: req.session.user || null });
+        res.render('kader/riwayat', {
+            riwayat: result.rows,
+            active: 'riwayat',
+            notifikasi: [],
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'kader'
+        });
     } catch (err) {
         console.error(err);
         res.status(500).send("Gagal memuat riwayat skrining.");
@@ -189,13 +197,19 @@ exports.renderEditSkrining = async (req, res) => {
         const query = `
             SELECT s.*, p.nama_pasien, p.nik 
             FROM skrining s JOIN pasien p ON s.id_pasien = p.id_pasien
-            WHERE s.id_skrining = $1 AND s.status_validasi = 'ditolak'
+            WHERE s.id_skrining = $1 AND s.status_validasi = 'revisi'
         `;
         const result = await pool.query(query, [id_skrining]);
         if (result.rows.length === 0) {
             return res.status(404).send("Data tidak ditemukan atau tidak dalam status ditolak.");
         }
-        res.render('kader/edit_skrining', { skrining: result.rows[0], active: 'riwayat', notifikasi: [], currentUser: req.session.user || null });
+        res.render('kader/edit_skrining', {
+            skrining: result.rows[0],
+            active: 'riwayat',
+            notifikasi: [],
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'kader'
+        });
     } catch (err) {
         console.error(err);
         res.status(500).send("Gagal memuat form edit.");
