@@ -317,6 +317,12 @@ app.post('/kepala/persetujuan/tolak/:id_laporan',
 );
 
 // Grafik kunjungan & rekap per periode - Activity 34 & 29
+app.get('/kepala/laporan/unduh/:id_laporan',
+    isAuthenticated,
+    isAuthorized('kepala_puskesmas'),
+    kepalaController.unduhLaporanKepala
+);
+
 app.get('/kepala/grafikkunjungan',
     isAuthenticated,
     isAuthorized('kepala_puskesmas'),
