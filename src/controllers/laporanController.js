@@ -114,6 +114,25 @@ exports.getPreviewData = async (req, res) => {
 exports.generateLaporan = async (req, res) => {
     const { periode_bulan, periode_tahun } = req.body;
     const id_pj = req.session.user.id_user;
+
+    // ================================================================
+    // VALIDASI: Cegah generate laporan untuk periode MASA DEPAN
+    // Contoh: jika sekarang Mei 2025, tidak boleh generate Juni 2025+
+    // ================================================================
+    const sekarang   = new Date();
+    const bulanSkrg  = sekarang.getMonth() + 1; // getMonth() mulai 0, +1 agar jadi 1-12
+    const tahunSkrg  = sekarang.getFullYear();
+    const bulanInput = parseInt(periode_bulan);
+    const tahunInput = parseInt(periode_tahun);
+
+    const isMasaDepan = tahunInput > tahunSkrg ||
+                        (tahunInput === tahunSkrg && bulanInput > bulanSkrg);
+
+    if (isMasaDepan) {
+        return res.redirect('/ptm/rekap?error=periode_masa_depan');
+    }
+    // ================================================================
+
     try {
         // Cari atau buat periode
         let periode = await pool.query(

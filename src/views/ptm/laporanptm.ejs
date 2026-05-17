@@ -12,6 +12,7 @@
         .hidden-el    { display: none !important; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-slate-50 font-inter antialiased text-slate-800 flex h-screen overflow-hidden">
 
@@ -393,7 +394,13 @@
             if (idLaporanTerpilih) {
                 window.location.href = '/ptm/laporan/export/' + idLaporanTerpilih;
             } else {
-                alert("Pilih laporan terlebih dahulu!");
+                Swal.fire({
+                icon: 'warning',
+                title: 'Belum Ada Laporan Dipilih',
+                text: 'Silakan pilih laporan dari daftar terlebih dahulu.',
+                confirmButtonColor: '#2563EB',
+                confirmButtonText: 'OK'
+                });
             }
         }
 

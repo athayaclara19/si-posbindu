@@ -137,30 +137,24 @@
             const rows = document.querySelectorAll('.baris-pasien');
 
             function filterTable() {
-                const searchTerm = searchInput.value.toLowerCase();
+                const searchTerm = searchInput.value.toLowerCase().trim();
                 const nagariTerm = filterNagari.value.toLowerCase();
                 const jorongTerm = filterJorong.value.toLowerCase();
 
                 rows.forEach(row => {
-                    // Ambil teks nama dan NIK dari kolom tabel
-                    const nik = row.children[0].textContent.toLowerCase();
-                    const nama = row.children[1].textContent.toLowerCase();
-                    
-                    // Ambil data jorong dan nagari dari atribut data yang kita buat di Step 2
+                    // children[0]=NO, children[1]=ID/NIK, children[2]=Nama Pasien
+                    // children[3]=Jorong, children[4]=L/P
+                    const idNik = row.children[1].textContent.toLowerCase();  // kolom ID/NIK
+                    const nama  = row.children[2].textContent.toLowerCase();  // kolom Nama
+
                     const jorongData = (row.getAttribute('data-jorong') || '').toLowerCase();
                     const nagariData = (row.getAttribute('data-nagari') || '').toLowerCase();
 
-                    // Cek apakah data cocok dengan filter
-                    const matchSearch = nik.includes(searchTerm) || nama.includes(searchTerm);
+                    const matchSearch = searchTerm === '' || idNik.includes(searchTerm) || nama.includes(searchTerm);
                     const matchNagari = nagariTerm === '' || nagariData === nagariTerm;
                     const matchJorong = jorongTerm === '' || jorongData === jorongTerm;
 
-                    // Tampilkan atau sembunyikan baris
-                    if (matchSearch && matchNagari && matchJorong) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
+                    row.style.display = (matchSearch && matchNagari && matchJorong) ? '' : 'none';
                 });
             }
 

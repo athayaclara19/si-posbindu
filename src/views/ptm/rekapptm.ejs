@@ -27,50 +27,17 @@
             </div>
 
             <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <h3 class="text-[#1F2937] font-poppins font-semibold mb-4">
-                    Generate Laporan Baru
-                </h3>
-                <form action="/ptm/laporan/generate" method="POST" class="flex flex-col sm:flex-row gap-4 items-end">
-                    <div class="flex-1 w-full">
-                        <label class="text-sm text-[#1F2937] font-medium mb-1.5 block">Bulan</label>
-                        <div class="relative">
-                            <select name="periode_bulan" class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-colors appearance-none cursor-pointer">
-                                <option value="01">Januari</option>
-                                <option value="02">Februari</option>
-                                <option value="03">Maret</option>
-                                <option value="04">April</option>
-                                <option value="05">Mei</option>
-                                <option value="06">Juni</option>
-                                <option value="07">Juli</option>
-                                <option value="08">Agustus</option>
-                                <option value="09">September</option>
-                                <option value="10">Oktober</option>
-                                <option value="11">November</option>
-                                <option value="12">Desember</option>
-                            </select>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
-                        </div>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="text-[#1F2937] font-poppins font-semibold">Buat Laporan Baru</h3>
+                        <p class="text-[#6B7280] text-sm mt-1">Pergi ke halaman Laporan untuk membuat dan mengirim laporan resmi ke Kepala Puskesmas</p>
                     </div>
-                    <div class="flex-1 w-full">
-                        <label class="text-sm text-[#1F2937] font-medium mb-1.5 block">Tahun</label>
-                        <div class="relative">
-                            <select name="periode_tahun" class="w-full pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-colors appearance-none cursor-pointer">
-                                <% 
-                                    // Membuat opsi tahun otomatis dari tahun ini mundur ke 2023
-                                    const tahunSekarang = new Date().getFullYear(); 
-                                    for(let t = tahunSekarang + 1; t >= 2023; t--) { 
-                                %>
-                                    <option value="<%= t %>" <%= t === tahunSekarang ? 'selected' : '' %>><%= t %></option>
-                                <% } %>
-                            </select>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
-                        </div>
-                    </div>
-                    <button type="submit" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-2.5 rounded-xl text-sm transition-all font-medium whitespace-nowrap shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
-                        Generate Laporan
-                    </button>
-                </form>
+                    <a href="/ptm/laporan"
+                       class="flex-shrink-0 flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm whitespace-nowrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Buat Laporan →
+                    </a>
+                </div>
             </div>
 
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -132,6 +99,29 @@
             </div>
         </main>
     </div>
+
+
+    <script>
+    document.querySelector('form[action="/ptm/laporan/generate"]').addEventListener('submit', function(e) {
+    const bulan = parseInt(document.getElementById('selectBulanGenerate').value);
+    const tahun = parseInt(document.querySelector('select[name="periode_tahun"]').value);
+    const now = new Date();
+    const bulanSkrg = now.getMonth() + 1;
+    const tahunSkrg = now.getFullYear();
+
+    // Cegah generate untuk periode masa depan
+    if (tahun > tahunSkrg || (tahun === tahunSkrg && bulan > bulanSkrg)) {
+        e.preventDefault();
+        Swal.fire({
+        icon: 'warning',
+        title: 'Periode Tidak Valid',
+        text: 'Tidak bisa generate laporan untuk bulan yang belum terjadi.',
+        confirmButtonColor: '#2563EB'
+        });
+        return;
+    }
+    });
+    </script>
 
 <%- include('../partials/profil') %>
 
