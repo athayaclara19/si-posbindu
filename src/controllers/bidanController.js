@@ -85,7 +85,12 @@ exports.renderValidasi = async (req, res) => {
             ORDER BY k.tanggal_kegiatan ASC
         `;
         const result = await pool.query(query);
-        res.render('bidan/validasi', { menungguValidasi: result.rows, active: 'validasi' });
+        res.render('bidan/validasi', {
+            menungguValidasi: result.rows,
+            active: 'validasi',
+            currentUser: req.session.user || null,  
+            role: req.session.user ? req.session.user.role : 'bidan'  
+        });
     } catch (err) {
         console.error(err);
         res.status(500).send("Gagal memuat antrean validasi.");

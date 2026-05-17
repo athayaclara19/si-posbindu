@@ -247,6 +247,34 @@ app.post('/ptm/jadwal/tambah',
     jadwalController.handleTambahJadwal
 );
 
+// EDIT Jadwal — render form edit
+app.get('/ptm/jadwal/edit/:id',
+    isAuthenticated,
+    isAuthorized('pj_ptm'),
+    jadwalController.renderEditJadwal
+);
+
+// EDIT Jadwal — simpan perubahan
+app.post('/ptm/jadwal/edit/:id',
+    isAuthenticated,
+    isAuthorized('pj_ptm'),
+    jadwalController.handleEditJadwal
+);
+
+// HAPUS Jadwal
+app.post('/ptm/jadwal/hapus/:id',
+    isAuthenticated,
+    isAuthorized('pj_ptm'),
+    jadwalController.handleHapusJadwal
+);
+
+// DETAIL Jadwal (API untuk modal)
+app.get('/ptm/jadwal/detail/:id',
+    isAuthenticated,
+    jadwalController.getDetailJadwal
+);
+
+
 
 // --- RUTE KELOLA PASIEN PTM ---
 // BUG FIX: Route sebelumnya tidak punya isAuthenticated & isAuthorized

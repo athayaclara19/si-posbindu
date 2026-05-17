@@ -6,8 +6,10 @@
     <title>Manajemen Jadwal - PJ PTM</title>
     <link rel="stylesheet" href="/css/output.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+        .font-inter   { font-family: 'Inter', sans-serif; }
         .fc-theme-standard .fc-scrollgrid { border: 1px solid #F3F4F6; border-radius: 0.75rem; overflow: hidden; }
         .fc .fc-toolbar-title { font-family: 'Poppins', sans-serif; font-size: 1.25rem; font-weight: 600; color: #1F2937; }
         .fc .fc-button-primary { background-color: #2563EB !important; border-color: #2563EB !important; text-transform: capitalize; border-radius: 0.5rem; }
@@ -16,38 +18,45 @@
         .fc-col-header-cell-cushion { color: #6B7280; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
         .fc-daygrid-day-number { color: #4B5563; font-weight: 500; font-size: 0.875rem; }
     </style>
-
 </head>
 <body class="bg-slate-50 font-inter antialiased text-slate-800 flex h-screen overflow-hidden">
-    
+
     <%- include('../partials/sidebar', { active: 'jadwal', role: 'ptm' }) %>
 
     <div class="flex-1 flex flex-col h-screen overflow-y-auto relative">
         <%- include('../partials/header', { pageTitle: 'Manajemen Jadwal', role: 'ptm' }) %>
 
         <main class="p-8 space-y-6 w-full">
+
             <div>
                 <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Kelola Jadwal Posbindu</h2>
-                <p class="text-[#6B7280] text-sm mt-1">Buat jadwal kegiatan agar kader bisa menginput data skrining.</p>
+                <p class="text-[#6B7280] text-sm mt-1">Buat, ubah, dan hapus jadwal kegiatan agar kader bisa menginput data skrining.</p>
             </div>
 
+            <!-- ============================================= -->
+            <!-- FORM TAMBAH JADWAL BARU                       -->
+            <!-- ============================================= -->
             <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
                 <h3 class="text-[#1F2937] font-poppins font-semibold mb-4">Buat Jadwal Baru</h3>
                 <form action="/ptm/jadwal/tambah" method="POST" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 items-end">
-                    
+
                     <div class="w-full">
                         <label class="text-sm text-[#1F2937] font-medium mb-1.5 block">Tanggal Kegiatan</label>
-                        <input type="date" id="input-tanggal-kegiatan" name="tanggal_kegiatan" onchange="validasiTanggal(this)" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-colors">
+                        <input type="date" id="input-tanggal-kegiatan" name="tanggal_kegiatan"
+                               onchange="validasiTanggal(this)" required
+                               class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-colors">
                     </div>
 
                     <div class="w-full">
                         <label class="text-sm text-[#1F2937] font-medium mb-1.5 block">Lokasi (Tempat)</label>
-                        <input type="text" name="lokasi" required placeholder="Contoh: Posyandu Melati 1" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-colors">
+                        <input type="text" name="lokasi" required placeholder="Contoh: Posyandu Melati 1"
+                               class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-colors">
                     </div>
 
                     <div class="w-full">
                         <label class="text-sm text-[#1F2937] font-medium mb-1.5 block">Nagari</label>
-                        <select id="select-nagari" onchange="filterJorong()" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-colors cursor-pointer">
+                        <select id="select-nagari" onchange="filterJorong()" required
+                                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-colors cursor-pointer">
                             <option value="">-- Pilih Nagari --</option>
                             <% if (typeof nagari !== 'undefined') { %>
                                 <% nagari.forEach(n => { %>
@@ -59,7 +68,8 @@
 
                     <div class="w-full">
                         <label class="text-sm text-[#1F2937] font-medium mb-1.5 block">Jorong</label>
-                        <select id="select-jorong" name="id_jorong" required disabled class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-100 cursor-not-allowed transition-colors">
+                        <select id="select-jorong" name="id_jorong" required disabled
+                                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-100 cursor-not-allowed transition-colors">
                             <option value="">-- Pilih Jorong --</option>
                             <% if (typeof jorong !== 'undefined') { %>
                                 <% jorong.forEach(j => { %>
@@ -69,196 +79,403 @@
                         </select>
                     </div>
 
-                    <button type="submit" class="w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-2.5 rounded-xl text-sm transition-all font-medium shadow-sm h-[42px] flex items-center justify-center">
-                        + Tambah Jadwal
+                    <button type="submit"
+                            class="w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-2.5 rounded-xl text-sm transition-all font-medium shadow-sm h-[42px] flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Tambah Jadwal
                     </button>
                 </form>
             </div>
 
-            <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm mb-6">
+            <!-- Kalender -->
+            <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
                 <h3 class="text-[#1F2937] font-poppins font-semibold mb-4">Kalender Jadwal Posbindu</h3>
                 <div id="calendar" class="w-full font-inter"></div>
             </div>
 
+            <!-- ============================================= -->
+            <!-- TABEL JADWAL + AKSI (DETAIL, EDIT, HAPUS)     -->
+            <!-- ============================================= -->
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+                    <h3 class="text-[#1F2937] font-poppins font-semibold">Daftar Semua Jadwal</h3>
+                    <span class="text-xs text-gray-400"><%= typeof jadwal !== 'undefined' ? jadwal.length : 0 %> jadwal</span>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead>
                             <tr class="bg-[#F8FAFC] border-b border-gray-100">
                                 <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Tanggal</th>
                                 <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Lokasi</th>
-                                <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Jorong</th>
+                                <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Jorong / Nagari</th>
+                                <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Skrining</th>
+                                <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Status</th>
+                                <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50">
                             <% if (typeof jadwal !== 'undefined' && jadwal.length > 0) { %>
-                                <% jadwal.forEach(item => { %>
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="px-6 py-4 text-sm text-[#1F2937] font-medium">
-                                            <%= new Date(item.tanggal_kegiatan).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
-                                        </td>
-                                        <td class="px-6 py-4 text-sm text-[#1F2937]"><%= item.lokasi %></td>
-                                        <td class="px-6 py-4 text-sm text-[#1F2937]"><%= item.nama_jorong %></td>
-                                    </tr>
+                                <% const today = new Date(); today.setHours(0,0,0,0); %>
+                                <% jadwal.forEach(item => {
+                                    const tgl = new Date(item.tanggal_kegiatan);
+                                    tgl.setHours(0,0,0,0);
+                                    const sudahLewat = tgl < today;
+                                    const hariIni    = tgl.getTime() === today.getTime();
+                                    const adaSkrining = parseInt(item.jumlah_skrining) > 0;
+                                %>
+                                <tr class="hover:bg-gray-50 transition-colors">
+
+                                    <!-- Tanggal -->
+                                    <td class="px-6 py-4">
+                                        <p class="text-[#1F2937] font-semibold text-sm">
+                                            <%= tgl.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %>
+                                        </p>
+                                        <p class="text-[#6B7280] text-xs capitalize">
+                                            <%= tgl.toLocaleDateString('id-ID', { weekday: 'long' }) %>
+                                        </p>
+                                    </td>
+
+                                    <!-- Lokasi -->
+                                    <td class="px-6 py-4 text-sm text-[#1F2937]"><%= item.lokasi %></td>
+
+                                    <!-- Jorong / Nagari -->
+                                    <td class="px-6 py-4">
+                                        <p class="text-sm text-[#1F2937] font-medium"><%= item.nama_jorong %></p>
+                                        <p class="text-xs text-[#6B7280]"><%= item.nama_nagari %></p>
+                                    </td>
+
+                                    <!-- Jumlah Skrining -->
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium <%= adaSkrining ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-500' %>">
+                                            <%= item.jumlah_skrining %> pasien
+                                        </span>
+                                    </td>
+
+                                    <!-- Status -->
+                                    <td class="px-6 py-4">
+                                        <% if (sudahLewat) { %>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ECFDF5] text-[#059669] text-xs font-semibold border border-[#A7F3D0]">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>Selesai
+                                            </span>
+                                        <% } else if (hariIni) { %>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#EFF6FF] text-[#2563EB] text-xs font-semibold border border-[#BFDBFE]">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-[#3B82F6]"></span>Hari Ini
+                                            </span>
+                                        <% } else { %>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-semibold border border-gray-200">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>Mendatang
+                                            </span>
+                                        <% } %>
+                                    </td>
+
+                                    <!-- AKSI: Detail, Edit, Hapus -->
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center justify-center gap-1.5">
+
+                                            <!-- Tombol DETAIL -->
+                                            <button onclick="bukaDetailJadwal(<%= item.id_kegiatan %>)"
+                                                    class="p-1.5 rounded-lg text-[#6B7280] hover:bg-blue-50 hover:text-[#2563EB] transition-all"
+                                                    title="Lihat Detail">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                            </button>
+
+                                            <!-- Tombol EDIT -->
+                                            <a href="/ptm/jadwal/edit/<%= item.id_kegiatan %>"
+                                               class="p-1.5 rounded-lg text-[#6B7280] hover:bg-amber-50 hover:text-[#D97706] transition-all"
+                                               title="<%= adaSkrining ? 'Edit lokasi/jorong (tanggal tidak bisa diubah karena sudah ada skrining)' : 'Edit Jadwal' %>">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                                            </a>
+
+                                            <!-- Tombol HAPUS (dikunci jika ada skrining) -->
+                                            <% if (adaSkrining) { %>
+                                                <button disabled
+                                                        title="Tidak bisa dihapus karena sudah ada <%= item.jumlah_skrining %> data skrining"
+                                                        class="p-1.5 rounded-lg text-gray-300 cursor-not-allowed"
+                                                        onclick="Swal.fire({ icon:'warning', title:'Tidak Bisa Dihapus', text:'Jadwal ini sudah memiliki <%= item.jumlah_skrining %> data skrining. Hapus data skriningnya terlebih dahulu.', confirmButtonColor:'#2563EB' })">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                                </button>
+                                            <% } else { %>
+                                                <button onclick="konfirmasiHapus(<%= item.id_kegiatan %>, '<%= item.lokasi %>')"
+                                                        class="p-1.5 rounded-lg text-[#6B7280] hover:bg-red-50 hover:text-[#DC2626] transition-all"
+                                                        title="Hapus Jadwal">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="m19 6-.867 12.142A2 2 0 0 1 16.138 20H7.862a2 2 0 0 1-1.995-1.858L5 6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                                </button>
+                                            <% } %>
+
+                                        </div>
+                                    </td>
+                                </tr>
                                 <% }) %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="3" class="px-6 py-8 text-center text-gray-500 text-sm">Belum ada jadwal kegiatan.</td>
+                                    <td colspan="6" class="px-6 py-10 text-center text-gray-400 text-sm">
+                                        Belum ada jadwal kegiatan.
+                                    </td>
                                 </tr>
                             <% } %>
                         </tbody>
                     </table>
                 </div>
             </div>
+
+            <!-- INFO KADER: Cara ganti jadwal -->
+            <div class="flex items-start gap-3 bg-amber-50 border border-amber-100 rounded-2xl p-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <div>
+                    <p class="text-amber-800 text-sm font-semibold mb-1">Informasi untuk Perubahan Jadwal</p>
+                    <p class="text-amber-700 text-sm leading-relaxed">
+                        Kader <strong>tidak bisa mengubah jadwal</strong> sendiri. Jika ada keperluan perubahan jadwal
+                        (misalnya lokasi berhalangan atau ada kegiatan lain), kader harus
+                        <strong>menghubungi PJ PTM</strong> untuk meminta perubahan.
+                        PJ PTM yang akan mengubah jadwal melalui halaman ini.
+                    </p>
+                </div>
+            </div>
+
         </main>
     </div>
 
+    <!-- ============================================= -->
+    <!-- MODAL DETAIL JADWAL                           -->
+    <!-- ============================================= -->
+    <div id="modalDetail" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+            <div class="bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] px-6 py-5 flex items-center justify-between">
+                <h3 class="text-white font-semibold font-poppins">Detail Jadwal Kegiatan</h3>
+                <button onclick="tutupModal('modalDetail')" class="text-white/70 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="p-6 space-y-4" id="isiDetail">
+                <div class="flex justify-center py-6">
+                    <div class="w-8 h-8 border-2 border-[#2563EB] border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-100 flex gap-3">
+                <button onclick="tutupModal('modalDetail')"
+                        class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-medium py-2.5 rounded-xl text-sm transition-colors">
+                    Tutup
+                </button>
+                <a id="btnEditDariModal" href="#"
+                   class="flex-1 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-medium py-2.5 rounded-xl text-sm transition-colors text-center">
+                    Edit Jadwal
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden form untuk hapus (POST) -->
+    <form id="formHapus" action="" method="POST" style="display:none;"></form>
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 
     <script>
+        const NAMA_BULAN = ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+        // ==========================================
+        // NOTIFIKASI DARI QUERY STRING (?success=...)
+        // ==========================================
+        const urlParams = new URLSearchParams(window.location.search);
+        const successMsg = {
+            jadwal_ditambah:   { title: 'Berhasil!', text: 'Jadwal baru berhasil ditambahkan.' },
+            jadwal_diperbarui: { title: 'Diperbarui!', text: 'Jadwal berhasil diubah.' },
+            jadwal_dihapus:    { title: 'Dihapus!', text: 'Jadwal berhasil dihapus.' },
+        };
+        const errorMsg = {
+            hari_minggu:         { title: 'Tidak Valid', text: 'Jadwal tidak bisa dibuat pada hari Minggu.' },
+            tanggal_masa_lalu:   { title: 'Tidak Valid', text: 'Tanggal tidak boleh di masa lalu.' },
+            ada_skrining:        { title: 'Tidak Bisa Dihapus', text: 'Jadwal ini sudah memiliki data skrining. Hapus skriningnya terlebih dahulu.' },
+            data_tidak_lengkap:  { title: 'Data Kurang', text: 'Semua field wajib diisi.' },
+            gagal_tambah:        { title: 'Gagal', text: 'Terjadi kesalahan saat menambah jadwal.' },
+            gagal_edit:          { title: 'Gagal', text: 'Terjadi kesalahan saat mengubah jadwal.' },
+            gagal_hapus:         { title: 'Gagal', text: 'Terjadi kesalahan saat menghapus jadwal.' },
+        };
+
+        if (urlParams.get('success') && successMsg[urlParams.get('success')]) {
+            const m = successMsg[urlParams.get('success')];
+            Swal.fire({ icon: 'success', title: m.title, text: m.text, confirmButtonColor: '#2563EB', timer: 2500, timerProgressBar: true });
+        }
+        if (urlParams.get('error') && errorMsg[urlParams.get('error')]) {
+            const m = errorMsg[urlParams.get('error')];
+            Swal.fire({ icon: 'error', title: m.title, text: m.text, confirmButtonColor: '#2563EB' });
+        }
+
+        // ==========================================
+        // VALIDASI TANGGAL (frontend)
+        // ==========================================
         document.addEventListener('DOMContentLoaded', function() {
             const inputTanggal = document.getElementById('input-tanggal-kegiatan');
-            
-            // 1. BLOKIR TANGGAL MASA LALU
-            // Dapatkan tanggal hari ini dengan format YYYY-MM-DD
             const today = new Date();
             const yyyy = today.getFullYear();
             const mm = String(today.getMonth() + 1).padStart(2, '0');
             const dd = String(today.getDate()).padStart(2, '0');
-            const tanggalHariIni = `${yyyy}-${mm}-${dd}`;
-            
-            // Set atribut 'min' pada input
-            inputTanggal.min = tanggalHariIni;
+            if (inputTanggal) inputTanggal.min = `${yyyy}-${mm}-${dd}`;
         });
 
-        // 2. BLOKIR HARI MINGGU DENGAN SWEETALERT
         function validasiTanggal(input) {
-            if (!input.value) return; // Jika kosong, abaikan
-            
-            const selectedDate = new Date(input.value);
-            
-            // getDay() mengembalikan angka hari dalam seminggu (0 = Minggu, 1 = Senin, ... 6 = Sabtu)
-            if (selectedDate.getDay() === 0) {
-                // [DIUBAH] Menggunakan SweetAlert2 menggantikan alert bawaan browser
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Tidak Bisa Pilih Hari Minggu!',
-                    text: 'Jadwal kegiatan Posbindu hanya bisa dilakukan pada hari kerja (Senin - Sabtu).',
-                    confirmButtonColor: '#2563EB', // Menggunakan warna biru khas Tailwind kamu
-                    customClass: { 
-                        popup: 'rounded-2xl',
-                        title: 'font-poppins font-semibold text-gray-800',
-                        htmlContainer: 'font-inter text-sm text-gray-600'
-                    }
-                });
-                
-                input.value = ""; // Kosongkan kembali inputnya
+            if (!input.value) return;
+            const d = new Date(input.value);
+            if (d.getDay() === 0) {
+                Swal.fire({ icon: 'error', title: 'Tidak Bisa Hari Minggu!', text: 'Jadwal hanya bisa Senin–Sabtu.', confirmButtonColor: '#2563EB' });
+                input.value = '';
             }
         }
-    </script>
 
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 1. Ambil data jadwal dari server (EJS) dan ubah ke format JSON
-            const rawJadwal = <%- JSON.stringify(jadwal || []) %>;
-            
-            // 2. Format data agar bisa dibaca oleh FullCalendar
-            const calendarEvents = rawJadwal.map(item => {
-                // Memastikan format tanggal YYYY-MM-DD
-                const tgl = new Date(item.tanggal_kegiatan);
-                const yyyy = tgl.getFullYear();
-                const mm = String(tgl.getMonth() + 1).padStart(2, '0');
-                const dd = String(tgl.getDate()).padStart(2, '0');
-                
-                return {
-                    title: item.lokasi + ' (' + item.nama_jorong + ')', // Judul event di kalender
-                    start: `${yyyy}-${mm}-${dd}`, // Tanggal event
-                    backgroundColor: '#EFF6FF', // Warna latar biru muda Tailwind
-                    borderColor: '#93C5FD', // Warna garis biru muda Tailwind
-                    textColor: '#1E3A8A' // Warna teks biru tua Tailwind
-                };
-            });
-
-            // 3. Inisialisasi Kalender
-            // 3. Inisialisasi Kalender
-            const calendarEl = document.getElementById('calendar');
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                locale: 'id', // Bahasa Indonesia
-                firstDay: 1, // Kalender dimulai dari hari Senin
-                
-                // [DIUBAH] Menambahkan tombol untuk view Tahun (multiMonthYear) dan Schedule (listMonth)
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,dayGridWeek,multiMonthYear,listMonth' 
-                },
-                
-                // [DIUBAH] Menambahkan teks terjemahan bahasa Indonesia untuk tombol baru
-                buttonText: {
-                    today: 'Hari Ini',
-                    month: 'Bulan',
-                    week: 'Minggu',
-                    year: 'Tahun',   // Teks untuk tombol multiMonthYear
-                    list: 'Agenda'   // Teks untuk tombol listMonth (Schedule)
-                },
-                
-                events: calendarEvents, // Masukkan data jadwal yang sudah diformat
-                eventClick: function(info) {
-                    // Kalau event di kalender diklik, munculkan SweetAlert
-                    Swal.fire({
-                        title: 'Detail Jadwal',
-                        text: info.event.title,
-                        icon: 'info',
-                        confirmButtonColor: '#2563EB',
-                        customClass: { popup: 'rounded-2xl font-inter' }
-                    });
+        // ==========================================
+        // KONFIRMASI HAPUS
+        // ==========================================
+        function konfirmasiHapus(idKegiatan, namaLokasi) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Hapus Jadwal?',
+                html: `Jadwal di <strong>${namaLokasi}</strong> akan dihapus permanen.<br>Tindakan ini tidak bisa dibatalkan.`,
+                showCancelButton: true,
+                confirmButtonColor: '#DC2626',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Ya, Hapus',
+                cancelButtonText: 'Batal',
+                customClass: { popup: 'rounded-2xl font-inter' }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.getElementById('formHapus');
+                    form.action = '/ptm/jadwal/hapus/' + idKegiatan;
+                    form.submit();
                 }
             });
+        }
 
-            // Tampilkan kalender
-            calendar.render();
+        // ==========================================
+        // MODAL DETAIL JADWAL
+        // ==========================================
+        function bukaDetailJadwal(idKegiatan) {
+            document.getElementById('modalDetail').classList.remove('hidden');
+            document.getElementById('modalDetail').classList.add('flex');
+            document.getElementById('isiDetail').innerHTML = '<div class="flex justify-center py-6"><div class="w-8 h-8 border-2 border-[#2563EB] border-t-transparent rounded-full animate-spin"></div></div>';
+            document.getElementById('btnEditDariModal').href = '/ptm/jadwal/edit/' + idKegiatan;
+
+            fetch('/ptm/jadwal/detail/' + idKegiatan)
+                .then(r => r.json())
+                .then(data => {
+                    const tgl = new Date(data.tanggal_kegiatan);
+                    const tglStr = tgl.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                    const adaSkrining = parseInt(data.jumlah_skrining) > 0;
+
+                    document.getElementById('isiDetail').innerHTML = `
+                        <div class="space-y-3">
+                            <div class="flex gap-3 items-start bg-gray-50 rounded-xl p-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 flex-shrink-0"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                <div><p class="text-xs text-gray-400 font-medium">Tanggal Kegiatan</p><p class="text-sm font-semibold text-gray-800">${tglStr}</p></div>
+                            </div>
+                            <div class="flex gap-3 items-start bg-gray-50 rounded-xl p-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 flex-shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                                <div><p class="text-xs text-gray-400 font-medium">Lokasi</p><p class="text-sm font-semibold text-gray-800">${data.lokasi}</p></div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-gray-50 rounded-xl p-3">
+                                    <p class="text-xs text-gray-400 font-medium">Jorong</p>
+                                    <p class="text-sm font-semibold text-gray-800">${data.nama_jorong}</p>
+                                </div>
+                                <div class="bg-gray-50 rounded-xl p-3">
+                                    <p class="text-xs text-gray-400 font-medium">Nagari</p>
+                                    <p class="text-sm font-semibold text-gray-800">${data.nama_nagari}</p>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 rounded-xl p-3">
+                                <p class="text-xs text-gray-400 font-medium mb-1">Data Skrining Terinput</p>
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${adaSkrining ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-500'}">
+                                    ${data.jumlah_skrining} pasien
+                                </span>
+                                ${adaSkrining ? '<p class="text-xs text-amber-600 mt-1.5">Tanggal tidak bisa diubah karena sudah ada data skrining.</p>' : ''}
+                            </div>
+                        </div>
+                    `;
+                })
+                .catch(() => {
+                    document.getElementById('isiDetail').innerHTML = '<p class="text-red-500 text-sm text-center py-4">Gagal memuat detail.</p>';
+                });
+        }
+
+        function tutupModal(id) {
+            const m = document.getElementById(id);
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        // Klik area luar modal = tutup
+        document.getElementById('modalDetail').addEventListener('click', function(e) {
+            if (e.target === this) tutupModal('modalDetail');
         });
-    </script>
 
-    <script>
-        // Simpan semua opsi jorong asli saat halaman pertama kali dimuat
+        // ==========================================
+        // FILTER DROPDOWN JORONG
+        // ==========================================
         let allJorongOptions = [];
-        
         document.addEventListener('DOMContentLoaded', function() {
-            // Ambil semua elemen <option> yang ada di dalam select jorong dan punya atribut data-nagari
             const jorongSelect = document.getElementById('select-jorong');
-            allJorongOptions = Array.from(jorongSelect.querySelectorAll('option[data-nagari]'));
+            if (jorongSelect) {
+                allJorongOptions = Array.from(jorongSelect.querySelectorAll('option[data-nagari]'));
+            }
         });
 
         function filterJorong() {
             const nagariId = document.getElementById('select-nagari').value;
             const jorongSelect = document.getElementById('select-jorong');
-            
-            // Bersihkan isi dropdown jorong dan kembalikan ke default "-- Pilih Jorong --"
             jorongSelect.innerHTML = '<option value="">-- Pilih Jorong --</option>';
-
             if (nagariId) {
-                // Jika ada nagari yang dipilih, aktifkan dropdown jorong
                 jorongSelect.disabled = false;
                 jorongSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
                 jorongSelect.classList.add('bg-gray-50', 'hover:bg-white', 'cursor-pointer');
-
-                // Masukkan kembali opsi jorong HANYA jika data-nagari nya sama dengan id_nagari yang dipilih
                 allJorongOptions.forEach(opt => {
                     if (opt.getAttribute('data-nagari') === nagariId) {
                         jorongSelect.appendChild(opt.cloneNode(true));
                     }
                 });
             } else {
-                // Jika nagari kosong (kembali ke default), matikan lagi dropdown jorong
                 jorongSelect.disabled = true;
                 jorongSelect.classList.add('bg-gray-100', 'cursor-not-allowed');
                 jorongSelect.classList.remove('bg-gray-50', 'hover:bg-white', 'cursor-pointer');
             }
         }
+
+        // ==========================================
+        // FULLCALENDAR
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', function() {
+            const rawJadwal = <%- JSON.stringify(jadwal || []) %>;
+            const calendarEvents = rawJadwal.map(item => {
+                const tgl = new Date(item.tanggal_kegiatan);
+                const yyyy = tgl.getFullYear();
+                const mm = String(tgl.getMonth() + 1).padStart(2, '0');
+                const dd = String(tgl.getDate()).padStart(2, '0');
+                return {
+                    id: item.id_kegiatan,
+                    title: item.lokasi + ' (' + item.nama_jorong + ')',
+                    start: `${yyyy}-${mm}-${dd}`,
+                    backgroundColor: '#EFF6FF',
+                    borderColor: '#93C5FD',
+                    textColor: '#1E3A8A'
+                };
+            });
+
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'id',
+                firstDay: 1,
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,dayGridWeek,listMonth'
+                },
+                buttonText: { today: 'Hari Ini', month: 'Bulan', week: 'Minggu', list: 'Agenda' },
+                events: calendarEvents,
+                eventClick: function(info) {
+                    bukaDetailJadwal(info.event.id);
+                }
+            });
+            calendar.render();
+        });
     </script>
 
 <%- include('../partials/profil') %>
