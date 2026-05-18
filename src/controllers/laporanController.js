@@ -184,10 +184,16 @@ exports.generateLaporan = async (req, res) => {
 exports.kirimLaporan = async (req, res) => {
     const { id_laporan } = req.params;
     try {
-        await pool.query(
-            "UPDATE laporan SET status='dikirim', dikirim_pada=NOW() WHERE id_laporan=$1",
+        // FIX: Hanya boleh kirim laporan yang masih berstatus 'draft'
+        // Mencegah laporan yang sudah 'disetujui' dikirim ulang via URL langsung
+        const result = await pool.query(
+            "UPDATE laporan SET status='dikirim', dikirim_pada=NOW() WHERE id_laporan=$1 AND status='draft' RETURNING id_laporan",
             [id_laporan]
         );
+        if (result.rowCount === 0) {
+            // Laporan tidak ditemukan atau bukan draft — tidak perlu error, cukup redirect
+            return res.redirect('/ptm/laporan?error=laporan_sudah_dikirim');
+        }
         res.redirect('/ptm/laporan');
     } catch (err) {
         console.error(err);
@@ -337,7 +343,9 @@ exports.renderLaporanPTM = async (req, res) => {
         res.render('ptm/laporanptm', {
             daftarLaporan: laporan.rows,
             periodeAda: periodeAda.rows,
-            active: 'laporan'
+            active: 'laporan',
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'pj_ptm'
         });
     } catch (err) {
         console.error(err);

@@ -17,7 +17,9 @@ exports.renderKelolaPasien = async (req, res) => {
         // Render file EJS yang nanti akan kita buat
         res.render('ptm/kelolapasien', { 
             pasien: result.rows,
-            active: 'pasien' // Untuk menandai menu aktif di sidebar
+            active: 'pasien',
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'pj_ptm'
         });
     } catch (err) {
         console.error("ERROR RENDER KELOLA PASIEN:", err);
@@ -44,7 +46,9 @@ exports.renderEditPasien = async (req, res) => {
         res.render('ptm/edit_pasien', { 
             pasien: resPasien.rows[0],
             jorong: resJorong.rows,
-            active: 'pasien'
+            active: 'pasien',
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'pj_ptm'
         });
     } catch (err) {
         console.error("ERROR RENDER EDIT PASIEN:", err);
@@ -108,7 +112,9 @@ exports.handleDeletePasien = async (req, res) => {
         res.render('ptm/kelolapasien', { 
             pasien: result.rows,
             active: 'pasien',
-            successMessage: 'Data pasien beserta riwayatnya berhasil dihapus permanen!' // [BARU] Pesan sukses
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'pj_ptm',
+            successMessage: 'Data pasien beserta riwayatnya berhasil dihapus permanen!'
         });
     } catch (err) {
         console.error("ERROR DELETE PASIEN:", err);
@@ -119,6 +125,8 @@ exports.handleDeletePasien = async (req, res) => {
             res.render('ptm/kelolapasien', { 
                 pasien: result.rows,
                 active: 'pasien',
+                currentUser: req.session.user || null,
+                role: req.session.user ? req.session.user.role : 'pj_ptm',
                 errorMessage: 'Gagal menghapus! Pastikan tidak ada data lain yang terkait dengan pasien ini.' 
             });
         } catch (fetchErr) {
@@ -205,6 +213,8 @@ exports.renderDashboardPTM = async (req, res) => {
         // Lempar ke EJS
         res.render('ptm/dashboardptm', {
             active: 'dashboard',
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'pj_ptm',
             tahunIni,
             TARGET_TAHUNAN,
             totalTercapai,
@@ -215,7 +225,6 @@ exports.renderDashboardPTM = async (req, res) => {
             persenTerkendali,
             dataNagari
         });
-
     } catch (err) {
         console.error("ERROR RENDER DASHBOARD PTM:", err);
         res.status(500).send("Gagal memuat dashboard PTM.");

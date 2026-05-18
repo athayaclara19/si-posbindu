@@ -15,7 +15,9 @@ exports.renderPetaHipertensi = async (req, res) => {
     try {
         res.render('kepala/peta_hipertensi', {
             active: 'peta-hipertensi',
-            pageTitle: 'Peta Persebaran Hipertensi'
+            pageTitle: 'Peta Persebaran Hipertensi',
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'kepala_puskesmas'
         });
     } catch (err) {
         console.error('Error renderPetaHipertensi:', err);

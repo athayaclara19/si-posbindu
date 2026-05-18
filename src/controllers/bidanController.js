@@ -2,20 +2,18 @@ const pool    = require('../config/db');
 const ExcelJS = require('exceljs');
  
 // 1. Dashboard Bidan
-// 1. Dashboard Bidan
 exports.renderDashboard = async (req, res) => {
     try {
-        // A. Hitung metrik card atas
         const menunggu      = await pool.query("SELECT COUNT(*) FROM skrining WHERE status_validasi='menunggu'");
         const terverifikasi = await pool.query("SELECT COUNT(*) FROM skrining WHERE status_validasi='terverifikasi'");
-        const ditolak       = await pool.query("SELECT COUNT(*) FROM skrining WHERE status_validasi='ditolak'");
+        // FIX: gunakan 'revisi' bukan 'ditolak' — konsisten dengan kaderControllers.js
+        const ditolak       = await pool.query("SELECT COUNT(*) FROM skrining WHERE status_validasi='revisi'");
         
         const jumlahMenunggu      = parseInt(menunggu.rows[0].count) || 0;
         const jumlahTerverifikasi = parseInt(terverifikasi.rows[0].count) || 0;
         const jumlahDitolak       = parseInt(ditolak.rows[0].count) || 0;
         const totalData           = jumlahMenunggu + jumlahTerverifikasi + jumlahDitolak;
 
-        // B. Ambil 3 data antrean terbaru untuk list "Data Belum Diverifikasi"
         const queryAntrean = `
             SELECT s.*, p.nama_pasien, p.nik, k.tanggal_kegiatan, j.nama_jorong
             FROM skrining s
@@ -28,7 +26,6 @@ exports.renderDashboard = async (req, res) => {
         `;
         const antreanResult = await pool.query(queryAntrean);
 
-        // C. Ambil statistik per Jorong untuk Chart dan List
         const queryJorong = `
             SELECT 
                 j.nama_jorong, 
@@ -43,7 +40,6 @@ exports.renderDashboard = async (req, res) => {
         `;
         const jorongStats = await pool.query(queryJorong);
 
-        // D. Ambil statistik Tensi Darah untuk progress bar
         const queryTensi = `
             SELECT 
                 COUNT(CASE WHEN sistole < 120 THEN 1 END) as normal,
@@ -55,9 +51,11 @@ exports.renderDashboard = async (req, res) => {
         `;
         const tensiStats = await pool.query(queryTensi);
 
-        // Kirim semua data ke EJS
+        // FIX: tambahkan currentUser dan role agar header tidak error
         res.render('bidan/dashboardbidan', {
             active: 'dashboard',
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'bidan',
             totalData,
             jumlahMenunggu,
             jumlahTerverifikasi,
@@ -88,8 +86,8 @@ exports.renderValidasi = async (req, res) => {
         res.render('bidan/validasi', {
             menungguValidasi: result.rows,
             active: 'validasi',
-            currentUser: req.session.user || null,  
-            role: req.session.user ? req.session.user.role : 'bidan'  
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'bidan'
         });
     } catch (err) {
         console.error(err);
@@ -103,23 +101,21 @@ exports.handleActionValidasi = async (req, res) => {
         const { id_skrining } = req.params;
         const { status_validasi, catatan_bidan } = req.body;
         
-        // Mengambil id user dengan aman (mencegah crash jika session hilang)
         const id_validator = req.session.user ? req.session.user.id_user : null;
 
-        // Mapping status dari form ke nilai enum yang valid di database:
-        // 'terverifikasi' -> diterima bidan
-        // 'ditolak'       -> dikembalikan / revisi ke kader
+        // FIX: 'revisi' disimpan sebagai 'revisi' (bukan 'ditolak')
+        // agar konsisten dengan query di kaderControllers.js
         const statusMap = {
             'terverifikasi': 'terverifikasi',
             'Valid':         'terverifikasi',
-            'revisi':        'ditolak',
-            'ditolak':       'ditolak',
+            'revisi':        'revisi',
+            'ditolak':       'revisi',
         };
 
         const finalStatus = statusMap[status_validasi] || null;
 
         if (!finalStatus) {
-            return res.status(400).send(`Status validasi tidak valid: "${status_validasi}". Nilai yang diizinkan: terverifikasi, ditolak.`);
+            return res.status(400).send(`Status validasi tidak valid: "${status_validasi}".`);
         }
 
         const query = `
@@ -130,7 +126,6 @@ exports.handleActionValidasi = async (req, res) => {
         `;
         
         await pool.query(query, [finalStatus, catatan_bidan || null, id_validator, id_skrining]);
-        
         res.redirect('/bidan/validasi');
 
     } catch (err) {
@@ -152,7 +147,13 @@ exports.renderLaporan = async (req, res) => {
             ORDER BY k.tanggal_kegiatan DESC
         `;
         const result = await pool.query(query);
-        res.render('bidan/laporan', { laporanData: result.rows, active: 'laporan' });
+        // FIX: tambahkan currentUser dan role
+        res.render('bidan/laporan', {
+            laporanData: result.rows,
+            active: 'laporan',
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'bidan'
+        });
     } catch (err) {
         console.error(err);
         res.status(500).send("Gagal memuat laporan.");

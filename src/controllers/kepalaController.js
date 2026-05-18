@@ -69,6 +69,8 @@ exports.renderDashboardKepala = async (req, res) => {
 
         res.render('kepala/dashboardkepala', {
             active: 'dashboard',
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'kepala_puskesmas',
             stats,
             persenTerkendali,
             totalPasienTerkendali: jumlahTerkendali,
@@ -145,6 +147,8 @@ exports.renderPersetujuan = async (req, res) => {
 
         res.render('kepala/persetujuan', {
             active: 'persetujuan',
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'kepala_puskesmas',
             laporanList,
             detailLaporan,
             distribusiNagari,
@@ -287,6 +291,8 @@ exports.renderGrafikKunjungan = async (req, res) => {
 
         res.render('kepala/grafikkunjungan', {
             active: 'grafikkunjungan',
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'kepala_puskesmas',
             grafikData,
             rekapPeriode,
             capaianNagari: nagariRes.rows,

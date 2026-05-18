@@ -20,7 +20,12 @@ exports.renderMonitoring = async (req, res) => {
             ORDER BY p.nama_pasien ASC
         `;
         const result = await pool.query(query);
-        res.render('bidan/monitoring', { daftarPasien: result.rows, active: 'monitoring' });
+        res.render('bidan/monitoring', {
+            daftarPasien: result.rows,
+            active: 'monitoring',
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'bidan'
+        });
     } catch (err) {
         console.error(err);
         res.status(500).send("Gagal memuat monitoring.");
@@ -84,9 +89,11 @@ exports.renderGrafikTensi = async (req, res) => {
 
         res.render('bidan/monitoring', {
             pasienTerpilih: pasien.rows[0],
-            riwayatTensi:   riwayat.rows,  // sekarang berisi kolom tambahan
+            riwayatTensi:   riwayat.rows,
             analisa,
-            active: 'monitoring'
+            active: 'monitoring',
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'bidan'
         });
     } catch (err) {
         console.error(err);

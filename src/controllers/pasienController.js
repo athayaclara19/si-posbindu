@@ -33,9 +33,11 @@ exports.renderDaftarPasien = async (req, res) => {
         // Render ke halaman EJS
         res.render('kader/pasien', { 
             daftarPasien: result.rows,
-            nagari: nagari.rows,   // [BARU] Kirim data nagari ke halaman pasien.ejs
-            jorong: jorong.rows,   // [BARU] Kirim data jorong ke halaman pasien.ejs
-            active: 'pasien' 
+            nagari: nagari.rows,
+            jorong: jorong.rows,
+            active: 'pasien',
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'kader'
         });
     } catch (err) {
         console.error(err);
@@ -52,8 +54,10 @@ exports.renderTambahPasien = async (req, res) => {
         
         res.render('kader/tambah_pasien', { 
             nagari: nagari.rows,
-            jorong: jorong.rows, // Kirim semua jorong, nanti kita filter pakai JavaScript di EJS
-            active: 'pasien'
+            jorong: jorong.rows,
+            active: 'pasien',
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'kader'
         });
     } catch (err) {
         console.error(err);

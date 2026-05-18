@@ -54,6 +54,8 @@ exports.renderRekapBidan = async (req, res) => {
 
         res.render('bidan/rekapbidan', {
             active: 'rekap',
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'bidan',
             cards: cards,
             rekapJorong: resultJorong.rows,
             trendBulanan: resultTrend.rows
@@ -82,7 +84,9 @@ exports.renderRekapPTM = async (req, res) => {
 
         res.render('ptm/rekapptm', {
             rekapData: result.rows,
-            active: 'rekap' // Menyalakan menu Rekap Periode di sidebar PTM
+            active: 'rekap',
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'pj_ptm'
         });
     } catch (err) {
         console.error(err);
