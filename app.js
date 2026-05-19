@@ -357,6 +357,12 @@ app.get('/kepala/laporan/unduh/:id_laporan',
     kepalaController.unduhLaporanKepala
 );
 
+app.get('/kepala/laporan/info/:id_laporan',
+    isAuthenticated,
+    isAuthorized('kepala_puskesmas'),
+    kepalaController.infoLaporanWA
+);
+
 app.get('/kepala/grafikkunjungan',
     isAuthenticated,
     isAuthorized('kepala_puskesmas'),

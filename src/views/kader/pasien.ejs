@@ -53,7 +53,7 @@
                 </div>
 
                 <div class="w-full md:w-56">
-                    <select id="filterJorong" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-all cursor-pointer shadow-sm">
+                    <select id="filterJorong" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-all cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" title="Pilih Nagari terlebih dahulu">
                         <option value="">Semua Jorong</option>
                         <% if (typeof jorong !== 'undefined') { %>
                             <% jorong.forEach(j => { %>
@@ -136,17 +136,53 @@
             const filterJorong = document.getElementById('filterJorong');
             const rows = document.querySelectorAll('.baris-pasien');
 
+            // Simpan semua opsi jorong beserta nagari-nya dari data-attribute baris
+            // Data jorong + nagari sudah ada di server, kita bangun mapping dari rows
+            const jorongOptions = [];
+            rows.forEach(row => {
+                const jorong = row.getAttribute('data-jorong') || '';
+                const nagari = row.getAttribute('data-nagari') || '';
+                if (jorong && !jorongOptions.find(j => j.jorong === jorong)) {
+                    jorongOptions.push({ jorong, nagari });
+                }
+            });
+
+            // Update dropdown jorong berdasarkan nagari yang dipilih
+            function updateJorongDropdown() {
+                const nagariTerpilih = filterNagari.value.toLowerCase();
+                const jorongSaatIni = filterJorong.value;
+
+                // Kosongkan dropdown jorong
+                filterJorong.innerHTML = '<option value="">Semua Jorong</option>';
+                filterJorong.disabled = nagariTerpilih === '';
+
+                const daftarJorong = nagariTerpilih === ''
+                    ? jorongOptions
+                    : jorongOptions.filter(j => j.nagari.toLowerCase() === nagariTerpilih);
+
+                daftarJorong.sort((a, b) => a.jorong.localeCompare(b.jorong));
+                daftarJorong.forEach(j => {
+                    const opt = document.createElement('option');
+                    opt.value = j.jorong;
+                    opt.textContent = j.jorong;
+                    if (j.jorong === jorongSaatIni) opt.selected = true;
+                    filterJorong.appendChild(opt);
+                });
+
+                // Jika jorong yang sebelumnya dipilih tidak ada lagi, reset
+                if (nagariTerpilih !== '' && !daftarJorong.find(j => j.jorong === jorongSaatIni)) {
+                    filterJorong.value = '';
+                }
+            }
+
             function filterTable() {
                 const searchTerm = searchInput.value.toLowerCase().trim();
                 const nagariTerm = filterNagari.value.toLowerCase();
                 const jorongTerm = filterJorong.value.toLowerCase();
 
                 rows.forEach(row => {
-                    // children[0]=NO, children[1]=ID/NIK, children[2]=Nama Pasien
-                    // children[3]=Jorong, children[4]=L/P
-                    const idNik = row.children[1].textContent.toLowerCase();  // kolom ID/NIK
-                    const nama  = row.children[2].textContent.toLowerCase();  // kolom Nama
-
+                    const idNik = row.children[1].textContent.toLowerCase();
+                    const nama  = row.children[2].textContent.toLowerCase();
                     const jorongData = (row.getAttribute('data-jorong') || '').toLowerCase();
                     const nagariData = (row.getAttribute('data-nagari') || '').toLowerCase();
 
@@ -158,10 +194,15 @@
                 });
             }
 
-            // Jalankan fungsi filter setiap kali pengguna mengetik atau memilih dropdown
-            searchInput.addEventListener('input', filterTable);
-            filterNagari.addEventListener('change', filterTable);
+            // Inisialisasi: disable filter jorong dulu, tunggu nagari dipilih
+            filterJorong.disabled = true;
+
+            filterNagari.addEventListener('change', function() {
+                updateJorongDropdown();
+                filterTable();
+            });
             filterJorong.addEventListener('change', filterTable);
+            searchInput.addEventListener('input', filterTable);
         });
     </script>
 

@@ -163,29 +163,67 @@ exports.renderPersetujuan = async (req, res) => {
 exports.handleSetujuiLaporan = async (req, res) => {
     const { id_laporan } = req.params;
     try {
-        // Cek kolom opsional disetujui_oleh
+        // Cek apakah kolom disetujui_oleh dan disetujui_pada ada
         const colCheck = await pool.query(`
             SELECT column_name FROM information_schema.columns
-            WHERE table_name='laporan' AND column_name='disetujui_oleh'
+            WHERE table_name='laporan' AND column_name IN ('disetujui_oleh','disetujui_pada')
         `);
-        if (colCheck.rows.length > 0) {
+        const cols = colCheck.rows.map(r => r.column_name);
+        
+        if (cols.includes('disetujui_oleh') && cols.includes('disetujui_pada')) {
             await pool.query(`
                 UPDATE laporan
                 SET status='disetujui', disetujui_pada=NOW(),
                     disetujui_oleh=$1, catatan_tolak=NULL
-                WHERE id_laporan=$2 AND status='dikirim'
+                WHERE id_laporan=$2
             `, [req.session.user.id_user, id_laporan]);
-        } else {
+        } else if (cols.includes('disetujui_pada')) {
             await pool.query(`
                 UPDATE laporan
                 SET status='disetujui', disetujui_pada=NOW(), catatan_tolak=NULL
-                WHERE id_laporan=$1 AND status='dikirim'
+                WHERE id_laporan=$1
+            `, [id_laporan]);
+        } else {
+            // Fallback: hanya update status
+            await pool.query(`
+                UPDATE laporan
+                SET status='disetujui', catatan_tolak=NULL
+                WHERE id_laporan=$1
             `, [id_laporan]);
         }
-        res.redirect('/kepala/persetujuan');
+        res.redirect('/kepala/persetujuan?id=' + id_laporan);
     } catch (err) {
         console.error('ERROR handleSetujuiLaporan:', err);
         res.redirect('/kepala/persetujuan');
+    }
+};
+
+// GET: Info laporan untuk kirim WhatsApp (return JSON)
+exports.infoLaporanWA = async (req, res) => {
+    const { id_laporan } = req.params;
+    try {
+        const result = await pool.query(`
+            SELECT l.*, per.periode_bulan, per.periode_tahun,
+                   u.nama_user AS nama_pj
+            FROM laporan l
+            JOIN periode per ON l.id_periode = per.periode_id
+            JOIN "user"  u   ON l.id_pj      = u.id_user
+            WHERE l.id_laporan = $1 AND l.status = 'disetujui'
+        `, [id_laporan]);
+        if (!result.rows.length) return res.status(404).json({ error: 'Laporan tidak ditemukan atau belum disetujui' });
+        const NAMA_BULAN_LOCAL = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+        const lap = result.rows[0];
+        const namaBulan = NAMA_BULAN_LOCAL[parseInt(lap.periode_bulan) - 1] || '-';
+        res.json({
+            id_laporan: lap.id_laporan,
+            periode: `${namaBulan} ${lap.periode_tahun}`,
+            total_pasien: lap.total_pasien,
+            total_skrining: lap.total_skrining,
+            nama_pj: lap.nama_pj
+        });
+    } catch (err) {
+        console.error('ERROR infoLaporanWA:', err);
+        res.status(500).json({ error: 'Gagal mengambil info laporan' });
     }
 };
 

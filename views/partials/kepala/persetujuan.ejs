@@ -120,7 +120,23 @@
                     <% } %>
 
                     <!-- Tombol aksi -->
-                    <% if (detailLaporan.status === 'dikirim') { %>
+                    <% if (detailLaporan.status === 'disetujui') { %>
+                    <div class="px-8 py-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <p class="text-sm text-gray-400">Laporan sudah disahkan. Unduh atau kirim ke Dinas Kesehatan.</p>
+                        <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                            <a href="/kepala/laporan/unduh/<%= detailLaporan.id_laporan %>"
+                               class="flex items-center justify-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-2.5 rounded-full text-sm font-medium shadow-sm transition-all w-full sm:w-auto">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                Unduh Excel
+                            </a>
+                            <button onclick="kirimWA('<%= detailLaporan.id_laporan %>', '<%= detailLaporan.nama_bulan %>', '<%= detailLaporan.periode_tahun %>', '<%= detailLaporan.total_pasien %>', '<%= detailLaporan.total_skrining %>')"
+                               class="flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebe5a] text-white px-6 py-2.5 rounded-full text-sm font-medium shadow-sm transition-all w-full sm:w-auto">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M20.52 3.449C12.831-3.984.106 1.407.101 11.893c0 2.096.549 4.14 1.595 5.945L0 24l6.335-1.652c1.746.943 3.71 1.444 5.71 1.447h.006c9.49 0 17.385-7.748 17.391-17.234C29.44 3.15 25.342-.001 20.52 3.449z"/></svg>
+                                Kirim ke Dinkes via WA
+                            </button>
+                        </div>
+                    </div>
+                    <% } else if (detailLaporan.status === 'dikirim') { %>
                     <div class="px-8 py-6 flex flex-col sm:flex-row items-center justify-end gap-3 border-t border-gray-100">
                         <!-- Tolak -->
                         <button onclick="document.getElementById('modal-tolak').classList.remove('hidden-el')"
@@ -136,17 +152,6 @@
                                 Setujui &amp; Sahkan
                             </button>
                         </form>
-                    </div>
-                    <% } else { %>
-                    <div class="px-8 py-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-                        <p class="text-sm text-gray-400">Laporan sudah diproses dan tidak dapat diubah.</p>
-                        <% if (detailLaporan.status === 'disetujui') { %>
-                        <a href="/kepala/laporan/unduh/<%= detailLaporan.id_laporan %>"
-                           class="flex items-center justify-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-2.5 rounded-full text-sm font-medium shadow-sm transition-all w-full sm:w-auto">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                            Unduh Laporan Final (Excel)
-                        </a>
-                        <% } %>
                     </div>
                     <% } %>
                 </div>
@@ -457,6 +462,25 @@
 
         // Inisialisasi awal
         document.addEventListener('DOMContentLoaded', renderList);
+
+        // Kirim laporan ke Dinkes via WhatsApp
+        function kirimWA(idLaporan, namaBulan, tahun, totalPasien, totalSkrining) {
+            const nomorDinkes = ''; // Isi nomor WA Dinkes jika ada, contoh: '6281234567890'
+            const pesan = 
+                '🏥 *LAPORAN POSBINDU PTM*\n' +
+                'Puskesmas Sungai Tarab\n\n' +
+                '📅 Periode: *' + namaBulan + ' ' + tahun + '*\n' +
+                '👥 Total Pasien: *' + (parseInt(totalPasien)||0).toLocaleString('id-ID') + ' orang*\n' +
+                '📋 Total Skrining: *' + (parseInt(totalSkrining)||0).toLocaleString('id-ID') + ' kegiatan*\n\n' +
+                '✅ Laporan ini telah disetujui dan disahkan oleh Kepala Puskesmas.\n\n' +
+                '_Laporan lengkap dalam format Excel dapat diminta langsung ke Puskesmas._';
+            
+            const pesanEncoded = encodeURIComponent(pesan);
+            const url = nomorDinkes 
+                ? 'https://wa.me/' + nomorDinkes + '?text=' + pesanEncoded
+                : 'https://wa.me/?text=' + pesanEncoded;
+            window.open(url, '_blank');
+        }
 
     </script>
 
