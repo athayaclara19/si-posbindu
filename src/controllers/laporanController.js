@@ -372,11 +372,13 @@ exports.exportLaporanExcel = async (req, res) => {
         if (laporanRes.rows.length === 0) return res.status(404).send("Laporan tidak ditemukan.");
 
         const laporan  = laporanRes.rows[0];
-        const tahun    = laporan.periode_tahun;
-        const namaFile = `Kohort_Hipertensi_${tahun}.xlsx`;
+        const tahun    = parseInt(laporan.periode_tahun);
+        const bulan    = parseInt(laporan.periode_bulan);  // bulan laporan (1–12)
+        const namaBulanLaporan = NAMA_BULAN[bulan - 1];
+        const namaFile = `Kohort_Hipertensi_s.d_${namaBulanLaporan}_${tahun}.xlsx`;
 
-        // 2. Ambil semua skrining pasien sepanjang tahun tersebut
-        //    Satu baris per pasien per bulan (bukan per kunjungan)
+        // 2. Ambil skrining pasien dari Januari s.d. bulan laporan pada tahun tersebut
+        //    Misal laporan Februari 2025 → ambil data Jan & Feb 2025 SAJA
         const skriningRes = await pool.query(`
             SELECT
                 p.id_pasien,
@@ -399,11 +401,12 @@ exports.exportLaporanExcel = async (req, res) => {
             JOIN jorong   j ON p.id_jorong   = j.id_jorong
             JOIN nagari   n ON j.id_nagari   = n.id_nagari
             WHERE EXTRACT(YEAR FROM k.tanggal_kegiatan) = $1
+              AND EXTRACT(MONTH FROM k.tanggal_kegiatan) <= $2
               AND s.status_validasi = 'terverifikasi'
             ORDER BY p.nama_pasien ASC, bulan ASC
-        `, [tahun]);
+        `, [tahun, bulan]);
 
-        // 3. Ambil info bulan pertama kasus ditemukan per pasien
+        // 3. Ambil info bulan pertama kasus ditemukan per pasien (s.d. bulan laporan)
         const kasusRes = await pool.query(`
             SELECT
                 p.id_pasien,
@@ -418,7 +421,8 @@ exports.exportLaporanExcel = async (req, res) => {
             WHERE s.status_validasi = 'terverifikasi'
             GROUP BY p.id_pasien, EXTRACT(YEAR FROM k.tanggal_kegiatan)
             HAVING EXTRACT(YEAR FROM k.tanggal_kegiatan) = $1
-        `, [tahun]);
+               AND MIN(EXTRACT(MONTH FROM k.tanggal_kegiatan)) <= $2
+        `, [tahun, bulan]);
 
         const kasusMap = {};
         kasusRes.rows.forEach(r => {
@@ -462,7 +466,7 @@ exports.exportLaporanExcel = async (req, res) => {
         const workbook = new ExcelJS.Workbook();
         workbook.creator = 'SI-Posbindu PTM';
         workbook.created = new Date();
-        const ws = workbook.addWorksheet('KOHORT HIPERTENSI', {
+        const ws = workbook.addWorksheet(`KOHORT S.D ${namaBulanLaporan.toUpperCase()} ${tahun}`, {
             pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 }
         });
 
@@ -482,12 +486,12 @@ exports.exportLaporanExcel = async (req, res) => {
         ];
 
         // ── BARIS 1: Judul utama ──────────────────────────────────────────────
-        // Kolom identitas = 9, per bulan = 6 kolom × 12 bulan = 72 → total 81 kolom
-        const TOTAL_COL = 9 + (6 * 12);
+        // Kolom identitas = 9, per bulan = 6 kolom × hanya s.d bulan laporan
+        const TOTAL_COL = 9 + (6 * bulan);
 
         ws.mergeCells(1, 1, 1, TOTAL_COL);
         const judulCell = ws.getCell('A1');
-        judulCell.value     = `FORMAT LAPORAN KOHORT HIPERTENSI TAHUN ${tahun}`;
+        judulCell.value     = `FORMAT LAPORAN KOHORT HIPERTENSI JANUARI - ${namaBulanLaporan.toUpperCase()} ${tahun}`;
         judulCell.font      = { bold: true, size: 14, color: { argb: PUTIH }, name: 'Arial' };
         judulCell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: BIRU_TUA } };
         judulCell.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -535,8 +539,9 @@ exports.exportLaporanExcel = async (req, res) => {
         });
 
         // Header nama bulan (baris 4) + sub-header bulan (baris 5)
+        // Hanya tampilkan bulan Januari s.d. bulan laporan
         const SUB_HEADERS = ['SISTOLE', 'DIASTOLE', 'STATUS', 'EDUKASI', 'DAPAT OBAT', 'RUJUK'];
-        NAMA_BULAN.forEach((namaBln, blnIdx) => {
+        NAMA_BULAN.slice(0, bulan).forEach((namaBln, blnIdx) => {
             const startCol = 9 + (blnIdx * 6) + 1;
             const endCol   = startCol + 5;
             const warnaBln = BULAN_COLORS[blnIdx];
@@ -609,8 +614,8 @@ exports.exportLaporanExcel = async (req, res) => {
                 if (i === 0) cell.font = { ...cell.font, bold: true };
             });
 
-            // Kolom bulan (1–12)
-            for (let bln = 1; bln <= 12; bln++) {
+            // Kolom bulan (1 s.d. bulan laporan)
+            for (let bln = 1; bln <= bulan; bln++) {
                 const startCol = 9 + ((bln - 1) * 6) + 1;
                 const data     = pasien.bulan[bln];
 

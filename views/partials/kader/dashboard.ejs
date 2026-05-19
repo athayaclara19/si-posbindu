@@ -344,7 +344,7 @@
     });
 
     // Chart.js — Tren Skrining 6 Bulan Terakhir
-    document.addEventListener('DOMContentLoaded', function() {
+    (function() {
       const trenData = <%- JSON.stringify(trenSkrining) %>;
       const labels6 = [], values6 = [];
       for (let i = 5; i >= 0; i--) {
@@ -358,7 +358,14 @@
       }
       const canvasEl = document.getElementById('trenChart');
       if (!canvasEl) return;
-      new Chart(canvasEl.getContext('2d'), {
+
+      // Tunggu Chart.js siap (antisipasi CDN load lambat)
+      function buatChart() {
+        if (typeof Chart === 'undefined') {
+          setTimeout(buatChart, 100);
+          return;
+        }
+        new Chart(canvasEl.getContext('2d'), {
         type: 'bar',
         data: {
           labels: labels6,
@@ -385,7 +392,9 @@
           }
         }
       });
-    });
+      }
+      buatChart();
+    })();
   </script>
 </body>
 </html>
