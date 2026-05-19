@@ -19,176 +19,118 @@
         <%- include('../partials/header', { pageTitle: 'Laporan Pengendalian Penyakit HT', role: 'bidan' }) %>
 
         <main class="p-8 space-y-6 w-full">
+            <%
+                // Hitung statistik dari daftarPasien
+                const totalPasienMon = daftarPasien ? daftarPasien.length : 0;
+                const terkendaliMon = daftarPasien ? daftarPasien.filter(p => {
+                    const s = parseInt(p.sistole_terakhir);
+                    const d = parseInt(p.diastole_terakhir);
+                    return !isNaN(s) && !isNaN(d) && s < 140 && d < 90;
+                }).length : 0;
+                const persenTerkendaliMon = totalPasienMon > 0 
+                    ? ((terkendaliMon / totalPasienMon) * 100).toFixed(1) : '0.0';
+                const tahunMon = new Date().getFullYear();
+            %>
             <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between gap-4">
                 <div class="space-y-1">
                     <p class="text-xs text-gray-500 uppercase font-bold tracking-wider">Puskesmas</p>
-                    <p class="text-sm font-semibold">PUSKESMAS SUNGAI TARAB</p>
-                    <p class="text-xs text-gray-500 uppercase font-bold tracking-wider pt-2">Tahun / Periode</p>
-                    <p class="text-sm font-semibold">2026 / Semester 1</p>
+                    <p class="text-sm font-semibold">Puskesmas IV Koto</p>
+                    <p class="text-xs text-gray-500 uppercase font-bold tracking-wider pt-2">Tahun</p>
+                    <p class="text-sm font-semibold"><%= tahunMon %></p>
                 </div>
                 <div class="space-y-1 md:text-right">
                     <p class="text-xs text-gray-500 uppercase font-bold tracking-wider">Jumlah Terkendali</p>
-                    <p class="text-lg font-bold text-green-600">120 Pasien</p>
-                    <p class="text-xs text-gray-500 uppercase font-bold tracking-wider pt-2">Persentase Capaian</p>
-                    <p class="text-lg font-bold text-blue-600">71.8%</p>
+                    <p class="text-lg font-bold text-green-600"><%= terkendaliMon %> Pasien</p>
+                    <p class="text-xs text-gray-500 uppercase font-bold tracking-wider pt-2">Persentase Terkendali</p>
+                    <p class="text-lg font-bold text-blue-600"><%= persenTerkendaliMon %>%</p>
                 </div>
             </div>
 
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <h3 class="text-[#1F2937] font-poppins font-semibold">Riwayat Kontrol Individu</h3>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="cariPasien" placeholder="Cari nama pasien..." 
+                               class="text-sm border border-gray-200 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400 w-48">
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-white border-b border-gray-100 text-[11px] uppercase tracking-wider font-bold text-gray-500">
                                 <th class="px-6 py-4">Nama / NIK</th>
-                                <th class="px-6 py-4">Info Pasien</th>
+                                <th class="px-6 py-4">Jorong</th>
                                 <th class="px-6 py-4">Kunjungan Terakhir</th>
                                 <th class="px-6 py-4 text-center">Tensi Terakhir</th>
                                 <th class="px-6 py-4">Status</th>
                                 <th class="px-6 py-4">Histori</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-50">
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4">
-                                    <p class="font-semibold text-sm text-[#1F2937]">ASMIARTI</p>
-                                    <p class="text-xs text-gray-500 font-mono mt-0.5">1306056807520001</p>
-                                </td>
-                                <td class="px-6 py-4 text-xs">
-                                    <p class="font-medium text-[#1F2937]">73 Th / Perempuan</p>
-                                    <p class="text-gray-500 mt-0.5">Jl. Koto, Guguak Tinggi</p>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <p class="text-sm font-medium text-[#1F2937]">12 Mei 2026</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">Kunjungan Ke-3</p>
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <p class="font-bold text-sm text-[#1F2937]">125 / 75</p>
-                                    <p class="text-[10px] text-gray-500 mt-0.5">mmHg</p>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold border border-green-200">Terkendali</span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <button onclick="bukaGrafikModal('ASMIARTI')" class="flex items-center gap-1.5 px-3 py-1.5 bg-[#DBEAFE] text-[#2563EB] rounded-lg text-xs font-semibold hover:bg-[#BFDBFE] transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-                                        Lihat Grafik
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4">
-                                    <p class="font-semibold text-sm text-[#1F2937]">ZULKIFLI</p>
-                                    <p class="text-xs text-gray-500 font-mono mt-0.5">1306051203650002</p>
-                                </td>
-                                <td class="px-6 py-4 text-xs">
-                                    <p class="font-medium text-[#1F2937]">61 Th / Laki-laki</p>
-                                    <p class="text-gray-500 mt-0.5">Jorong Pasar</p>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <p class="text-sm font-medium text-[#1F2937]">10 Mei 2026</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">Kunjungan Ke-4</p>
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <p class="font-bold text-sm text-[#EF4444]">160 / 95</p>
-                                    <p class="text-[10px] text-gray-500 mt-0.5">mmHg</p>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold border border-red-200">Tidak Terkendali</span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <button onclick="bukaGrafikModal('ZULKIFLI')" class="flex items-center gap-1.5 px-3 py-1.5 bg-[#DBEAFE] text-[#2563EB] rounded-lg text-xs font-semibold hover:bg-[#BFDBFE] transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-                                        Lihat Grafik
-                                    </button>
-                                </td>
-                            </tr>
-                            <!-- PASIEN DUMMY: SITI RAHAYU — fluktuatif sedang -->
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4">
-                                    <p class="font-semibold text-sm text-[#1F2937]">SITI RAHAYU</p>
-                                    <p class="text-xs text-gray-500 font-mono mt-0.5">1306056807520003</p>
-                                </td>
-                                <td class="px-6 py-4 text-xs">
-                                    <p class="font-medium text-[#1F2937]">55 Th / Perempuan</p>
-                                    <p class="text-gray-500 mt-0.5">Jorong Koto Tuo</p>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <p class="text-sm font-medium text-[#1F2937]">08 Mei 2026</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">Kunjungan Ke-8</p>
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <p class="font-bold text-sm text-[#EF4444]">160 / 97</p>
-                                    <p class="text-[10px] text-gray-500 mt-0.5">mmHg</p>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold border border-red-200">Tidak Terkendali</span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <button onclick="bukaGrafikModal('SITI RAHAYU')" class="flex items-center gap-1.5 px-3 py-1.5 bg-[#DBEAFE] text-[#2563EB] rounded-lg text-xs font-semibold hover:bg-[#BFDBFE] transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-                                        Lihat Grafik
-                                    </button>
-                                </td>
-                            </tr>
-                            <!-- PASIEN DUMMY: DEWI LESTARI — sempat membaik lalu naik lagi -->
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4">
-                                    <p class="font-semibold text-sm text-[#1F2937]">DEWI LESTARI</p>
-                                    <p class="text-xs text-gray-500 font-mono mt-0.5">1306051203650004</p>
-                                </td>
-                                <td class="px-6 py-4 text-xs">
-                                    <p class="font-medium text-[#1F2937]">48 Th / Perempuan</p>
-                                    <p class="text-gray-500 mt-0.5">Jorong Pasar Baru</p>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <p class="text-sm font-medium text-[#1F2937]">07 Mei 2026</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">Kunjungan Ke-8</p>
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <p class="font-bold text-sm text-[#EF4444]">162 / 98</p>
-                                    <p class="text-[10px] text-gray-500 mt-0.5">mmHg</p>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold border border-red-200">Tidak Terkendali</span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <button onclick="bukaGrafikModal('DEWI LESTARI')" class="flex items-center gap-1.5 px-3 py-1.5 bg-[#DBEAFE] text-[#2563EB] rounded-lg text-xs font-semibold hover:bg-[#BFDBFE] transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-                                        Lihat Grafik
-                                    </button>
-                                </td>
-                            </tr>
-                            <!-- PASIEN DUMMY: NURHAYATI — fluktuasi ringan -->
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4">
-                                    <p class="font-semibold text-sm text-[#1F2937]">NURHAYATI</p>
-                                    <p class="text-xs text-gray-500 font-mono mt-0.5">1306056807520005</p>
-                                </td>
-                                <td class="px-6 py-4 text-xs">
-                                    <p class="font-medium text-[#1F2937]">62 Th / Perempuan</p>
-                                    <p class="text-gray-500 mt-0.5">Jl. Sudirman No. 12</p>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <p class="text-sm font-medium text-[#1F2937]">05 Mei 2026</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">Kunjungan Ke-8</p>
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <p class="font-bold text-sm text-[#1F2937]">140 / 87</p>
-                                    <p class="text-[10px] text-gray-500 mt-0.5">mmHg</p>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="px-2.5 py-1 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold border border-yellow-200">Terkendali</span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <button onclick="bukaGrafikModal('NURHAYATI')" class="flex items-center gap-1.5 px-3 py-1.5 bg-[#DBEAFE] text-[#2563EB] rounded-lg text-xs font-semibold hover:bg-[#BFDBFE] transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-                                        Lihat Grafik
-                                    </button>
-                                </td>
-                            </tr>
+                        <tbody class="divide-y divide-gray-50" id="tabelPasien">
+                            <% if (daftarPasien && daftarPasien.length > 0) { %>
+                                <% daftarPasien.forEach(function(p) { %>
+                                <%
+                                    const sistole = parseInt(p.sistole_terakhir);
+                                    const diastole = parseInt(p.diastole_terakhir);
+                                    let statusLabel = 'Belum ada data';
+                                    let statusCls = 'bg-gray-100 text-gray-500';
+                                    if (!isNaN(sistole) && !isNaN(diastole)) {
+                                        if (sistole >= 180 || diastole >= 110) {
+                                            statusLabel = 'Krisis';
+                                            statusCls = 'bg-red-100 text-red-700';
+                                        } else if (sistole >= 160 || diastole >= 100) {
+                                            statusLabel = 'HT Tingkat 2';
+                                            statusCls = 'bg-red-100 text-red-700';
+                                        } else if (sistole >= 140 || diastole >= 90) {
+                                            statusLabel = 'HT Tingkat 1';
+                                            statusCls = 'bg-orange-100 text-orange-700';
+                                        } else if (sistole >= 120) {
+                                            statusLabel = 'Pra-Hipertensi';
+                                            statusCls = 'bg-yellow-100 text-yellow-700';
+                                        } else {
+                                            statusLabel = 'Terkendali';
+                                            statusCls = 'bg-green-100 text-green-700';
+                                        }
+                                    }
+                                %>
+                                <tr class="hover:bg-slate-50 transition-colors baris-pasien" data-nama="<%= p.nama_pasien.toLowerCase() %>">
+                                    <td class="px-6 py-4">
+                                        <p class="font-semibold text-sm text-[#1F2937]"><%= p.nama_pasien %></p>
+                                        <p class="text-xs text-gray-500 font-mono mt-0.5"><%= p.nik %></p>
+                                    </td>
+                                    <td class="px-6 py-4 text-xs text-gray-600"><%= p.nama_jorong %></td>
+                                    <td class="px-6 py-4 text-xs text-gray-600">
+                                        <% if (p.kunjungan_terakhir) { %>
+                                            <%= new Date(p.kunjungan_terakhir).toLocaleDateString('id-ID') %>
+                                        <% } else { %>
+                                            <span class="text-gray-400">Belum ada</span>
+                                        <% } %>
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        <% if (!isNaN(sistole) && !isNaN(diastole)) { %>
+                                            <span class="font-bold text-sm <%= sistole >= 140 || diastole >= 90 ? 'text-red-600' : 'text-green-600' %>">
+                                                <%= sistole %>/<%= diastole %>
+                                            </span>
+                                            <p class="text-xs text-gray-400">mmHg</p>
+                                        <% } else { %>
+                                            <span class="text-gray-400 text-xs">—</span>
+                                        <% } %>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold <%= statusCls %>"><%= statusLabel %></span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <button onclick="bukaGrafikModal('<%= p.id_pasien %>', '<%= p.nama_pasien %>')" 
+                                                class="flex items-center gap-1.5 px-3 py-1.5 bg-[#DBEAFE] text-[#2563EB] rounded-lg text-xs font-semibold hover:bg-[#BFDBFE] transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                            Lihat Grafik
+                                        </button>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr><td colspan="6" class="text-center py-12 text-gray-400">Belum ada data pasien</td></tr>
+                            <% } %>
                         </tbody>
                     </table>
                 </div>
@@ -345,86 +287,86 @@
         //      — warna kotak kini tetap biru netral (informatif, bukan judgement)
         // Struktur fungsi, nama variabel, dan render Chart TIDAK diubah.
         // ============================================================
-        function bukaGrafikModal(namaPasien) {
+        // Variabel global chart
+        let chartInst = null;
+
+        // Cari pasien
+        document.getElementById('cariPasien').addEventListener('input', function() {
+            const q = this.value.toLowerCase();
+            document.querySelectorAll('.baris-pasien').forEach(row => {
+                row.style.display = row.dataset.nama.includes(q) ? '' : 'none';
+            });
+        });
+
+        async function bukaGrafikModal(idPasien, namaPasien) {
             document.getElementById('modal-grafik').classList.remove('hidden-el');
             document.getElementById('nama-pasien-modal').innerText = namaPasien;
+            document.getElementById('kesimpulan-pasien').textContent = 'Memuat data...';
 
-            // [REVISI] Data simulasi dipertahankan sementara (untuk dummy/demo).
-            // Saat integrasi database selesai, ganti blok ini dengan fetch ke
-            // endpoint API: GET /bidan/monitoring/:id_pasien
-            let dataSistole  = [];
-            let dataDiastole = [];
+            try {
+                const res = await fetch(`/bidan/monitoring/api/${idPasien}`);
+                const json = await res.json();
 
-            if (namaPasien === 'ASMIARTI') {
-                dataSistole  = [173, 150, 140, 130, 128, 125];
-                dataDiastole = [95, 90, 85, 80, 78, 75];
-            } else if (namaPasien === 'SITI RAHAYU') {
-                dataSistole  = [140, 155, 138, 162, 145, 158, 135, 160]; // fluktuatif sedang
-                dataDiastole = [88,  95,  85,  98,  90,  96,  84,  97];
-            } else if (namaPasien === 'DEWI LESTARI') {
-                dataSistole  = [158, 165, 150, 145, 155, 170, 148, 162]; // sempat turun lalu naik lagi
-                dataDiastole = [95,  100, 90,  88,  93,  102, 89,  98];
-            } else if (namaPasien === 'NURHAYATI') {
-                dataSistole  = [138, 142, 135, 144, 136, 141, 133, 140]; // fluktuasi ringan
-                dataDiastole = [86,  89,  84,  90,  85,  88,  83,  87];
-            } else {
-                dataSistole  = [130, 135, 145, 155, 158, 160];
-                dataDiastole = [80, 85, 88, 90, 92, 95];
-            }
-
-            // [REVISI] teksKesimpulan klinis DIHAPUS sepenuhnya.
-            // Diganti dengan hasil hitungan matematis dari hitungNarasiDeskriptif().
-            const narasiDeskriptif = hitungNarasiDeskriptif(dataSistole, dataDiastole);
-
-            // [REVISI] Isi elemen teks dengan narasi deskriptif (bukan innerHTML
-            // dengan HTML bold — gunakan textContent agar lebih aman dari XSS)
-            document.getElementById('kesimpulan-pasien').textContent = narasiDeskriptif;
-
-            // [REVISI] Manipulasi warna kotak berdasarkan kondisi klinis DIHAPUS.
-            // Kotak tetap biru netral (#EFF6FF) karena hanya menyajikan data,
-            // bukan memberikan penilaian kondisi pasien.
-
-            // Render Chart — TIDAK DIUBAH dari versi asli
-            Chart.defaults.font.family = "'Inter', sans-serif";
-            const ctx = document.getElementById('historiTensiChart').getContext('2d');
-            
-            if (chartInst) chartInst.destroy();
-
-            chartInst = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ["Jan", "Feb", "Mar", "Apr", "Mei", "Sekarang"],
-                    datasets: [
-                        {
-                            label: 'Sistole',
-                            data: dataSistole,
-                            borderColor: '#EF4444',
-                            backgroundColor: '#EF4444',
-                            tension: 0.3,
-                            borderWidth: 2,
-                            pointRadius: 4
-                        },
-                        {
-                            label: 'Diastole',
-                            data: dataDiastole,
-                            borderColor: '#3B82F6',
-                            backgroundColor: '#3B82F6',
-                            tension: 0.3,
-                            borderWidth: 2,
-                            pointRadius: 4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } } },
-                    scales: {
-                        y: { min: 60, max: 200, grid: { color: '#F3F4F6', strokeDash: [3, 3] } },
-                        x: { grid: { display: false } }
-                    }
+                if (!json.success || !json.data || json.data.length === 0) {
+                    document.getElementById('kesimpulan-pasien').textContent = 'Belum ada riwayat skrining terverifikasi untuk pasien ini.';
+                    if (chartInst) { chartInst.destroy(); chartInst = null; }
+                    return;
                 }
-            });
+
+                const dataSistole  = json.data.map(r => r.sistole);
+                const dataDiastole = json.data.map(r => r.diastole);
+                const labels       = json.data.map(r => {
+                    const d = new Date(r.tanggal_skrining);
+                    return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+                });
+
+                const narasiDeskriptif = hitungNarasiDeskriptif(dataSistole, dataDiastole);
+                document.getElementById('kesimpulan-pasien').textContent = narasiDeskriptif;
+
+                Chart.defaults.font.family = "'Inter', sans-serif";
+                const ctx = document.getElementById('historiTensiChart').getContext('2d');
+                if (chartInst) chartInst.destroy();
+
+                chartInst = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [
+                            {
+                                label: 'Sistole',
+                                data: dataSistole,
+                                borderColor: '#EF4444',
+                                backgroundColor: '#EF4444',
+                                tension: 0.3,
+                                borderWidth: 2,
+                                pointRadius: 4
+                            },
+                            {
+                                label: 'Diastole',
+                                data: dataDiastole,
+                                borderColor: '#3B82F6',
+                                backgroundColor: '#3B82F6',
+                                tension: 0.3,
+                                borderWidth: 2,
+                                pointRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } } },
+                        scales: {
+                            y: { min: 60, max: 200, grid: { color: '#F3F4F6' } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+
+            } catch (err) {
+                document.getElementById('kesimpulan-pasien').textContent = 'Gagal memuat data. Periksa koneksi.';
+                console.error(err);
+            }
         }
 
         function tutupGrafikModal() {

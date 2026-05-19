@@ -100,3 +100,21 @@ exports.renderGrafikTensi = async (req, res) => {
         res.status(500).send("Gagal memuat grafik tensi.");
     }
 };
+
+exports.getApiTensiPasien = async (req, res) => {
+    const { id_pasien } = req.params;
+    try {
+        const result = await pool.query(`
+            SELECT tanggal_skrining, sistole, diastole
+            FROM skrining
+            WHERE id_pasien = $1
+              AND status_validasi = 'terverifikasi'
+            ORDER BY tanggal_skrining ASC
+        `, [id_pasien]);
+
+        res.json({ success: true, data: result.rows });
+    } catch (err) {
+        console.error('ERROR getApiTensiPasien:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+};

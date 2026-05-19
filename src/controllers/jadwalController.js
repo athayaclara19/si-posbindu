@@ -160,6 +160,18 @@ exports.handleEditJadwal = async (req, res) => {
     const { id } = req.params;
     const { tanggal_kegiatan, lokasi, id_jorong } = req.body;
     try {
+        // VALIDASI: Kegiatan yang sudah lewat tidak bisa diedit sama sekali
+        const kegiatanCheck = await pool.query(
+            'SELECT tanggal_kegiatan FROM kegiatan WHERE id_kegiatan = $1', [id]
+        );
+        if (kegiatanCheck.rows.length > 0) {
+            const tgl = new Date(kegiatanCheck.rows[0].tanggal_kegiatan);
+            const today = new Date(); today.setHours(0,0,0,0);
+            if (tgl < today) {
+                return res.redirect('/ptm/jadwal?error=kegiatan_selesai');
+            }
+        }
+        
         // Cek apakah ada skrining → jika ada, hanya boleh edit lokasi & jorong
         const skriningCheck = await pool.query(
             'SELECT COUNT(*)::int AS total FROM skrining WHERE id_kegiatan = $1',

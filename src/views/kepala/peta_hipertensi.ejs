@@ -117,7 +117,7 @@
                         <select id="filterTahun"
                                 class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
                             <% for (let y = new Date().getFullYear(); y >= 2023; y--) { %>
-                                <option value="<%= y %>"><%= y %></option>
+                                <option value="<%= y %>" <%= y === new Date().getFullYear() ? 'selected' : '' %>><%= y %></option>
                             <% } %>
                         </select>
                     </div>
@@ -281,9 +281,9 @@
                 dataMap[d.nama_nagari.toUpperCase()] = d;
             });
 
+            renderSummaryCards(json.data);
             renderMap(dataMap);
             renderTable(json.data);
-            renderSummaryCards(json.data);
 
         } catch (err) {
             console.error('Gagal memuat data peta:', err);
@@ -387,7 +387,7 @@
             ? ((totalHipertensi / totalPasien) * 100).toFixed(1)
             : '0.0';
         const nagariTertinggi= data.length
-            ? data.sort((a,b) => b.persen_hipertensi - a.persen_hipertensi)[0]
+            ? [...data].sort((a,b) => b.persen_hipertensi - a.persen_hipertensi)[0] 
             : null;
 
         document.getElementById('summaryCards').innerHTML = `

@@ -5,18 +5,24 @@ const pool = require('../config/db');
  */
 exports.renderKelolaPasien = async (req, res) => {
     try {
-        // Kita ambil data pasien lengkap dengan nama jorongnya menggunakan JOIN
-        const query = `
-            SELECT p.*, j.nama_jorong 
+        const result = await pool.query(`
+            SELECT p.*, j.nama_jorong, n.nama_nagari, n.id_nagari
             FROM pasien p 
-            JOIN jorong j ON p.id_jorong = j.id_jorong 
+            JOIN jorong j ON p.id_jorong = j.id_jorong
+            JOIN nagari n ON j.id_nagari = n.id_nagari
             ORDER BY p.nama_pasien ASC
-        `;
-        const result = await pool.query(query);
+        `);
+        const nagari = await pool.query('SELECT * FROM nagari ORDER BY nama_nagari ASC');
+        const jorong = await pool.query(`
+            SELECT j.*, n.nama_nagari 
+            FROM jorong j JOIN nagari n ON j.id_nagari = n.id_nagari 
+            ORDER BY j.nama_jorong ASC
+        `);
 
-        // Render file EJS yang nanti akan kita buat
         res.render('ptm/kelolapasien', { 
             pasien: result.rows,
+            nagari: nagari.rows,
+            jorong: jorong.rows,
             active: 'pasien',
             currentUser: req.session.user || null,
             role: req.session.user ? req.session.user.role : 'pj_ptm'

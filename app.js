@@ -181,6 +181,12 @@ app.get('/bidan/monitoring',
     monitoringController.renderMonitoring
 );
 
+app.get('/bidan/monitoring/api/:id_pasien',
+    isAuthenticated,
+    isAuthorized('bidan'),
+    monitoringController.getApiTensiPasien
+);
+
 app.get('/bidan/monitoring/:id_pasien',
     isAuthenticated,
     isAuthorized('bidan'),
