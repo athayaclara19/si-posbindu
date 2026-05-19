@@ -57,19 +57,8 @@ exports.getDataPetaHipertensi = async (req, res) => {
         // CABANG 1: Filter berdasarkan bulan & tahun tertentu
         // -------------------------------------------------------
         if (bulan && tahun) {
-            // Cari id_periode dulu
-            const periodeRes = await pool.query(
-                'SELECT periode_id FROM periode WHERE periode_bulan = $1 AND periode_tahun = $2',
-                [parseInt(bulan), parseInt(tahun)]
-            );
-
-            if (periodeRes.rows.length === 0) {
-                // Periode tidak ditemukan → kembalikan array kosong per nagari
-                return res.json({ success: true, data: [] });
-            }
-
-            const id_periode = periodeRes.rows[0].periode_id;
-
+            // Filter langsung berdasarkan EXTRACT bulan & tahun dari tanggal_kegiatan
+            // lebih reliable daripada lookup id_periode
             const result = await pool.query(`
                 SELECT
                     n.nama_nagari,
@@ -81,10 +70,16 @@ exports.getDataPetaHipertensi = async (req, res) => {
                 JOIN jorong j   ON p.id_jorong   = j.id_jorong
                 JOIN nagari n   ON j.id_nagari   = n.id_nagari
                 WHERE s.status_validasi = 'terverifikasi'
-                  AND k.id_periode      = $1
+                  AND EXTRACT(MONTH FROM k.tanggal_kegiatan) = $1
+                  AND EXTRACT(YEAR  FROM k.tanggal_kegiatan) = $2
                 GROUP BY n.nama_nagari
                 ORDER BY total_hipertensi DESC
-            `, [id_periode]);
+            `, [parseInt(bulan), parseInt(tahun)]);
+
+            // Kalau tidak ada data untuk bulan/tahun ini, kembalikan array kosong
+            if (result.rows.length === 0) {
+                return res.json({ success: true, data: [] });
+            }
 
             const data = result.rows.map(row => ({
                 nama_nagari:       row.nama_nagari,

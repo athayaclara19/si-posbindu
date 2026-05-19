@@ -24,14 +24,36 @@
             </div>
 
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-6">
-                <div class="flex items-center w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus-within:bg-white focus-within:border-[#2563EB] transition-all shadow-sm">
-                    
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 flex-shrink-0 mr-3">
-                        <circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/>
-                    </svg>
-                    
-                    <input type="text" id="searchPasien" placeholder="Cari Nama atau NIK Pasien..." class="w-full bg-transparent border-none outline-none p-0 text-sm text-[#1F2937] placeholder-gray-400 focus:ring-0">
-                
+                <div class="flex flex-wrap items-end gap-3">
+                    <!-- Cari nama/NIK -->
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Cari Nama / NIK</label>
+                        <div class="flex items-center px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 focus-within:bg-white focus-within:border-[#2563EB] transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 mr-2 flex-shrink-0"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
+                            <input type="text" id="searchPasien" placeholder="Ketik nama atau NIK..." class="w-full bg-transparent border-none outline-none text-sm text-[#1F2937] placeholder-gray-400 focus:ring-0">
+                        </div>
+                    </div>
+                    <!-- Filter Nagari -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Nagari</label>
+                        <select id="filterNagari" class="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-[160px]">
+                            <option value="">Semua Nagari</option>
+                            <% if (typeof nagari !== 'undefined') { nagari.forEach(n => { %>
+                                <option value="<%= n.id_nagari %>"><%= n.nama_nagari %></option>
+                            <% }); } %>
+                        </select>
+                    </div>
+                    <!-- Filter Jorong (dinamis) -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Jorong</label>
+                        <select id="filterJorong" class="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-[160px]" disabled>
+                            <option value="">Pilih nagari dulu</option>
+                        </select>
+                    </div>
+                    <!-- Tombol reset -->
+                    <button id="btnResetFilter" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold rounded-xl transition-colors">
+                        Reset
+                    </button>
                 </div>
             </div>
 
@@ -43,6 +65,7 @@
                                 <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">No</th>
                                 <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">NIK & Nama</th>
                                 <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Usia / L/P</th>
+                                <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nagari</th>
                                 <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Jorong</th>
                                 <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Alamat</th>
                                 <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Aksi</th>
@@ -51,7 +74,7 @@
                         <tbody class="divide-y divide-gray-100">
                             <% if (typeof pasien !== 'undefined' && pasien.length > 0) { %>
                                 <% pasien.forEach((item, index) => { %>
-                                    <tr class="border-b border-gray-50 hover:bg-slate-50 transition-colors baris-pasien">
+                                    <tr class="border-b border-gray-50 hover:bg-slate-50 transition-colors baris-pasien" data-nagari="<%= item.id_nagari || '' %>" data-jorong="<%= item.id_jorong %>">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                             <%= index + 1 %>
                                         </td>
@@ -66,6 +89,9 @@
                                             <div class="text-xs text-gray-500 mt-0.5"><%= item.jenis_kelamin || '-' %></div>
                                         </td>
                                         
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                            <%= item.nama_nagari || '-' %>
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                             <%= item.nama_jorong %>
                                         </td>
@@ -171,27 +197,65 @@
     </script>
 
     <script>
+        // Data jorong per nagari (dari server)
+        const semuaJorong = <%- JSON.stringify(typeof jorong !== 'undefined' ? jorong : []) %>;
+
         document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('searchPasien');
-            const rows = document.querySelectorAll('.baris-pasien');
+            const searchInput   = document.getElementById('searchPasien');
+            const filterNagari  = document.getElementById('filterNagari');
+            const filterJorong  = document.getElementById('filterJorong');
+            const btnReset      = document.getElementById('btnResetFilter');
+            const rows          = document.querySelectorAll('.baris-pasien');
 
-            if(searchInput) {
-                searchInput.addEventListener('input', function() {
-                    const searchTerm = this.value.toLowerCase();
+            function applyFilter() {
+                const q          = (searchInput.value || '').toLowerCase();
+                const nagariVal  = filterNagari.value;
+                const jorongVal  = filterJorong.value;
 
-                    rows.forEach(row => {
-                        // Mengambil seluruh teks di dalam baris tabel tersebut (termasuk NIK dan Nama)
-                        const textContent = row.textContent.toLowerCase();
+                rows.forEach(row => {
+                    const teks    = row.textContent.toLowerCase();
+                    const nagari  = row.dataset.nagari || '';
+                    const jorong  = row.dataset.jorong || '';
 
-                        // Tampilkan baris jika teks cocok, sembunyikan jika tidak
-                        if (textContent.includes(searchTerm)) {
-                            row.style.display = '';
-                        } else {
-                            row.style.display = 'none';
-                        }
-                    });
+                    const lolosSearch = !q || teks.includes(q);
+                    const lolosNagari = !nagariVal || nagari === nagariVal;
+                    const lolosJorong = !jorongVal || jorong === jorongVal;
+
+                    row.style.display = (lolosSearch && lolosNagari && lolosJorong) ? '' : 'none';
                 });
             }
+
+            // Update dropdown jorong saat nagari dipilih
+            filterNagari.addEventListener('change', function() {
+                const idNagari = this.value;
+                filterJorong.innerHTML = '<option value="">Semua Jorong</option>';
+
+                if (idNagari) {
+                    filterJorong.disabled = false;
+                    const jorongFiltered = semuaJorong.filter(j => String(j.id_nagari) === String(idNagari));
+                    jorongFiltered.forEach(j => {
+                        const opt = document.createElement('option');
+                        opt.value = j.id_jorong;
+                        opt.textContent = j.nama_jorong;
+                        filterJorong.appendChild(opt);
+                    });
+                } else {
+                    filterJorong.disabled = true;
+                    filterJorong.innerHTML = '<option value="">Pilih nagari dulu</option>';
+                }
+                applyFilter();
+            });
+
+            filterJorong.addEventListener('change', applyFilter);
+            searchInput.addEventListener('input', applyFilter);
+
+            btnReset.addEventListener('click', function() {
+                searchInput.value = '';
+                filterNagari.value = '';
+                filterJorong.disabled = true;
+                filterJorong.innerHTML = '<option value="">Pilih nagari dulu</option>';
+                applyFilter();
+            });
         });
     </script>
 

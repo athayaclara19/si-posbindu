@@ -179,12 +179,20 @@
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                                             </button>
 
-                                            <!-- Tombol EDIT -->
-                                            <a href="/ptm/jadwal/edit/<%= item.id_kegiatan %>"
-                                               class="p-1.5 rounded-lg text-[#6B7280] hover:bg-amber-50 hover:text-[#D97706] transition-all"
-                                               title="<%= adaSkrining ? 'Edit lokasi/jorong (tanggal tidak bisa diubah karena sudah ada skrining)' : 'Edit Jadwal' %>">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-                                            </a>
+                                            <!-- Tombol EDIT: hanya jika belum selesai -->
+                                            <% if (sudahLewat) { %>
+                                                <button disabled
+                                                        title="Kegiatan sudah selesai, tidak bisa diedit"
+                                                        class="p-1.5 rounded-lg text-gray-300 cursor-not-allowed">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                                                </button>
+                                            <% } else { %>
+                                                <a href="/ptm/jadwal/edit/<%= item.id_kegiatan %>"
+                                                class="p-1.5 rounded-lg text-[#6B7280] hover:bg-amber-50 hover:text-[#D97706] transition-all"
+                                                title="<%= adaSkrining ? 'Edit lokasi/jorong (tanggal tidak bisa diubah)' : 'Edit Jadwal' %>">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                                                </a>
+                                            <% } %>
 
                                             <!-- Tombol HAPUS (dikunci jika ada skrining) -->
                                             <% if (adaSkrining) { %>
@@ -285,6 +293,7 @@
         const errorMsg = {
             hari_minggu:         { title: 'Tidak Valid', text: 'Jadwal tidak bisa dibuat pada hari Minggu.' },
             tanggal_masa_lalu:   { title: 'Tidak Valid', text: 'Tanggal tidak boleh di masa lalu.' },
+            kegiatan_selesai:    { title: 'Tidak Diizinkan', text: 'Kegiatan yang sudah selesai tidak dapat diedit.' },
             ada_skrining:        { title: 'Tidak Bisa Dihapus', text: 'Jadwal ini sudah memiliki data skrining. Hapus skriningnya terlebih dahulu.' },
             data_tidak_lengkap:  { title: 'Data Kurang', text: 'Semua field wajib diisi.' },
             gagal_tambah:        { title: 'Gagal', text: 'Terjadi kesalahan saat menambah jadwal.' },
