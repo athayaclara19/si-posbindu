@@ -91,7 +91,7 @@ exports.renderDashboard = async (req, res) => {
 
         // Perlu revisi (ditolak)
         const revisi = await pool.query(
-            "SELECT COUNT(*) FROM skrining WHERE id_kader=$1 AND status_validasi='ditolak'", [id_kader]);
+            "SELECT COUNT(*) FROM skrining WHERE id_kader=$1 AND status_validasi='revisi'", [id_kader]);
 
         // Tren skrining 6 bulan terakhir
         const trenQuery = await pool.query(`
@@ -120,7 +120,7 @@ exports.renderDashboard = async (req, res) => {
             SELECT s.id_skrining, p.nama_pasien, s.tanggal_skrining, s.catatan_bidan
             FROM skrining s
             JOIN pasien p ON s.id_pasien = p.id_pasien
-            WHERE s.id_kader=$1 AND s.status_validasi='ditolak'
+            WHERE s.id_kader=$1 AND s.status_validasi='revisi'
             ORDER BY s.tanggal_skrining DESC LIMIT 10`, [id_kader]);
 
         // Notifikasi: skrining terverifikasi terbaru (5 hari terakhir)
@@ -165,24 +165,74 @@ exports.renderDashboard = async (req, res) => {
 
 // 4. Render Riwayat Skrining
 exports.renderRiwayat = async (req, res) => {
-    const id_kader = req.session.user.id_user; // PERBAIKAN
+    const id_kader = req.session.user.id_user;
     try {
+        const search     = (req.query.search || '').trim();
+        const statusQ    = req.query.status  || '';
+        const page       = Math.max(1, parseInt(req.query.page) || 1);
+        const limit      = 20;
+        const offset     = (page - 1) * limit;
+
+        // Bangun kondisi WHERE dinamis
+        const conditions = ['s.id_kader = $1'];
+        const params     = [id_kader];
+        let   pi         = 2; // index parameter berikutnya
+
+        if (search !== '') {
+            conditions.push(`(p.nama_pasien ILIKE $${pi} OR p.nik ILIKE $${pi})`);
+            params.push(`%${search}%`);
+            pi++;
+        }
+        if (statusQ !== '' && statusQ !== 'Semua') {
+            // Map label UI ke nilai DB
+            const statusMap = {
+                'Menunggu Validasi': 'menunggu',
+                'Valid':             'terverifikasi',
+                'Perlu Revisi':      'revisi',
+            };
+            const dbStatus = statusMap[statusQ];
+            if (dbStatus) {
+                conditions.push(`s.status_validasi = $${pi}`);
+                params.push(dbStatus);
+                pi++;
+            }
+        }
+
+        const whereClause = 'WHERE ' + conditions.join(' AND ');
+
+        // Hitung total untuk pagination
+        const countResult = await pool.query(
+            `SELECT COUNT(*) FROM skrining s
+             JOIN pasien p ON s.id_pasien = p.id_pasien
+             ${whereClause}`, params);
+        const totalData  = parseInt(countResult.rows[0].count);
+        const totalPages = Math.ceil(totalData / limit);
+
+        // Ambil data dengan LIMIT & OFFSET
+        const dataParams = [...params, limit, offset];
         const query = `
             SELECT s.*, p.nama_pasien, p.nik, k.tanggal_kegiatan, j.nama_jorong
             FROM skrining s
-            JOIN pasien p  ON s.id_pasien  = p.id_pasien
+            JOIN pasien   p ON s.id_pasien   = p.id_pasien
             JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
-            JOIN jorong j  ON p.id_jorong  = j.id_jorong
-            WHERE s.id_kader = $1
+            JOIN jorong   j ON p.id_jorong   = j.id_jorong
+            ${whereClause}
             ORDER BY k.tanggal_kegiatan DESC
+            LIMIT $${pi} OFFSET $${pi + 1}
         `;
-        const result = await pool.query(query, [id_kader]);
+        const result = await pool.query(query, dataParams);
+
         res.render('kader/riwayat', {
             riwayat: result.rows,
             active: 'riwayat',
             notifikasi: [],
             currentUser: req.session.user || null,
-            role: req.session.user ? req.session.user.role : 'kader'
+            role: req.session.user ? req.session.user.role : 'kader',
+            search,
+            statusQ,
+            page,
+            totalPages,
+            totalData,
         });
     } catch (err) {
         console.error(err);

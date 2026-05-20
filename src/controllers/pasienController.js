@@ -1,28 +1,46 @@
 const pool = require('../config/db');
 
-// 1. Tampilkan Daftar Pasien
-// 1. Tampilkan Daftar Pasien
+// 1. Tampilkan Daftar Pasien (dengan server-side search & pagination)
 exports.renderDaftarPasien = async (req, res) => {
     try {
-        // HAPUS filter "WHERE p.id_jorong = $1" agar Kader bisa melihat SEMUA pasien.
-        // UBAH urutan menjadi DESC (Descending) agar pasien yang baru ditambah 
-        // langsung muncul di baris paling atas tabel!
-        
-        const query = `
+        // Ambil parameter dari query string
+        const search   = (req.query.search || '').trim();
+        const page     = Math.max(1, parseInt(req.query.page) || 1);
+        const limit    = 20; // tampilkan 20 data per halaman
+        const offset   = (page - 1) * limit;
+
+        // Bangun kondisi WHERE berdasarkan search
+        let whereClause = '';
+        let queryParams = [];
+
+        if (search !== '') {
+            whereClause = `WHERE p.nama_pasien ILIKE $1 OR p.nik ILIKE $1`;
+            queryParams = [`%${search}%`];
+        }
+
+        // Hitung total data (untuk pagination)
+        const countQuery = `SELECT COUNT(*) FROM pasien p JOIN jorong j ON p.id_jorong = j.id_jorong ${whereClause}`;
+        const countResult = await pool.query(countQuery, queryParams);
+        const totalData   = parseInt(countResult.rows[0].count);
+        const totalPages  = Math.ceil(totalData / limit);
+
+        // Query data dengan LIMIT dan OFFSET
+        const dataParams  = search !== '' ? [`%${search}%`, limit, offset] : [limit, offset];
+        const limitParam  = search !== '' ? '$2' : '$1';
+        const offsetParam = search !== '' ? '$3' : '$2';
+
+        const dataQuery = `
             SELECT p.*, j.nama_jorong 
             FROM pasien p 
             JOIN jorong j ON p.id_jorong = j.id_jorong 
+            ${whereClause}
             ORDER BY p.id_pasien DESC 
+            LIMIT ${limitParam} OFFSET ${offsetParam}
         `;
-        const result = await pool.query(query);
+        const result = await pool.query(dataQuery, dataParams);
 
-        // ==========================================
-        // [BARU] MENGAMBIL DATA NAGARI DAN JORONG UNTUK FILTER
-        // ==========================================
-        // Ambil data nagari
+        // Ambil data nagari dan jorong untuk filter
         const nagari = await pool.query('SELECT * FROM nagari ORDER BY nama_nagari ASC');
-        
-        // Ambil data jorong beserta nama nagarinya (menggunakan JOIN)
         const jorong = await pool.query(`
             SELECT j.*, n.nama_nagari 
             FROM jorong j 
@@ -30,14 +48,19 @@ exports.renderDaftarPasien = async (req, res) => {
             ORDER BY j.nama_jorong ASC
         `);
 
-        // Render ke halaman EJS
         res.render('kader/pasien', { 
             daftarPasien: result.rows,
             nagari: nagari.rows,
             jorong: jorong.rows,
             active: 'pasien',
             currentUser: req.session.user || null,
-            role: req.session.user ? req.session.user.role : 'kader'
+            role: req.session.user ? req.session.user.role : 'kader',
+            // Data pagination & search untuk dipakai di view
+            search,
+            page,
+            totalPages,
+            totalData,
+            limit,
         });
     } catch (err) {
         console.error(err);
@@ -48,7 +71,6 @@ exports.renderDaftarPasien = async (req, res) => {
 // 2. Tampilkan Form Tambah Pasien
 exports.renderTambahPasien = async (req, res) => {
     try {
-        // Asumsi kamu memiliki tabel 'nagari' dan kolom 'id_nagari' di tabel 'jorong'
         const nagari = await pool.query('SELECT * FROM nagari ORDER BY nama_nagari ASC');
         const jorong = await pool.query('SELECT * FROM jorong ORDER BY nama_jorong ASC');
         
@@ -68,32 +90,17 @@ exports.renderTambahPasien = async (req, res) => {
 // 3. Proses Simpan Pasien Baru
 exports.handleTambahPasien = async (req, res) => {
     try {
-        // 1. Ambil data dari form EJS
         const { id_jorong, nik, nama_pasien, usia, jenis_kelamin, alamat, no_hp, pekerjaan, agama } = req.body;
-
-        // ==========================================
-        // 2. JURUS PAMUNGKAS: BIKIN ID OTOMATIS!
-        // Membuat ID unik berdasarkan waktu saat ini agar tidak akan pernah duplikat
-        // ==========================================
-        const id_pasien = nik; 
-
-        // 3. Kalkulator Tahun Lahir
+        const id_pasien    = nik; 
         const tahunSekarang = new Date().getFullYear();
-        const tahun_lahir = tahunSekarang - parseInt(usia);
+        const tahun_lahir  = tahunSekarang - parseInt(usia);
 
-        // 4. Query SQL (Kita masukkan kembali id_pasien di urutan PERTAMA)
         const query = `
             INSERT INTO pasien (id_pasien, id_jorong, nik, nama_pasien, usia, tahun_lahir, jenis_kelamin, alamat, no_hp, pekerjaan, agama) 
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         `;
-        
-        // 5. Susunan data (id_pasien di urutan paling depan sesuai $1)
         const values = [id_pasien, id_jorong, nik, nama_pasien, usia, tahun_lahir, jenis_kelamin, alamat, no_hp, pekerjaan, agama];
-
-        // 6. Eksekusi ke Database
         await pool.query(query, values);
-        
-        // 7. Jika sukses, kembali ke halaman pasien
         res.redirect('/pasien');
 
     } catch (err) {
@@ -101,5 +108,3 @@ exports.handleTambahPasien = async (req, res) => {
         res.status(500).send("<script>alert('Gagal menambah pasien. Cek terminal untuk detailnya.'); window.history.back();</script>");
     }
 };
-
-

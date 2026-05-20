@@ -124,6 +124,38 @@
                         </tbody>
                     </table>
                 </div>
+
+                <%# ====== PAGINATION ====== %>
+                <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+                <div class="flex items-center justify-between mt-4 px-2">
+                    <p class="text-sm text-gray-500">
+                        Menampilkan halaman <%= page %> dari <%= totalPages %> 
+                        (<%= totalData %> total pasien)
+                    </p>
+                    <div class="flex gap-2">
+                        <% if (page > 1) { %>
+                            <a href="/pasien?search=<%= encodeURIComponent(search) %>&page=<%= page - 1 %>"
+                               class="px-3 py-1.5 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+                                ← Sebelumnya
+                            </a>
+                        <% } %>
+                        <% for (let i = Math.max(1, page-2); i <= Math.min(totalPages, page+2); i++) { %>
+                            <a href="/pasien?search=<%= encodeURIComponent(search) %>&page=<%= i %>"
+                               class="px-3 py-1.5 rounded-lg border text-sm
+                                      <%= i === page ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50' %>">
+                                <%= i %>
+                            </a>
+                        <% } %>
+                        <% if (page < totalPages) { %>
+                            <a href="/pasien?search=<%= encodeURIComponent(search) %>&page=<%= page + 1 %>"
+                               class="px-3 py-1.5 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+                                Berikutnya →
+                            </a>
+                        <% } %>
+                    </div>
+                </div>
+                <% } %>
+
             </div>
 
         </main>
@@ -131,30 +163,37 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('searchPasien');
+            const searchInput  = document.getElementById('searchPasien');
             const filterNagari = document.getElementById('filterNagari');
             const filterJorong = document.getElementById('filterJorong');
-            const rows = document.querySelectorAll('.baris-pasien');
 
-            // Simpan semua opsi jorong beserta nagari-nya dari data-attribute baris
-            // Data jorong + nagari sudah ada di server, kita bangun mapping dari rows
-            const jorongOptions = [];
-            rows.forEach(row => {
-                const jorong = row.getAttribute('data-jorong') || '';
-                const nagari = row.getAttribute('data-nagari') || '';
-                if (jorong && !jorongOptions.find(j => j.jorong === jorong)) {
-                    jorongOptions.push({ jorong, nagari });
-                }
+            // === SERVER-SIDE SEARCH ===
+            // Isi nilai search dari URL agar kotak tidak kosong setelah submit
+            const urlParams   = new URLSearchParams(window.location.search);
+            const currentSearch = urlParams.get('search') || '';
+            searchInput.value = currentSearch;
+
+            // Kirim pencarian ke server saat Enter atau setelah berhenti mengetik (debounce)
+            let debounceTimer;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function() {
+                    const q = searchInput.value.trim();
+                    window.location.href = '/pasien?search=' + encodeURIComponent(q) + '&page=1';
+                }, 500); // tunggu 500ms setelah berhenti mengetik
             });
 
-            // Update dropdown jorong berdasarkan nagari yang dipilih
+            // === FILTER JORONG (client-side, hanya untuk dropdown cascade) ===
+            // Filter jorong dropdown berdasarkan nagari (tidak perlu reload halaman)
+            const jorongOptions = [];
+            <%- JSON.stringify(jorong || []) %>.forEach(j => {
+                jorongOptions.push({ jorong: j.nama_jorong, nagari: j.nama_nagari });
+            });
+
             function updateJorongDropdown() {
                 const nagariTerpilih = filterNagari.value.toLowerCase();
-                const jorongSaatIni = filterJorong.value;
-
-                // Kosongkan dropdown jorong
                 filterJorong.innerHTML = '<option value="">Semua Jorong</option>';
-                filterJorong.disabled = nagariTerpilih === '';
+                filterJorong.disabled  = nagariTerpilih === '';
 
                 const daftarJorong = nagariTerpilih === ''
                     ? jorongOptions
@@ -163,46 +202,16 @@
                 daftarJorong.sort((a, b) => a.jorong.localeCompare(b.jorong));
                 daftarJorong.forEach(j => {
                     const opt = document.createElement('option');
-                    opt.value = j.jorong;
+                    opt.value       = j.jorong;
                     opt.textContent = j.jorong;
-                    if (j.jorong === jorongSaatIni) opt.selected = true;
                     filterJorong.appendChild(opt);
                 });
-
-                // Jika jorong yang sebelumnya dipilih tidak ada lagi, reset
-                if (nagariTerpilih !== '' && !daftarJorong.find(j => j.jorong === jorongSaatIni)) {
-                    filterJorong.value = '';
-                }
             }
 
-            function filterTable() {
-                const searchTerm = searchInput.value.toLowerCase().trim();
-                const nagariTerm = filterNagari.value.toLowerCase();
-                const jorongTerm = filterJorong.value.toLowerCase();
-
-                rows.forEach(row => {
-                    const idNik = row.children[1].textContent.toLowerCase();
-                    const nama  = row.children[2].textContent.toLowerCase();
-                    const jorongData = (row.getAttribute('data-jorong') || '').toLowerCase();
-                    const nagariData = (row.getAttribute('data-nagari') || '').toLowerCase();
-
-                    const matchSearch = searchTerm === '' || idNik.includes(searchTerm) || nama.includes(searchTerm);
-                    const matchNagari = nagariTerm === '' || nagariData === nagariTerm;
-                    const matchJorong = jorongTerm === '' || jorongData === jorongTerm;
-
-                    row.style.display = (matchSearch && matchNagari && matchJorong) ? '' : 'none';
-                });
-            }
-
-            // Inisialisasi: disable filter jorong dulu, tunggu nagari dipilih
             filterJorong.disabled = true;
-
             filterNagari.addEventListener('change', function() {
                 updateJorongDropdown();
-                filterTable();
             });
-            filterJorong.addEventListener('change', filterTable);
-            searchInput.addEventListener('input', filterTable);
         });
     </script>
 
