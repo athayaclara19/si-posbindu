@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelola Akun User – SI-Posbindu</title>
+    <link rel="stylesheet" href="/css/output.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+        .font-inter   { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 font-inter antialiased text-slate-800 flex h-screen overflow-hidden">
+
+    <%- include('../partials/sidebar', { active: 'user' }) %>
+
+    <div class="flex-1 flex flex-col h-screen overflow-y-auto relative">
+        <%- include('../partials/header', { pageTitle: 'Kelola Akun User' }) %>
+
+        <main class="p-8 space-y-6 w-full">
+
+            <!-- Page Title -->
+            <div class="flex items-start justify-between mt-2">
+                <div>
+                    <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Kelola Akun User</h2>
+                    <p class="text-[#6B7280] text-sm mt-1">Tambah, edit, dan kelola akses semua pengguna sistem</p>
+                </div>
+                <button onclick="document.getElementById('modalTambah').classList.remove('hidden')"
+                    class="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-5 py-2.5 rounded-xl text-sm transition-all font-medium shadow-sm flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                    Tambah User
+                </button>
+            </div>
+
+            <!-- Flash Messages -->
+            <% if (successMessage) { %>
+            <div id="flashSuccess" class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-600 flex-shrink-0"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <span class="text-sm font-medium"><%= successMessage %></span>
+                <button onclick="document.getElementById('flashSuccess').remove()" class="ml-auto text-green-600 hover:text-green-800">✕</button>
+            </div>
+            <% } %>
+            <% if (errorMessage) { %>
+            <div id="flashError" class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-600 flex-shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                <span class="text-sm font-medium"><%= errorMessage %></span>
+                <button onclick="document.getElementById('flashError').remove()" class="ml-auto text-red-600 hover:text-red-800">✕</button>
+            </div>
+            <% } %>
+
+            <!-- Filter & Search -->
+            <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-wrap gap-3 items-center">
+                <div class="relative flex-1 min-w-[200px]">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    <input id="searchInput" type="text" placeholder="Cari nama atau username..."
+                        class="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+                </div>
+                <select id="filterRole" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+                    <option value="">Semua Role</option>
+                    <option value="kader">Kader</option>
+                    <option value="bidan">Bidan</option>
+                    <option value="pj_ptm">PJ PTM</option>
+                    <option value="kepala_puskesmas">Kepala Puskesmas</option>
+                </select>
+                <select id="filterStatus" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+                    <option value="">Semua Status</option>
+                    <option value="aktif">Aktif</option>
+                    <option value="nonaktif">Nonaktif</option>
+                </select>
+            </div>
+
+            <!-- Tabel User -->
+            <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h3 class="text-[#1F2937] font-poppins font-semibold text-base">Daftar Pengguna Sistem</h3>
+                    <span id="jumlahUser" class="text-sm text-gray-500"><%= users.length %> user</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm" id="tabelUser">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left font-medium">No</th>
+                                <th class="px-6 py-3 text-left font-medium">Nama</th>
+                                <th class="px-6 py-3 text-left font-medium">Username</th>
+                                <th class="px-6 py-3 text-left font-medium">Role</th>
+                                <th class="px-6 py-3 text-left font-medium">Jorong / Nagari</th>
+                                <th class="px-6 py-3 text-center font-medium">Status</th>
+                                <th class="px-6 py-3 text-center font-medium">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100" id="tableBody">
+                            <% users.forEach((u, i) => { %>
+                            <tr class="hover:bg-gray-50/50 transition-colors user-row"
+                                data-nama="<%= u.nama_user.toLowerCase() %>"
+                                data-username="<%= u.username.toLowerCase() %>"
+                                data-role="<%= u.role %>"
+                                data-status="<%= u.is_active ? 'aktif' : 'nonaktif' %>">
+
+                                <td class="px-6 py-4 text-gray-500"><%= i + 1 %></td>
+
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-[#2563EB]/10 flex items-center justify-center text-[#2563EB] font-semibold text-xs">
+                                            <%= u.nama_user.charAt(0).toUpperCase() %>
+                                        </div>
+                                        <span class="font-medium text-gray-800"><%= u.nama_user %></span>
+                                    </div>
+                                </td>
+
+                                <td class="px-6 py-4 text-gray-600 font-mono text-xs"><%= u.username %></td>
+
+                                <td class="px-6 py-4">
+                                    <% const roleLabel = {
+                                        kader: { label: 'Kader', color: 'bg-purple-100 text-purple-700' },
+                                        bidan: { label: 'Bidan', color: 'bg-pink-100 text-pink-700' },
+                                        pj_ptm: { label: 'PJ PTM', color: 'bg-blue-100 text-blue-700' },
+                                        kepala_puskesmas: { label: 'Kepala', color: 'bg-orange-100 text-orange-700' }
+                                    }; const rl = roleLabel[u.role] || { label: u.role, color: 'bg-gray-100 text-gray-700' }; %>
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-medium <%= rl.color %>"><%= rl.label %></span>
+                                </td>
+
+                                <td class="px-6 py-4 text-gray-600 text-xs">
+                                    <% if (u.nama_jorong) { %>
+                                        <span class="font-medium"><%= u.nama_jorong %></span>
+                                        <span class="text-gray-400"> / <%= u.nama_nagari %></span>
+                                    <% } else { %>
+                                        <span class="text-gray-400 italic">–</span>
+                                    <% } %>
+                                </td>
+
+                                <td class="px-6 py-4 text-center">
+                                    <% if (u.is_active) { %>
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Aktif
+                                        </span>
+                                    <% } else { %>
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-xs font-medium">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Nonaktif
+                                        </span>
+                                    <% } %>
+                                </td>
+
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <!-- Edit -->
+                                        <a href="/ptm/user/edit/<%= u.id_user %>"
+                                            class="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="Edit User">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                                        </a>
+
+                                        <!-- Reset Password -->
+                                        <button onclick="bukaModalReset('<%= u.id_user %>', '<%= u.nama_user %>')"
+                                            class="p-2 rounded-lg bg-yellow-50 text-yellow-600 hover:bg-yellow-100 transition-colors" title="Reset Password">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                        </button>
+
+                                        <!-- Toggle Aktif/Nonaktif -->
+                                        <% if (u.id_user !== currentUser.id_user) { %>
+                                        <button onclick="konfirmasiToggle('<%= u.id_user %>', '<%= u.nama_user %>', <%= u.is_active %>)"
+                                            class="p-2 rounded-lg <%= u.is_active ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100' %> transition-colors"
+                                            title="<%= u.is_active ? 'Nonaktifkan' : 'Aktifkan' %>">
+                                            <% if (u.is_active) { %>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" x2="12" y1="2" y2="12"/></svg>
+                                            <% } else { %>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                            <% } %>
+                                        </button>
+                                        <% } %>
+                                    </div>
+                                </td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Empty state -->
+                <div id="emptyState" class="hidden px-6 py-12 text-center text-gray-400">
+                    <svg class="mx-auto mb-3 text-gray-300" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    <p class="text-sm">Tidak ada user yang sesuai filter.</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- MODAL: Tambah User Baru                        -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div id="modalTambah" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md">
+            <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+                <h3 class="font-poppins font-semibold text-gray-800">Tambah User Baru</h3>
+                <button onclick="document.getElementById('modalTambah').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+            <form action="/ptm/user/tambah" method="POST" class="px-6 py-5 space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Nama Lengkap <span class="text-red-500">*</span></label>
+                    <input type="text" name="nama_user" required placeholder="Contoh: Siti Rahmawati"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Username <span class="text-red-500">*</span></label>
+                    <input type="text" name="username" required placeholder="Contoh: siti.rahmawati"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+                    <p class="text-xs text-gray-400 mt-1">Digunakan untuk login. Tidak boleh ada spasi.</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Password <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <input type="password" name="password" id="pwdTambah" required placeholder="Minimal 6 karakter"
+                            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 pr-10">
+                        <button type="button" onclick="togglePwd('pwdTambah', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Role <span class="text-red-500">*</span></label>
+                    <select name="role" required id="roleTambah" onchange="handleRoleChange('roleTambah', 'jorongTambah')"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+                        <option value="">-- Pilih Role --</option>
+                        <option value="kader">Kader</option>
+                        <option value="bidan">Bidan</option>
+                        <option value="pj_ptm">PJ PTM</option>
+                        <option value="kepala_puskesmas">Kepala Puskesmas</option>
+                    </select>
+                </div>
+                <div id="jorongTambah">
+                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Jorong <span class="text-gray-400">(untuk Kader & Bidan)</span></label>
+                    <select name="id_jorong"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+                        <option value="">– Tidak Ada –</option>
+                        <% jorong.forEach(j => { %>
+                        <option value="<%= j.id_jorong %>"><%= j.nama_jorong %> (<%= j.nama_nagari %>)</option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="document.getElementById('modalTambah').classList.add('hidden')"
+                        class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors">
+                        Batal
+                    </button>
+                    <button type="submit"
+                        class="flex-1 bg-[#2563EB] hover:bg-[#1D4ED8] text-white py-2.5 rounded-xl text-sm font-medium transition-colors">
+                        Simpan User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- MODAL: Reset Password                          -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div id="modalReset" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+            <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+                <h3 class="font-poppins font-semibold text-gray-800">Reset Password</h3>
+                <button onclick="document.getElementById('modalReset').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+            <form id="formReset" method="POST" class="px-6 py-5 space-y-4">
+                <p class="text-sm text-gray-600">Reset password untuk: <strong id="namaReset" class="text-gray-800"></strong></p>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Password Baru <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <input type="password" name="password_baru" id="pwdReset" required placeholder="Minimal 6 karakter"
+                            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 pr-10">
+                        <button type="button" onclick="togglePwd('pwdReset', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="document.getElementById('modalReset').classList.add('hidden')"
+                        class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors">
+                        Batal
+                    </button>
+                    <button type="submit"
+                        class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-2.5 rounded-xl text-sm font-medium transition-colors">
+                        Reset Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- MODAL: Konfirmasi Toggle Aktif/Nonaktif        -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div id="modalToggle" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
+            <div id="iconToggle" class="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center"></div>
+            <h3 class="font-poppins font-semibold text-gray-800 text-lg mb-2" id="judulToggle"></h3>
+            <p class="text-sm text-gray-500 mb-6" id="pesanToggle"></p>
+            <form id="formToggle" method="POST">
+                <div class="flex gap-3">
+                    <button type="button" onclick="document.getElementById('modalToggle').classList.add('hidden')"
+                        class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors">
+                        Batal
+                    </button>
+                    <button type="submit" id="btnToggleAksi"
+                        class="flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors text-white">
+                        Konfirmasi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script>
+        // ── Filter & Search ──────────────────────────────
+        const searchInput  = document.getElementById('searchInput');
+        const filterRole   = document.getElementById('filterRole');
+        const filterStatus = document.getElementById('filterStatus');
+        const rows         = document.querySelectorAll('.user-row');
+        const jumlahEl     = document.getElementById('jumlahUser');
+        const emptyState   = document.getElementById('emptyState');
+
+        function filterTable() {
+            const kata   = searchInput.value.toLowerCase();
+            const role   = filterRole.value;
+            const status = filterStatus.value;
+            let visible  = 0;
+
+            rows.forEach(row => {
+                const nama     = row.dataset.nama;
+                const username = row.dataset.username;
+                const rRole    = row.dataset.role;
+                const rStatus  = row.dataset.status;
+
+                const cocok = (!kata   || nama.includes(kata) || username.includes(kata))
+                           && (!role   || rRole   === role)
+                           && (!status || rStatus === status);
+
+                row.classList.toggle('hidden', !cocok);
+                if (cocok) visible++;
+            });
+
+            jumlahEl.textContent = `${visible} user`;
+            emptyState.classList.toggle('hidden', visible > 0);
+        }
+
+        searchInput.addEventListener('input', filterTable);
+        filterRole.addEventListener('change', filterTable);
+        filterStatus.addEventListener('change', filterTable);
+
+        // ── Toggle Show/Hide Password ────────────────────
+        function togglePwd(inputId, btn) {
+            const input = document.getElementById(inputId);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        // ── Modal Reset Password ─────────────────────────
+        function bukaModalReset(idUser, namaUser) {
+            document.getElementById('namaReset').textContent = namaUser;
+            document.getElementById('formReset').action = `/ptm/user/reset/${idUser}`;
+            document.getElementById('pwdReset').value = '';
+            document.getElementById('modalReset').classList.remove('hidden');
+        }
+
+        // ── Modal Toggle Aktif/Nonaktif ──────────────────
+        function konfirmasiToggle(idUser, namaUser, isAktif) {
+            const aktif   = isAktif === true || isAktif === 'true';
+            const judul   = aktif ? 'Nonaktifkan Akun?' : 'Aktifkan Akun?';
+            const pesan   = aktif
+                ? `Akun "${namaUser}" akan dinonaktifkan. User tidak bisa login sampai diaktifkan kembali.`
+                : `Akun "${namaUser}" akan diaktifkan kembali dan bisa login ke sistem.`;
+            const warna   = aktif ? 'bg-red-500' : 'bg-green-500';
+            const iconEl  = document.getElementById('iconToggle');
+
+            document.getElementById('judulToggle').textContent = judul;
+            document.getElementById('pesanToggle').textContent = pesan;
+            document.getElementById('formToggle').action = `/ptm/user/toggle/${idUser}`;
+            document.getElementById('btnToggleAksi').className =
+                `flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors text-white ${warna}`;
+
+            iconEl.className = `w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center ${aktif ? 'bg-red-100' : 'bg-green-100'}`;
+            iconEl.innerHTML = aktif
+                ? `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="${aktif ? '#EF4444' : '#22C55E'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" x2="12" y1="2" y2="12"/></svg>`
+                : `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+            document.getElementById('modalToggle').classList.remove('hidden');
+        }
+
+        // ── Tampilkan/Sembunyikan Jorong berdasarkan Role ──
+        function handleRoleChange(roleSelectId, jorongDivId) {
+            const role  = document.getElementById(roleSelectId).value;
+            const divEl = document.getElementById(jorongDivId);
+            // Jorong relevan untuk kader dan bidan
+            divEl.style.display = (role === 'kader' || role === 'bidan') ? 'block' : 'none';
+        }
+        // Inisialisasi
+        handleRoleChange('roleTambah', 'jorongTambah');
+    </script>
+
+</body>
+</html>

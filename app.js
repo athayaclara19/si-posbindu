@@ -204,6 +204,72 @@ app.get('/bidan/laporan/export',
 
 // --- RUTE PJ PTM (Hanya untuk role 'pj_ptm') ---
 const ptmController = require('./src/controllers/ptmController');
+const userController = require('./src/controllers/userController'); 
+const targetController = require('./src/controllers/targetController');
+
+// Halaman kelola target
+app.get('/ptm/target',
+    isAuthenticated,
+    isAuthorized('pj_ptm'),
+    targetController.renderKelolaTarget
+);
+
+// Simpan / update target
+app.post('/ptm/target/simpan',
+    isAuthenticated,
+    isAuthorized('pj_ptm'),
+    targetController.handleSimpanTarget
+);
+
+// Hapus target
+app.post('/ptm/target/hapus/:id',
+    isAuthenticated,
+    isAuthorized('pj_ptm'),
+    targetController.handleHapusTarget
+);
+
+
+// Daftar semua user
+app.get('/ptm/user',
+    isAuthenticated,
+    isAuthorized('pj_ptm'),
+    userController.renderKelolaUser
+);
+
+// Tambah user baru (POST)
+app.post('/ptm/user/tambah',
+    isAuthenticated,
+    isAuthorized('pj_ptm'),
+    userController.handleTambahUser
+);
+
+// Form edit user
+app.get('/ptm/user/edit/:id',
+    isAuthenticated,
+    isAuthorized('pj_ptm'),
+    userController.renderEditUser
+);
+
+// Proses update user (POST)
+app.post('/ptm/user/update',
+    isAuthenticated,
+    isAuthorized('pj_ptm'),
+    userController.handleUpdateUser
+);
+
+// Toggle aktif / nonaktif (POST)
+app.post('/ptm/user/toggle/:id',
+    isAuthenticated,
+    isAuthorized('pj_ptm'),
+    userController.handleToggleAktif
+);
+
+// Reset password (POST)
+app.post('/ptm/user/reset/:id',
+    isAuthenticated,
+    isAuthorized('pj_ptm'),
+    userController.handleResetPassword
+);
 
 // KODE BARU
 app.get('/ptm', 
