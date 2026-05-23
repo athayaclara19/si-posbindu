@@ -48,6 +48,19 @@
             padding: 0 !important;
         }
 
+        /* === KATEGORI TEKANAN DARAH WRAPPER === */
+        #kategori-wrapper {
+            transition: background 0.4s ease, border-color 0.4s ease;
+        }
+        #badge-kategori {
+            transition: background-color 0.3s ease, color 0.3s ease,
+                        border-color 0.3s ease, box-shadow 0.3s ease;
+            letter-spacing: 0.01em;
+        }
+        #text-kategori {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
         /* === DAPAT OBAT: default abu, aktif biru === */
         .obat-card {
             border: 2px solid #E5E7EB !important; /* abu-abu default */
@@ -123,7 +136,12 @@
                                     <select id="input-pasien" name="id_pasien" placeholder="Cari Nama atau NIK Pasien..." autocomplete="off" style="display: none;">
                                         <option value=""></option>
                                         <% pasien.forEach(p => { %>
-                                            <option value="<%= p.id_pasien %>"><%= p.nama_pasien %> (<%= p.nik %>)</option>
+                                            <option 
+                                                value="<%= p.id_pasien %>"
+                                                data-usia="<%= p.usia || '' %>"
+                                                data-tahun-lahir="<%= p.tahun_lahir || '' %>">
+                                                <%= p.nama_pasien %> (<%= p.nik %>)
+                                            </option>
                                         <% }) %>
                                     </select>
                                 </div>
@@ -204,12 +222,16 @@
                             </div>
 
                             <div id="box-kategori" class="sm:col-span-2 hidden-step">
-                                <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Kategori (Otomatis)</label>
-                                <div>
-                                    <span id="badge-kategori" class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold shadow-sm border bg-gray-100 text-gray-600 border-gray-200">
-                                        -
-                                    </span>
-                                    <p id="text-kategori" class="text-xs text-gray-500 mt-2 font-medium">-</p>
+                                <label class="text-sm text-[#1F2937] mb-2 block font-medium">Kategori Tekanan Darah (Otomatis)</label>
+                                <div class="rounded-2xl border-2 p-4 transition-all duration-300" id="kategori-wrapper" style="border-color:#E5E7EB; background:linear-gradient(135deg,#F9FAFB,#F3F4F6)">
+                                    <div class="flex items-center gap-3 flex-wrap mb-3">
+                                        <span id="badge-kategori" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold shadow-lg border-2 transition-all duration-300">
+                                            <span id="badge-icon" class="text-base">&#9679;</span>
+                                            <span id="badge-label" class="tracking-wide">-</span>
+                                        </span>
+                                        <span id="badge-usia-mode" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/80 text-slate-500 border border-slate-200 shadow-sm">&#128100; Dewasa</span>
+                                    </div>
+                                    <p id="text-kategori" class="text-xs font-semibold leading-relaxed rounded-xl px-4 py-3 border-2 transition-all duration-300">-</p>
                                 </div>
                             </div>
 
@@ -461,51 +483,246 @@
         const badgeKat = document.getElementById('badge-kategori');
         const textKat = document.getElementById('text-kategori');
 
+        // =====================================================================
+        // Fungsi klasifikasi tekanan darah sesuai Pedoman Kemenkes 2024
+        // Dewasa (≥18 th): 7 kategori (Tabel 2.1 ESC/ESH via Kemenkes)
+        // Anak (<18 th): 4 kategori (Tabel 2.2 AAP 2017 via Kemenkes)
+        // =====================================================================
+        function getUsiaFromPasien() {
+            const select = document.getElementById('input-pasien');
+            const selectedOption = select.options[select.selectedIndex];
+            if (!selectedOption || !selectedOption.value) return null;
+
+            // Coba ambil dari data-usia langsung
+            const usia = parseInt(selectedOption.getAttribute('data-usia'));
+            if (!isNaN(usia) && usia > 0) return usia;
+
+            // Fallback: hitung dari tahun lahir
+            const tahunLahir = parseInt(selectedOption.getAttribute('data-tahun-lahir'));
+            if (!isNaN(tahunLahir) && tahunLahir > 0) {
+                return new Date().getFullYear() - tahunLahir;
+            }
+            return null; // tidak diketahui → asumsikan dewasa
+        }
+
         function checkBP() {
-            const sysInput = document.getElementById('input-sistole').value;
-            const diaInput = document.getElementById('input-diastole').value;
-            const sys = parseInt(sysInput);
-            const dia = parseInt(diaInput);
-            const box = document.getElementById('box-kategori');
+            const sysVal = document.getElementById('input-sistole').value;
+            const diaVal = document.getElementById('input-diastole').value;
+            const sys    = parseInt(sysVal);
+            const dia    = parseInt(diaVal);
+
+            const box   = document.getElementById('box-kategori');
             const badge = document.getElementById('badge-kategori');
-            const text = document.getElementById('text-kategori');
+            const text  = document.getElementById('text-kategori');
+            const modeBadge = document.getElementById('badge-usia-mode');
 
-            // [DIUBAH] Menghapus pemanggilan elemen yang tidak ada agar script tidak crash
-            if (sysInput && diaInput && !isNaN(sys) && !isNaN(dia)) {
-                box.classList.remove('hidden-step');
-                
-                let kategori = '';
-                let warnaClass = '';
-                let pesan = '';
+            if (!sysVal || !diaVal || isNaN(sys) || isNaN(dia)) {
+                box.classList.add('hidden-step');
+                return;
+            }
 
-                if (sys >= 180 || dia >= 120) {
-                    kategori = 'Krisis Hipertensi';
-                    warnaClass = 'bg-red-100 text-red-700 border-red-200';
+            box.classList.remove('hidden-step');
 
-                } else if (sys >= 140 || dia >= 90) {
-                    kategori = 'Hipertensi Tahap 2';
-                    warnaClass = 'bg-orange-100 text-orange-700 border-orange-200';
-                    
-                } else if (sys >= 130 || dia >= 80) {
-                    kategori = 'Hipertensi Tahap 1';
-                    warnaClass = 'bg-yellow-100 text-yellow-700 border-yellow-200';
+            const usia = getUsiaFromPasien();
+            const isAnak = (usia !== null && usia < 18);
 
-                } else if (sys >= 120 && dia < 80) {
-                    kategori = 'Elevated (Meningkat)';
-                    warnaClass = 'bg-blue-100 text-blue-700 border-blue-200';
-                    
+            let kategori = '';
+            let warnaClass = '';
+            let pesan = '';
+
+            if (isAnak) {
+                // ── ANAK (< 18 tahun) ── Tabel 2.2 Kemenkes 2024 (AAP 2017)
+                // Anak usia ≥ 13 tahun menggunakan nilai absolut
+                // Anak usia 1–12 tahun menggunakan persentil (disederhanakan ke nilai umum)
+                modeBadge.textContent = `Anak (${usia} th)`;
+                modeBadge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-600 border border-purple-200';
+
+                if (usia >= 13) {
+                    // Anak ≥ 13 tahun — nilai absolut mmHg
+                    if (sys >= 140 || dia >= 90) {
+                        kategori  = 'Hipertensi Tingkat 2';
+                        warnaClass = 'bg-red-100 text-red-700 border-red-200';
+                        pesan     = `Anak ≥13 th: Sistolik ≥140 atau Diastolik ≥90 mmHg. Rujuk ke FKRTL.`;
+                    } else if ((sys >= 130 && sys <= 139) || (dia >= 80 && dia <= 89)) {
+                        kategori  = 'Hipertensi Tingkat 1';
+                        warnaClass = 'bg-orange-100 text-orange-700 border-orange-200';
+                        pesan     = `Anak ≥13 th: Sistolik 130–138 atau Diastolik 80–89 mmHg. Perlu tatalaksana dan monitoring.`;
+                    } else if ((sys >= 120 && sys < 130) || (dia >= 80 && dia < 80)) {
+                        kategori  = 'Pre Hipertensi';
+                        warnaClass = 'bg-yellow-100 text-yellow-700 border-yellow-200';
+                        pesan     = `Anak ≥13 th: Sistolik 120–129 / Diastolik <80 mmHg. Perlu edukasi perubahan gaya hidup.`;
+                    } else if (sys < 120 && dia < 80) {
+                        kategori  = 'Tekanan Darah Normal';
+                        warnaClass = 'bg-green-100 text-green-700 border-green-200';
+                        pesan     = `Anak ≥13 th: Tekanan darah <120/80 mmHg. Pertahankan gaya hidup sehat.`;
+                    } else {
+                        kategori  = 'Pre Hipertensi';
+                        warnaClass = 'bg-yellow-100 text-yellow-700 border-yellow-200';
+                        pesan     = `Anak ≥13 th: Perlu monitoring lebih lanjut.`;
+                    }
                 } else {
-                    kategori = 'Normal';
-                    warnaClass = 'bg-green-100 text-green-700 border-green-200';
+                    // Anak 1–12 tahun — berbasis persentil (pendekatan praktis)
+                    if (sys >= 130 || dia >= 80) {
+                        kategori  = 'Hipertensi Tingkat 2';
+                        warnaClass = 'bg-red-100 text-red-700 border-red-200';
+                        pesan     = `Anak 1–12 th: Sistolik/Diastolik ≥persentil 95+12 mmHg. Rujuk ke FKRTL segera.`;
+                    } else if (sys >= 120 || dia >= 70) {
+                        kategori  = 'Hipertensi Tingkat 1';
+                        warnaClass = 'bg-orange-100 text-orange-700 border-orange-200';
+                        pesan     = `Anak 1–12 th: Nilai antara persentil 95 dan 95+12 mmHg. Perlu pemeriksaan lebih lanjut.`;
+                    } else if (sys >= 100 || dia >= 65) {
+                        kategori  = 'Pre Hipertensi';
+                        warnaClass = 'bg-yellow-100 text-yellow-700 border-yellow-200';
+                        pesan     = `Anak 1–12 th: Antara persentil 90 dan <persentil 95. Perlu edukasi dan monitoring.`;
+                    } else {
+                        kategori  = 'Tekanan Darah Normal';
+                        warnaClass = 'bg-green-100 text-green-700 border-green-200';
+                        pesan     = `Anak 1–12 th: Sistolik dan Diastolik <persentil 90. Tekanan darah normal untuk usia ini.`;
+                    }
                 }
 
-                // Update UI
-                badge.innerText = kategori;
-                badge.className = `inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold shadow-sm border ${warnaClass}`;
-                text.innerText = pesan;
             } else {
-                box.classList.add('hidden-step');
+                // ── DEWASA (≥18 tahun atau usia tidak diketahui) ──
+                // 7 Kategori sesuai Tabel 2.1 Pedoman Kemenkes 2024 (ESC/ESH 2018)
+                modeBadge.textContent = usia ? `Dewasa (${usia} th)` : 'Dewasa';
+                modeBadge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200';
+
+                if (sys >= 180 || dia >= 110) {
+                    // Hipertensi Derajat 3
+                    kategori  = 'Hipertensi Derajat 3';
+                    warnaClass = 'bg-red-200 text-red-800 border-red-300';
+                    pesan     = `Sistolik ≥180 dan/atau Diastolik ≥110 mmHg. KRISIS — Segera rujuk ke FKRTL!`;
+
+                } else if ((sys >= 160 && sys <= 179) || (dia >= 100 && dia <= 109)) {
+                    // Hipertensi Derajat 2
+                    kategori  = 'Hipertensi Derajat 2';
+                    warnaClass = 'bg-red-100 text-red-700 border-red-200';
+                    pesan     = `Sistolik 160–179 dan/atau Diastolik 100–109 mmHg. Perlu pengobatan segera dan monitor ketat.`;
+
+                } else if ((sys >= 140 && sys <= 159) || (dia >= 90 && dia <= 99)) {
+                    // Hipertensi Derajat 1
+                    kategori  = 'Hipertensi Derajat 1';
+                    warnaClass = 'bg-orange-100 text-orange-700 border-orange-200';
+                    pesan     = `Sistolik 140–159 dan/atau Diastolik 90–99 mmHg. Perlu tatalaksana farmakologi dan non-farmakologi.`;
+
+                } else if ((sys >= 130 && sys <= 139) || (dia >= 85 && dia <= 89)) {
+                    // Prehipertensi / Normal Tinggi
+                    kategori  = 'Prehipertensi (Normal Tinggi)';
+                    warnaClass = 'bg-yellow-100 text-yellow-700 border-yellow-200';
+                    pesan     = `Sistolik 130–139 dan/atau Diastolik 85–89 mmHg. Perlu pengawasan dan modifikasi gaya hidup.`;
+
+                } else if ((sys >= 120 && sys <= 129) && (dia >= 80 && dia <= 84)) {
+                    // Normal
+                    kategori  = 'Normal';
+                    warnaClass = 'bg-blue-100 text-blue-700 border-blue-200';
+                    pesan     = `Sistolik 120–129 dan Diastolik 80–84 mmHg. Pertahankan pola hidup sehat.`;
+
+                } else if (sys < 120 && dia < 80) {
+                    // Optimal
+                    kategori  = 'Optimal';
+                    warnaClass = 'bg-green-100 text-green-700 border-green-200';
+                    pesan     = `Sistolik <120 dan Diastolik <80 mmHg. Tekanan darah sangat baik!`;
+
+                } else if (sys >= 140 && dia < 90) {
+                    // Hipertensi Sistolik Terisolasi
+                    kategori  = 'Hipertensi Sistolik Terisolasi';
+                    warnaClass = 'bg-purple-100 text-purple-700 border-purple-200';
+                    pesan     = `Sistolik ≥140 dan Diastolik <90 mmHg. Perlu tatalaksana dan pemantauan.`;
+
+                } else {
+                    // Fallback ke Prehipertensi jika tidak masuk kondisi di atas
+                    kategori  = 'Prehipertensi (Normal Tinggi)';
+                    warnaClass = 'bg-yellow-100 text-yellow-700 border-yellow-200';
+                    pesan     = `Tekanan darah di batas atas normal. Perlu monitoring rutin.`;
+                }
             }
+
+            // === Peta ikon per kategori ===
+            const ikonMap = {
+                // Dewasa
+                'Optimal':                        '&#128994;', // hijau solid
+                'Normal':                         '&#128309;', // biru
+                'Prehipertensi (Normal Tinggi)':  '&#128993;', // kuning
+                'Hipertensi Derajat 1':           '&#128992;', // oranye
+                'Hipertensi Derajat 2':           '&#128308;', // merah
+                'Hipertensi Derajat 3':           '&#128721;', // stop
+                'Hipertensi Sistolik Terisolasi': '&#128310;', // ungu
+                // Anak
+                'Tekanan Darah Normal':           '&#128994;',
+                'Pre Hipertensi':                 '&#128993;',
+                'Hipertensi Tingkat 1':           '&#128992;',
+                'Hipertensi Tingkat 2':           '&#128308;',
+            };
+
+            // === Peta warna INLINE STYLE per kategori (badge) ===
+            // bg: warna latar badge, color: warna teks, border: warna garis tepi badge
+            const warnaMap = {
+                'Optimal':                        { bg:'#059669', color:'#ffffff', border:'#047857' },
+                'Normal':                         { bg:'#3B82F6', color:'#ffffff', border:'#2563EB' },
+                'Prehipertensi (Normal Tinggi)':  { bg:'#FCD34D', color:'#78350F', border:'#F59E0B' },
+                'Hipertensi Derajat 1':           { bg:'#F97316', color:'#ffffff', border:'#EA580C' },
+                'Hipertensi Derajat 2':           { bg:'#EF4444', color:'#ffffff', border:'#DC2626' },
+                'Hipertensi Derajat 3':           { bg:'#991B1B', color:'#ffffff', border:'#7F1D1D' },
+                'Hipertensi Sistolik Terisolasi': { bg:'#A855F7', color:'#ffffff', border:'#9333EA' },
+                'Tekanan Darah Normal':           { bg:'#059669', color:'#ffffff', border:'#047857' },
+                'Pre Hipertensi':                 { bg:'#FCD34D', color:'#78350F', border:'#F59E0B' },
+                'Hipertensi Tingkat 1':           { bg:'#F97316', color:'#ffffff', border:'#EA580C' },
+                'Hipertensi Tingkat 2':           { bg:'#EF4444', color:'#ffffff', border:'#DC2626' },
+            };
+
+            // === Peta warna INLINE STYLE kotak deskripsi ===
+            const textWarnaBg = {
+                'Optimal':                        { bg:'#ECFDF5', color:'#065F46', border:'#6EE7B7' },
+                'Normal':                         { bg:'#EFF6FF', color:'#1E40AF', border:'#93C5FD' },
+                'Prehipertensi (Normal Tinggi)':  { bg:'#FFFBEB', color:'#92400E', border:'#FCD34D' },
+                'Hipertensi Derajat 1':           { bg:'#FFF7ED', color:'#9A3412', border:'#FDBA74' },
+                'Hipertensi Derajat 2':           { bg:'#FEF2F2', color:'#991B1B', border:'#FCA5A5' },
+                'Hipertensi Derajat 3':           { bg:'#FEE2E2', color:'#7F1D1D', border:'#F87171' },
+                'Hipertensi Sistolik Terisolasi': { bg:'#F5F3FF', color:'#5B21B6', border:'#C4B5FD' },
+                'Tekanan Darah Normal':           { bg:'#ECFDF5', color:'#065F46', border:'#6EE7B7' },
+                'Pre Hipertensi':                 { bg:'#FFFBEB', color:'#92400E', border:'#FCD34D' },
+                'Hipertensi Tingkat 1':           { bg:'#FFF7ED', color:'#9A3412', border:'#FDBA74' },
+                'Hipertensi Tingkat 2':           { bg:'#FEF2F2', color:'#991B1B', border:'#FCA5A5' },
+            };
+
+            const finalWarna   = warnaMap[kategori]    || { bg:'#E5E7EB', color:'#374151', border:'#D1D5DB' };
+            const finalTextBg  = textWarnaBg[kategori] || { bg:'#F9FAFB', color:'#374151', border:'#E5E7EB' };
+            const finalIkon    = ikonMap[kategori]     || '&#9679;';
+
+            // === Peta warna wrapper card (background + border luar) ===
+            const wrapperMap = {
+                'Optimal':                        { bg: 'linear-gradient(135deg,#ECFDF5,#D1FAE5)', border: '#059669' },
+                'Normal':                         { bg: 'linear-gradient(135deg,#EFF6FF,#DBEAFE)', border: '#3B82F6' },
+                'Prehipertensi (Normal Tinggi)':  { bg: 'linear-gradient(135deg,#FFFBEB,#FEF3C7)', border: '#F59E0B' },
+                'Hipertensi Derajat 1':           { bg: 'linear-gradient(135deg,#FFF7ED,#FFEDD5)', border: '#F97316' },
+                'Hipertensi Derajat 2':           { bg: 'linear-gradient(135deg,#FEF2F2,#FEE2E2)', border: '#EF4444' },
+                'Hipertensi Derajat 3':           { bg: 'linear-gradient(135deg,#FEE2E2,#FECACA)', border: '#991B1B' },
+                'Hipertensi Sistolik Terisolasi': { bg: 'linear-gradient(135deg,#F5F3FF,#EDE9FE)', border: '#A855F7' },
+                'Tekanan Darah Normal':           { bg: 'linear-gradient(135deg,#ECFDF5,#D1FAE5)', border: '#059669' },
+                'Pre Hipertensi':                 { bg: 'linear-gradient(135deg,#FFFBEB,#FEF3C7)', border: '#F59E0B' },
+                'Hipertensi Tingkat 1':           { bg: 'linear-gradient(135deg,#FFF7ED,#FFEDD5)', border: '#F97316' },
+                'Hipertensi Tingkat 2':           { bg: 'linear-gradient(135deg,#FEF2F2,#FEE2E2)', border: '#EF4444' },
+            };
+
+            const wrapper = document.getElementById('kategori-wrapper');
+            const wStyle  = wrapperMap[kategori] || { bg: 'linear-gradient(135deg,#F9FAFB,#F3F4F6)', border: '#D1D5DB' };
+            wrapper.style.background   = wStyle.bg;
+            wrapper.style.borderColor  = wStyle.border;
+
+            // Update badge — pakai inline style agar tidak bergantung Tailwind purge
+            badge.className = 'inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold shadow-lg border-2 transition-all duration-300';
+            badge.style.backgroundColor = finalWarna.bg;
+            badge.style.color           = finalWarna.color;
+            badge.style.borderColor     = finalWarna.border;
+            document.getElementById('badge-icon').innerHTML  = finalIkon;
+            document.getElementById('badge-label').innerText = kategori;
+
+            // Update deskripsi — pakai inline style juga
+            text.className = 'text-xs font-semibold leading-relaxed rounded-xl px-4 py-3 border-2 transition-all duration-300';
+            text.style.backgroundColor = finalTextBg.bg;
+            text.style.color           = finalTextBg.color;
+            text.style.borderColor     = finalTextBg.border;
+            text.innerText = pesan;
         }
 
         function showStep(stepIndex) {
@@ -551,6 +768,9 @@
 
         sysInput.addEventListener('input', checkBP);
         diaInput.addEventListener('input', checkBP);
+
+        // Recalculate when patient changes (usia may differ → dewasa vs anak)
+        document.getElementById('input-pasien').addEventListener('change', checkBP);
 
         // Hitung IMT Otomatis
         const bbInput = document.getElementById('input-bb');

@@ -3,7 +3,7 @@ const pool = require('../config/db');
 // 1. Render Form Input Skrining
 exports.renderInputSkrining = async (req, res) => {
     try {
-        const pasien   = await pool.query('SELECT id_pasien, nama_pasien, nik FROM pasien ORDER BY nama_pasien ASC');
+        const pasien   = await pool.query('SELECT id_pasien, nama_pasien, nik, usia, tahun_lahir FROM pasien ORDER BY nama_pasien ASC');
         const kegiatan = await pool.query('SELECT id_kegiatan, lokasi, tanggal_kegiatan FROM kegiatan ORDER BY tanggal_kegiatan DESC');
         res.render('kader/skrining', {
             pasien: pasien.rows, kegiatan: kegiatan.rows,
