@@ -175,8 +175,6 @@
     </div>
 
     <script>
-        let chartInst = null;
-
         // ============================================================
         // [REVISI] FUNGSI BARU: hitungNarasiDeskriptif()
         // Menggantikan teksKesimpulan hardcoded yang berisi rekomendasi klinis.
@@ -287,7 +285,7 @@
         //      — warna kotak kini tetap biru netral (informatif, bukan judgement)
         // Struktur fungsi, nama variabel, dan render Chart TIDAK diubah.
         // ============================================================
-        // Variabel global chart
+        // Variabel global chart — hanya satu deklarasi
         let chartInst = null;
 
         // Cari pasien
@@ -299,9 +297,16 @@
         });
 
         async function bukaGrafikModal(idPasien, namaPasien) {
+            // 1. Tampilkan modal DULU sebelum render chart
             document.getElementById('modal-grafik').classList.remove('hidden-el');
             document.getElementById('nama-pasien-modal').innerText = namaPasien;
             document.getElementById('kesimpulan-pasien').textContent = 'Memuat data...';
+
+            // 2. Hancurkan chart lama jika ada
+            if (chartInst) {
+                chartInst.destroy();
+                chartInst = null;
+            }
 
             try {
                 const res = await fetch(`/bidan/monitoring/api/${idPasien}`);
@@ -309,7 +314,6 @@
 
                 if (!json.success || !json.data || json.data.length === 0) {
                     document.getElementById('kesimpulan-pasien').textContent = 'Belum ada riwayat skrining terverifikasi untuk pasien ini.';
-                    if (chartInst) { chartInst.destroy(); chartInst = null; }
                     return;
                 }
 
@@ -323,45 +327,55 @@
                 const narasiDeskriptif = hitungNarasiDeskriptif(dataSistole, dataDiastole);
                 document.getElementById('kesimpulan-pasien').textContent = narasiDeskriptif;
 
-                Chart.defaults.font.family = "'Inter', sans-serif";
-                const ctx = document.getElementById('historiTensiChart').getContext('2d');
-                if (chartInst) chartInst.destroy();
+                // 3. Beri jeda kecil agar modal sudah benar-benar visible sebelum Chart.js hitung dimensi canvas
+                setTimeout(() => {
+                    Chart.defaults.font.family = "'Inter', sans-serif";
+                    const ctx = document.getElementById('historiTensiChart').getContext('2d');
 
-                chartInst = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels,
-                        datasets: [
-                            {
-                                label: 'Sistole',
-                                data: dataSistole,
-                                borderColor: '#EF4444',
-                                backgroundColor: '#EF4444',
-                                tension: 0.3,
-                                borderWidth: 2,
-                                pointRadius: 4
+                    if (chartInst) { chartInst.destroy(); chartInst = null; }
+
+                    chartInst = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels,
+                            datasets: [
+                                {
+                                    label: 'Sistole',
+                                    data: dataSistole,
+                                    borderColor: '#EF4444',
+                                    backgroundColor: 'rgba(239,68,68,0.1)',
+                                    fill: true,
+                                    tension: 0.3,
+                                    borderWidth: 2,
+                                    pointRadius: 4,
+                                    pointBackgroundColor: '#EF4444'
+                                },
+                                {
+                                    label: 'Diastole',
+                                    data: dataDiastole,
+                                    borderColor: '#3B82F6',
+                                    backgroundColor: 'rgba(59,130,246,0.1)',
+                                    fill: true,
+                                    tension: 0.3,
+                                    borderWidth: 2,
+                                    pointRadius: 4,
+                                    pointBackgroundColor: '#3B82F6'
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } }
                             },
-                            {
-                                label: 'Diastole',
-                                data: dataDiastole,
-                                borderColor: '#3B82F6',
-                                backgroundColor: '#3B82F6',
-                                tension: 0.3,
-                                borderWidth: 2,
-                                pointRadius: 4
+                            scales: {
+                                y: { min: 60, max: 200, grid: { color: '#F3F4F6' } },
+                                x: { grid: { display: false } }
                             }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } } },
-                        scales: {
-                            y: { min: 60, max: 200, grid: { color: '#F3F4F6' } },
-                            x: { grid: { display: false } }
                         }
-                    }
-                });
+                    });
+                }, 50);
 
             } catch (err) {
                 document.getElementById('kesimpulan-pasien').textContent = 'Gagal memuat data. Periksa koneksi.';
