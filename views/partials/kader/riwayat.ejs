@@ -27,15 +27,17 @@
             <div class="flex flex-col sm:flex-row gap-3">
                 <div class="relative flex-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                    <input type="text" id="searchInput" placeholder="Cari nama atau NIK pasien..." class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all">
+                    <input type="text" id="searchInput" placeholder="Cari nama atau NIK pasien..."
+                           value="<%= typeof search !== 'undefined' ? search : '' %>"
+                           class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all">
                 </div>
                 <div class="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#6B7280]"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
                     <select id="statusFilter" class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all">
-                        <option value="Semua">Semua</option>
-                        <option value="Menunggu Validasi">Menunggu Validasi</option>
-                        <option value="Valid">Valid (Diterima)</option>
-                        <option value="Perlu Revisi">Perlu Revisi</option>
+                        <option value="Semua"             <%= (typeof statusQ === 'undefined' || statusQ === '' || statusQ === 'Semua') ? 'selected' : '' %>>Semua</option>
+                        <option value="Menunggu Validasi" <%= (typeof statusQ !== 'undefined' && statusQ === 'Menunggu Validasi') ? 'selected' : '' %>>Menunggu Validasi</option>
+                        <option value="Valid"             <%= (typeof statusQ !== 'undefined' && statusQ === 'Valid') ? 'selected' : '' %>>Valid (Diterima)</option>
+                        <option value="Perlu Revisi"      <%= (typeof statusQ !== 'undefined' && statusQ === 'Perlu Revisi') ? 'selected' : '' %>>Perlu Revisi</option>
                     </select>
                 </div>
             </div>
@@ -156,8 +158,30 @@
                     </table>
                 </div>
                 
-                <div class="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
-                    <p id="rowCountText" class="text-[#6B7280] text-xs">Menampilkan data</p>
+                <div class="px-5 py-3 border-t border-gray-100 flex items-center justify-between flex-wrap gap-3">
+                    <p class="text-[#6B7280] text-xs">
+                        Menampilkan <%= riwayat.length %> dari <%= typeof totalData !== 'undefined' ? totalData : riwayat.length %> data
+                    </p>
+                    <%# Pagination %>
+                    <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+                    <div class="flex gap-1.5">
+                        <% if (page > 1) { %>
+                            <a href="/riwayat?search=<%= encodeURIComponent(search) %>&status=<%= encodeURIComponent(statusQ) %>&page=<%= page - 1 %>"
+                               class="px-3 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50">← Prev</a>
+                        <% } %>
+                        <% for (let i = Math.max(1, page-2); i <= Math.min(totalPages, page+2); i++) { %>
+                            <a href="/riwayat?search=<%= encodeURIComponent(search) %>&status=<%= encodeURIComponent(statusQ) %>&page=<%= i %>"
+                               class="px-3 py-1.5 rounded-lg border text-xs
+                                      <%= i === page ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50' %>">
+                                <%= i %>
+                            </a>
+                        <% } %>
+                        <% if (page < totalPages) { %>
+                            <a href="/riwayat?search=<%= encodeURIComponent(search) %>&status=<%= encodeURIComponent(statusQ) %>&page=<%= page + 1 %>"
+                               class="px-3 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50">Next →</a>
+                        <% } %>
+                    </div>
+                    <% } %>
                 </div>
             </div>
         </main>
@@ -223,37 +247,28 @@
     </div>
 
     <script>
-        const searchInput = document.getElementById('searchInput');
+        // === SERVER-SIDE SEARCH & FILTER ===
+        const searchInput  = document.getElementById('searchInput');
         const statusFilter = document.getElementById('statusFilter');
-        const rows = document.querySelectorAll('.data-row');
-        const rowCountText = document.getElementById('rowCountText');
 
-        function filterTable() {
-            const searchTerm = searchInput.value.toLowerCase();
-            const filterValue = statusFilter.value;
-            let visibleCount = 0;
-
-            rows.forEach(row => {
-                const textData = row.innerText.toLowerCase();
-                const rowStatus = row.getAttribute('data-status');
-                
-                const matchesSearch = textData.includes(searchTerm);
-                const matchesStatus = filterValue === "Semua" || rowStatus === filterValue;
-
-                if (matchesSearch && matchesStatus) {
-                    row.style.display = '';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-
-            rowCountText.innerText = `Menampilkan ${visibleCount} data`;
+        function goToServer() {
+            const q      = searchInput.value.trim();
+            const status = statusFilter.value;
+            window.location.href =
+                '/riwayat?search=' + encodeURIComponent(q) +
+                '&status='  + encodeURIComponent(status) +
+                '&page=1';
         }
-        
-        filterTable();
-        searchInput.addEventListener('input', filterTable);
-        statusFilter.addEventListener('change', filterTable);
+
+        // Debounce search — kirim ke server 500ms setelah berhenti mengetik
+        let debounceTimer;
+        searchInput.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(goToServer, 500);
+        });
+
+        // Filter status langsung redirect
+        statusFilter.addEventListener('change', goToServer);
 
         function openDetailModal(nama, nik, tanggal, sistole, diastole, bb, tb, kategori, status) {
             document.getElementById('modalNama').innerText = nama;

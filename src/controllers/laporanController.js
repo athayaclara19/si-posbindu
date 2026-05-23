@@ -392,7 +392,7 @@ exports.exportLaporanExcel = async (req, res) => {
                 s.sistole,
                 s.diastole,
                 s.edukasi,
-                s.terapi_obat,
+                s.dapat_obat,
                 s.status_rujukan,
                 CASE WHEN s.sistole >= 140 OR s.diastole >= 90 THEN 'HIPERTENSI' ELSE 'NORMAL' END AS status_td
             FROM skrining s
@@ -454,9 +454,14 @@ exports.exportLaporanExcel = async (req, res) => {
                 sistole:    row.sistole,
                 diastole:   row.diastole,
                 status:     row.status_td,
-                edukasi:    row.edukasi       ? 'Ada' : '',
-                dapat_obat: row.terapi_obat   ? 'Iya' : '',
-                rujuk:      row.status_rujukan && row.status_rujukan !== 'tidak' ? 'Iya' : '',
+                edukasi:    row.edukasi && row.edukasi.trim() !== '' ? 'Ada' : 'Tidak',
+                dapat_obat: row.dapat_obat && row.dapat_obat !== 'tidak'
+                                ? (row.dapat_obat === 'beli_sendiri'    ? 'Beli Sendiri'
+                                :  row.dapat_obat === 'dari_puskesmas'  ? 'Puskesmas'
+                                :  row.dapat_obat === 'dari_rumah_sakit'? 'Rumah Sakit'
+                                : 'Ada')
+                                : 'Tidak',
+                rujuk:      row.status_rujukan && row.status_rujukan === 'iya' ? 'Iya' : 'Tidak',
             };
         });
 

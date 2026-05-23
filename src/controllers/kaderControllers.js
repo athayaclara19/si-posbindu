@@ -23,36 +23,31 @@ exports.handleInputSkrining = async (req, res) => {
     const {
         id_pasien, id_kegiatan, sistole, diastole,
         berat_badan, tinggi_badan, gula_darah, kolesterol,
-        lingkar_perut, frekuensi_nadi, merokok, pola_makan,
-        aktivitas_fisik, riwayat_keluarga, tingkat_stres,
-        terapi_obat, kepatuhan_obat, edukasi, status_rujukan
+        merokok, aktivitas_fisik, edukasi, dapat_obat, status_rujukan
     } = req.body;
 
-    const id_kader = req.session.user.id_user; // PERBAIKAN: gunakan id_user
+    const id_kader = req.session.user.id_user;
 
     try {
         const query = `
             INSERT INTO skrining 
             (id_pasien, id_kader, id_kegiatan, sistole, diastole, 
             berat_badan, tinggi_badan, gula_darah, kolesterol, 
-            lingkar_perut, frekuensi_nadi, merokok, pola_makan, 
-            aktivitas_fisik, riwayat_keluarga, tingkat_stres, 
-            terapi_obat, kepatuhan_obat, edukasi, status_rujukan, 
+            merokok, aktivitas_fisik, edukasi, dapat_obat, status_rujukan, 
             tanggal_skrining, status_validasi)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,
-            $14,$15,$16,$17,$18,$19,$20, CURRENT_DATE, 'menunggu')
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,
+            CURRENT_DATE, 'menunggu')
         `;
         const values = [
             id_pasien, id_kader, id_kegiatan,
             parseInt(sistole), parseInt(diastole),
-            berat_badan||null, tinggi_badan||null, gula_darah||null,
-            kolesterol||null, lingkar_perut||null, frekuensi_nadi||null,
+            berat_badan||null, tinggi_badan||null,
+            gula_darah||null, kolesterol||null,
             merokok==='true'||merokok===true||merokok==='on',
-            pola_makan||null, aktivitas_fisik||null,
-            riwayat_keluarga==='true'||riwayat_keluarga==='on',
-            tingkat_stres||null,
-            terapi_obat==='true'||terapi_obat==='on',
-            kepatuhan_obat||null, edukasi||null, status_rujukan||'tidak'
+            aktivitas_fisik||null,
+            edukasi||null,
+            dapat_obat||'tidak',
+            status_rujukan||'tidak'
         ];
         await pool.query(query, values);
         res.redirect('/riwayat');
