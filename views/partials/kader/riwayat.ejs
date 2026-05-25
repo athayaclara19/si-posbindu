@@ -127,20 +127,29 @@
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
                                                     Perbaiki
                                                 </a>
-                                            <% } else { %>
+                                                                                        <% } else { %>
                                                 <!-- Tombol Lihat -->
-                                                <button onclick="openDetailModal(
-                                                    '<%= r.nama_pasien %>',
-                                                    '<%= r.nik %>',
-                                                    '<%= new Date(r.tanggal_kegiatan).toLocaleDateString("id-ID") %>',
-                                                    '<%= r.sistole %>',
-                                                    '<%= r.diastole %>',
-                                                    '<%= r.berat_badan %>',
-                                                    '<%= r.tinggi_badan %>',
-                                                    '<%= r.status_tekanan %>',
-                                                    '<%= filterStatus %>')"
-                                                   class="p-1.5 rounded-lg text-[#6B7280] hover:bg-[#DBEAFE] hover:text-[#2563EB] transition-all"
-                                                   title="Lihat Detail">
+                                                <button
+                                                    class="btn-lihat p-1.5 rounded-lg text-[#6B7280] hover:bg-[#DBEAFE] hover:text-[#2563EB] transition-all"
+                                                    title="Lihat Detail"
+                                                    data-nama="<%- r.nama_pasien %>"
+                                                    data-nik="<%= r.nik %>"
+                                                    data-tanggal="<%= new Date(r.tanggal_kegiatan).toLocaleDateString('id-ID', {day:'numeric',month:'long',year:'numeric'}) %>"
+                                                    data-sistole="<%= r.sistole %>"
+                                                    data-diastole="<%= r.diastole %>"
+                                                    data-bb="<%= r.berat_badan || '' %>"
+                                                    data-tb="<%= r.tinggi_badan || '' %>"
+                                                    data-gula="<%= r.gula_darah || '' %>"
+                                                    data-kolesterol="<%= r.kolesterol || '' %>"
+                                                    data-merokok="<%= r.merokok ? 'Ya' : 'Tidak' %>"
+                                                    data-aktivitas="<%= r.aktivitas_fisik || '' %>"
+                                                    data-edukasi="<%- r.edukasi || '' %>"
+                                                    data-dapat-obat="<%= r.dapat_obat || 'tidak' %>"
+                                                    data-rujukan="<%= r.status_rujukan || 'tidak' %>"
+                                                    data-kategori="<%= r.status_tekanan || 'Terkendali' %>"
+                                                    data-status="<%= filterStatus %>"
+                                                    data-catatan="<%- r.catatan_bidan || '' %>"
+                                                    data-tgl-validasi="<%= r.tanggal_validasi ? new Date(r.tanggal_validasi).toLocaleDateString('id-ID', {day:'numeric',month:'long',year:'numeric'}) : '' %>">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                                                 </button>
                                             <% } %>
@@ -189,9 +198,10 @@
         <div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center">
             <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onclick="closeDetailModal()"></div>
             
-            <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl z-10 overflow-hidden transform transition-all m-4">
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl z-10 overflow-hidden transform transition-all m-4 max-h-[90vh] flex flex-col">
                 
-                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <!-- Header Modal -->
+                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0">
                     <div class="flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#2563EB]"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                         <h3 class="font-poppins font-semibold text-gray-800 text-lg">Detail Skrining</h3>
@@ -201,42 +211,119 @@
                     </button>
                 </div>
 
-                <div class="p-6 space-y-6">
+                <!-- Body Modal (scrollable) -->
+                <div class="p-6 space-y-5 overflow-y-auto">
+
+                    <!-- Identitas Pasien -->
                     <div class="flex items-center gap-4">
-                        <div id="modalInisial" class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
-                            BS
-                        </div>
+                        <div id="modalInisial" class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg shrink-0">BS</div>
                         <div>
-                            <p id="modalNama" class="font-poppins font-semibold text-gray-800 text-lg">Nama Pasien</p>
-                            <p id="modalNik" class="text-sm text-gray-500 font-mono">NIK Pasien</p>
+                            <p id="modalNama" class="font-poppins font-semibold text-gray-800 text-lg">-</p>
+                            <p id="modalNik" class="text-sm text-gray-500 font-mono">-</p>
+                        </div>
+                        <span id="modalStatusBadge" class="ml-auto shrink-0 px-3 py-1 rounded-full text-xs font-semibold">-</span>
+                    </div>
+
+                    <!-- Seksi: Informasi Pemeriksaan -->
+                    <div>
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Informasi Pemeriksaan</p>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                <p class="text-gray-400 text-xs mb-1">Tanggal Skrining</p>
+                                <p id="modalTanggal" class="font-semibold text-gray-800 text-sm">-</p>
+                            </div>
+                            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                <p class="text-gray-400 text-xs mb-1">Kategori TD</p>
+                                <span id="modalKategori" class="inline-block px-2 py-0.5 rounded-md text-xs font-semibold">-</span>
+                            </div>
+                            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                <p class="text-gray-400 text-xs mb-1">Tekanan Darah</p>
+                                <p class="font-bold text-gray-800 text-sm"><span id="modalTensi">-</span> <span class="text-gray-400 font-normal text-xs">mmHg</span></p>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-100 grid grid-cols-2 gap-y-4 gap-x-6">
-                        <div>
-                            <p class="text-gray-500 text-xs font-medium mb-1">Tanggal Pemeriksaan</p>
-                            <p id="modalTanggal" class="font-medium text-gray-800 text-sm">-</p>
-                        </div>
-                        <div>
-                            <p class="text-gray-500 text-xs font-medium mb-1">Kategori Tekanan Darah</p>
-                            <span id="modalKategori" class="inline-block px-2.5 py-1 bg-yellow-100 text-yellow-700 rounded-md text-xs font-semibold">-</span>
-                        </div>
-                        <div>
-                            <p class="text-gray-500 text-xs font-medium mb-1">Sistole / Diastole</p>
-                            <p class="font-bold text-gray-800 text-sm"><span id="modalTensi">-</span> <span class="text-gray-500 font-normal text-xs">mmHg</span></p>
-                        </div>
-                        <div>
-                            <p class="text-gray-500 text-xs font-medium mb-1">Berat / Tinggi Badan</p>
-                            <p id="modalFisik" class="font-medium text-gray-800 text-sm">- kg / - cm</p>
-                        </div>
-                        <div class="col-span-2">
-                            <p class="text-gray-500 text-xs font-medium mb-1">Status Validasi</p>
-                            <span id="modalStatus" class="inline-block px-2.5 py-1 bg-gray-200 text-gray-700 rounded-md text-xs font-semibold">-</span>
+                    <!-- Seksi: Data Fisik -->
+                    <div>
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Data Fisik</p>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                <p class="text-gray-400 text-xs mb-1">Berat Badan</p>
+                                <p id="modalBB" class="font-semibold text-gray-800 text-sm">-</p>
+                            </div>
+                            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                <p class="text-gray-400 text-xs mb-1">Tinggi Badan</p>
+                                <p id="modalTB" class="font-semibold text-gray-800 text-sm">-</p>
+                            </div>
+                            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                <p class="text-gray-400 text-xs mb-1">Gula Darah</p>
+                                <p id="modalGula" class="font-semibold text-gray-800 text-sm">-</p>
+                            </div>
+                            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                <p class="text-gray-400 text-xs mb-1">Kolesterol</p>
+                                <p id="modalKolesterol" class="font-semibold text-gray-800 text-sm">-</p>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Seksi: Gaya Hidup -->
+                    <div>
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Gaya Hidup</p>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                <p class="text-gray-400 text-xs mb-1">Merokok</p>
+                                <p id="modalMerokok" class="font-semibold text-gray-800 text-sm">-</p>
+                            </div>
+                            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                <p class="text-gray-400 text-xs mb-1">Aktivitas Fisik</p>
+                                <p id="modalAktivitas" class="font-semibold text-gray-800 text-sm">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seksi: Tindak Lanjut -->
+                    <div>
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Tindak Lanjut</p>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                <p class="text-gray-400 text-xs mb-1">Edukasi</p>
+                                <span id="modalEdukasiStatus" class="inline-block px-2 py-0.5 rounded-md text-xs font-semibold">-</span>
+                            </div>
+                            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                <p class="text-gray-400 text-xs mb-1">Dapat Obat</p>
+                                <p id="modalObat" class="font-semibold text-gray-800 text-sm">-</p>
+                            </div>
+                            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                <p class="text-gray-400 text-xs mb-1">Dirujuk ke RS</p>
+                                <span id="modalRujukan" class="inline-block px-2 py-0.5 rounded-md text-xs font-semibold">-</span>
+                            </div>
+                        </div>
+                        <!-- Catatan Edukasi (muncul kalau ada) -->
+                        <div id="modalEdukasiBox" class="hidden mt-3 bg-blue-50 rounded-xl p-3 border border-blue-100">
+                            <p class="text-blue-400 text-xs mb-1 font-medium">Catatan Edukasi</p>
+                            <p id="modalEdukasiCatatan" class="text-blue-800 text-sm">-</p>
+                        </div>
+                    </div>
+
+                    <!-- Seksi: Validasi (muncul kalau sudah divalidasi) -->
+                    <div id="seksiValidasi" class="hidden">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Hasil Validasi</p>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                <p class="text-gray-400 text-xs mb-1">Tanggal Validasi</p>
+                                <p id="modalTglValidasi" class="font-semibold text-gray-800 text-sm">-</p>
+                            </div>
+                            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 col-span-1">
+                                <p class="text-gray-400 text-xs mb-1">Catatan Bidan</p>
+                                <p id="modalCatatanBidan" class="text-gray-700 text-sm">-</p>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
-                <div class="px-6 py-4 border-t border-gray-100 flex justify-end bg-gray-50 rounded-b-2xl">
+                <!-- Footer Modal -->
+                <div class="px-6 py-4 border-t border-gray-100 flex justify-end bg-gray-50 rounded-b-2xl shrink-0">
                     <button onclick="closeDetailModal()" class="px-5 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-medium rounded-xl transition-all shadow-sm">
                         Tutup
                     </button>
@@ -270,25 +357,116 @@
         // Filter status langsung redirect
         statusFilter.addEventListener('change', goToServer);
 
-        function openDetailModal(nama, nik, tanggal, sistole, diastole, bb, tb, kategori, status) {
-            document.getElementById('modalNama').innerText = nama;
-            document.getElementById('modalNik').innerText = nik;
-            document.getElementById('modalTanggal').innerText = tanggal;
-            document.getElementById('modalTensi').innerText = sistole + ' / ' + diastole;
-            
-            bb = bb && bb !== 'null' ? bb : '-';
-            tb = tb && tb !== 'null' ? tb : '-';
-            document.getElementById('modalFisik').innerText = `${bb} kg / ${tb} cm`;
-            
-            document.getElementById('modalKategori').innerText = kategori || 'Terkendali';
-            document.getElementById('modalStatus').innerText = status;
+        // Event listener untuk tombol lihat — baca dari data-* attribute
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.btn-lihat');
+            if (!btn) return;
+            const d = {
+                nama:       btn.dataset.nama,
+                nik:        btn.dataset.nik,
+                tanggal:    btn.dataset.tanggal,
+                sistole:    btn.dataset.sistole,
+                diastole:   btn.dataset.diastole,
+                bb:         btn.dataset.bb,
+                tb:         btn.dataset.tb,
+                gula:       btn.dataset.gula,
+                kolesterol: btn.dataset.kolesterol,
+                merokok:    btn.dataset.merokok,
+                aktivitas:  btn.dataset.aktivitas,
+                edukasi:    btn.dataset.edukasi,
+                dapat_obat: btn.dataset.dapatObat,
+                rujukan:    btn.dataset.rujukan,
+                kategori:   btn.dataset.kategori,
+                status:     btn.dataset.status,
+                catatan:    btn.dataset.catatan,
+                tgl_validasi: btn.dataset.tglValidasi
+            };
+            openDetailModal(d);
+        });
 
-            let inisial = nama.substring(0, 2).toUpperCase();
-            if(nama.includes(' ')) {
-                const words = nama.split(' ');
-                inisial = words[0][0] + words[1][0];
+        function openDetailModal(d) {
+            // Identitas
+            document.getElementById('modalNama').innerText = d.nama;
+            document.getElementById('modalNik').innerText  = d.nik;
+            const words = d.nama.trim().split(' ');
+            document.getElementById('modalInisial').innerText =
+                (words.length >= 2 ? words[0][0] + words[1][0] : d.nama.substring(0,2)).toUpperCase();
+
+            // Status badge
+            const badge = document.getElementById('modalStatusBadge');
+            if (d.status === 'Valid') {
+                badge.className = 'ml-auto shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700';
+                badge.innerText = 'Valid';
+            } else if (d.status === 'Perlu Revisi') {
+                badge.className = 'ml-auto shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600';
+                badge.innerText = 'Perlu Revisi';
+            } else {
+                badge.className = 'ml-auto shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700';
+                badge.innerText = 'Menunggu Validasi';
             }
-            document.getElementById('modalInisial').innerText = inisial.toUpperCase();
+
+            // Pemeriksaan
+            document.getElementById('modalTanggal').innerText = d.tanggal;
+            document.getElementById('modalTensi').innerText   = d.sistole + ' / ' + d.diastole;
+
+            const kat = document.getElementById('modalKategori');
+            kat.innerText = d.kategori || 'Terkendali';
+            kat.className = d.kategori === 'Tidak Terkendali'
+                ? 'inline-block px-2 py-0.5 rounded-md text-xs font-semibold bg-red-100 text-red-600'
+                : 'inline-block px-2 py-0.5 rounded-md text-xs font-semibold bg-yellow-100 text-yellow-700';
+
+            // Data Fisik
+            document.getElementById('modalBB').innerText       = d.bb && d.bb !== 'null' ? d.bb + ' kg' : '-';
+            document.getElementById('modalTB').innerText       = d.tb && d.tb !== 'null' ? d.tb + ' cm' : '-';
+            document.getElementById('modalGula').innerText     = d.gula && d.gula !== 'null' ? d.gula + ' mg/dL' : '-';
+            document.getElementById('modalKolesterol').innerText = d.kolesterol && d.kolesterol !== 'null' ? d.kolesterol + ' mg/dL' : '-';
+
+            // Gaya Hidup
+            document.getElementById('modalMerokok').innerText   = d.merokok || '-';
+            document.getElementById('modalAktivitas').innerText = d.aktivitas || '-';
+
+            // Edukasi
+            const eduStatus = document.getElementById('modalEdukasiStatus');
+            const eduBox    = document.getElementById('modalEdukasiBox');
+            if (d.edukasi && d.edukasi.trim() !== '') {
+                eduStatus.innerText   = 'Ada';
+                eduStatus.className   = 'inline-block px-2 py-0.5 rounded-md text-xs font-semibold bg-green-100 text-green-700';
+                eduBox.classList.remove('hidden');
+                document.getElementById('modalEdukasiCatatan').innerText = d.edukasi;
+            } else {
+                eduStatus.innerText   = 'Tidak';
+                eduStatus.className   = 'inline-block px-2 py-0.5 rounded-md text-xs font-semibold bg-gray-100 text-gray-500';
+                eduBox.classList.add('hidden');
+            }
+
+            // Dapat Obat
+            const obatMap = {
+                'tidak':           'Tidak',
+                'beli_sendiri':    'Beli Sendiri',
+                'dari_puskesmas':  'Dari Puskesmas',
+                'dari_rumah_sakit':'Dari Rumah Sakit'
+            };
+            document.getElementById('modalObat').innerText = obatMap[d.dapat_obat] || 'Tidak';
+
+            // Rujukan
+            const rujEl = document.getElementById('modalRujukan');
+            if (d.rujukan === 'iya') {
+                rujEl.innerText   = 'Iya — Dirujuk ke RS';
+                rujEl.className   = 'inline-block px-2 py-0.5 rounded-md text-xs font-semibold bg-orange-100 text-orange-600';
+            } else {
+                rujEl.innerText   = 'Tidak';
+                rujEl.className   = 'inline-block px-2 py-0.5 rounded-md text-xs font-semibold bg-gray-100 text-gray-500';
+            }
+
+            // Seksi Validasi (hanya muncul kalau sudah divalidasi)
+            const seksiVal = document.getElementById('seksiValidasi');
+            if (d.status === 'Valid' || d.status === 'Perlu Revisi') {
+                seksiVal.classList.remove('hidden');
+                document.getElementById('modalTglValidasi').innerText   = d.tgl_validasi || '-';
+                document.getElementById('modalCatatanBidan').innerText  = d.catatan && d.catatan.trim() !== '' ? d.catatan : 'Tidak ada catatan';
+            } else {
+                seksiVal.classList.add('hidden');
+            }
 
             const modal = document.getElementById('detailModal');
             modal.classList.remove('hidden');
