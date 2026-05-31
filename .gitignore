@@ -1,0 +1,30 @@
+@"
+# Rahasia - jangan diupload
+.env
+.env.*
+.env.local
+.env.production
+
+# Dependencies
+node_modules/
+
+# Database
+*.sql
+*.sqlite
+*.db
+
+# Log
+*.log
+logs/
+npm-debug.log*
+
+# Upload pengguna
+public/uploads/
+uploads/
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.vscode/settings.json
+.idea/
+"@ | Set-Content .gitignore
