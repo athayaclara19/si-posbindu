@@ -14,11 +14,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body class="bg-slate-50 font-inter antialiased text-slate-800 flex h-screen overflow-hidden">
+<body class="bg-slate-50 font-inter antialiased text-slate-800">
 
+    <div class="flex min-h-screen">
     <%- include('../partials/sidebar', { active: 'laporan', role: 'ptm' }) %>
 
-    <div class="flex-1 flex flex-col h-screen overflow-y-auto relative">
+    <div class="flex-1 flex flex-col min-w-0 lg:ml-64">
         <%- include('../partials/header', { pageTitle: 'Laporan Program PTM', role: 'ptm' }) %>
 
         <main class="p-8 space-y-6 w-full">
@@ -506,5 +507,6 @@
 
 <%- include('../partials/profil') %>
 
+</div>
 </body>
 </html>
