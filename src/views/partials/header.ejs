@@ -1,6 +1,5 @@
-<% const currentRole = (typeof role !== 'undefined') ? role : 'kader'; %>
+<% const currentRole = (currentUser && currentUser.role) ? currentUser.role : 'kader'; %>
 
-<!-- CSS untuk dropdown panel (dibutuhkan di semua halaman) -->
 <style>
   .dropdown-panel {
     display: none; position: absolute; right: 0; top: calc(100% + 8px);
@@ -10,150 +9,141 @@
   .dropdown-panel.open { display: block; }
 </style>
 
-<header class="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between sticky top-0 z-20">
-    <div>
-        <h1 class="text-[#1F2937] font-poppins font-semibold text-lg">
-            <%= typeof pageTitle !== 'undefined' ? pageTitle : 'Dashboard' %>
-        </h1>
-    </div>
-    <div class="flex items-center gap-5">
+<header class="bg-white border-b border-gray-100 px-4 md:px-8 py-3 md:py-4 flex items-center justify-between sticky top-0 z-20">
+  <div class="flex items-center gap-3">
+    <!-- Tombol Hamburger (tampil hanya di mobile/tablet) -->
+    <button onclick="openSidebar()" class="lg:hidden text-gray-500 hover:text-[#2563EB] transition-colors p-1.5 rounded-lg hover:bg-gray-100 flex-shrink-0" aria-label="Buka menu">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/>
+      </svg>
+    </button>
+    <h1 class="text-[#1F2937] font-semibold text-base md:text-lg truncate">
+      <%= typeof pageTitle !== 'undefined' ? pageTitle : 'Dashboard' %>
+    </h1>
+  </div>
 
-        <!-- NOTIFIKASI -->
-        <div class="relative" id="notifWrapper">
-            <button onclick="togglePanel('notifPanel')" class="relative text-gray-400 hover:text-[#2563EB] transition-colors p-1">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-                <% if (typeof notifikasi !== 'undefined' && notifikasi && notifikasi.length > 0) { %>
-                <span class="absolute top-0 right-0 w-4 h-4 bg-[#EF4444] rounded-full border-2 border-white text-[9px] text-white font-bold flex items-center justify-center"><%= notifikasi.length %></span>
-                <% } %>
-            </button>
+  <div class="flex items-center gap-3 md:gap-5">
 
-            <!-- Panel Notifikasi (lebar diperbesar ke w-96) -->
-            <div class="dropdown-panel w-96" id="notifPanel">
-                <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                    <p class="font-semibold text-sm text-[#1F2937]">Notifikasi</p>
-                    <% if (typeof notifikasi !== 'undefined' && notifikasi && notifikasi.length > 0) { %>
-                    <span class="text-xs px-2 py-0.5 bg-red-100 text-red-600 rounded-full font-medium"><%= notifikasi.length %> baru</span>
-                    <% } %>
-                </div>
-                <div class="max-h-80 overflow-y-auto">
-                    <% if (typeof notifikasi === 'undefined' || !notifikasi || notifikasi.length === 0) { %>
-                    <div class="px-4 py-8 text-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" stroke-width="1.5" class="mx-auto mb-2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-                        <p class="text-sm text-gray-400">Tidak ada notifikasi</p>
-                    </div>
-                    <% } else { notifikasi.forEach(function(n) { %>
-                    <div class="px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors">
-                        <div class="flex gap-3 items-start">
-                            <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center <%= n.tipe === 'revisi' ? 'bg-red-100' : 'bg-green-100' %>">
-                                <% if (n.tipe === 'revisi') { %>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                <% } else { %>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
-                                <% } %>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm text-[#1F2937] leading-snug"><%= n.pesan %></p>
-                                <% if (n.tipe === 'revisi' && n.id_skrining) { %>
-                                <a href="/skrining/edit/<%= n.id_skrining %>" class="text-xs text-[#2563EB] hover:underline mt-1 inline-block">Perbaiki sekarang →</a>
-                                <% } %>
-                            </div>
-                        </div>
-                    </div>
-                    <% }) } %>
-                </div>
-                <div class="px-4 py-2.5 border-t border-gray-100">
-                    <%
-                    const riwayatUrl = currentUser && currentUser.role === 'kader' ? '/riwayat' :
-                                        currentUser && currentUser.role === 'bidan' ? '/bidan/validasi' :
-                                        currentUser && currentUser.role === 'pj_ptm' ? '/ptm/laporan' :
-                                        currentUser && currentUser.role === 'kepala_puskesmas' ? '/kepala/persetujuan' : '/';
-                    %>
-                    <a href="<%= riwayatUrl %>" class="text-xs text-[#2563EB] hover:underline">
-                    Lihat semua riwayat →
-                    </a>
-                </div>
-            </div>
+    <!-- NOTIFIKASI -->
+    <div class="relative" id="notifWrapper">
+      <button onclick="togglePanel('notifPanel')" class="relative text-gray-400 hover:text-[#2563EB] transition-colors p-1">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <% if (typeof notifikasi !== 'undefined' && notifikasi && notifikasi.length > 0) { %>
+        <span class="absolute top-0 right-0 w-4 h-4 bg-[#EF4444] rounded-full border-2 border-white text-[9px] text-white font-bold flex items-center justify-center"><%= notifikasi.length %></span>
+        <% } %>
+      </button>
+
+      <!-- Panel Notifikasi -->
+      <div class="dropdown-panel w-80 md:w-96" id="notifPanel">
+        <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+          <p class="font-semibold text-sm text-[#1F2937]">Notifikasi</p>
+          <% if (typeof notifikasi !== 'undefined' && notifikasi && notifikasi.length > 0) { %>
+          <span class="text-xs px-2 py-0.5 bg-red-100 text-red-600 rounded-full font-medium"><%= notifikasi.length %> baru</span>
+          <% } %>
         </div>
-
-        <!-- PROFIL -->
-        <div class="relative" id="profileWrapper">
-            <button onclick="togglePanel('profilePanel')" class="flex items-center gap-3 pl-5 border-l border-gray-200 hover:opacity-80 transition-opacity">
-                <% if (typeof currentUser !== 'undefined' && currentUser) { %>
-                    <div class="w-9 h-9 rounded-full bg-[#2563EB] text-white flex items-center justify-center font-bold text-sm shadow-sm"><%= currentUser.nama.charAt(0).toUpperCase() %></div>
-                    <div class="hidden sm:block text-right">
-                        <p class="text-[#1F2937] text-sm font-semibold leading-tight"><%= currentUser.nama %></p>
-                        <p class="text-[#6B7280] text-[11px] font-medium mt-0.5">
-                            <% if (currentRole === 'bidan') { %>Bidan Desa
-                            <% } else if (currentRole === 'ptm') { %>PJ Program PTM
-                            <% } else if (currentRole === 'kepala') { %>Kepala Puskesmas
-                            <% } else { %>Kader Posbindu<% } %>
-                        </p>
-                    </div>
+        <div class="max-h-80 overflow-y-auto">
+          <% if (typeof notifikasi === 'undefined' || !notifikasi || notifikasi.length === 0) { %>
+          <div class="px-4 py-8 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" stroke-width="1.5" class="mx-auto mb-2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            <p class="text-sm text-gray-400">Tidak ada notifikasi</p>
+          </div>
+          <% } else { notifikasi.forEach(function(n) { %>
+          <div class="px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors">
+            <div class="flex gap-3 items-start">
+              <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center <%= n.tipe === 'revisi' ? 'bg-red-100' : 'bg-green-100' %>">
+                <% if (n.tipe === 'revisi') { %>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                 <% } else { %>
-                    <div class="w-9 h-9 rounded-full bg-[#2563EB] text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                        <% if (currentRole === 'bidan') { %>B<% } else if (currentRole === 'ptm') { %>H<% } else if (currentRole === 'kepala') { %>A<% } else { %>K<% } %>
-                    </div>
-                    <div class="hidden sm:block text-right">
-                        <p class="text-[#1F2937] text-sm font-semibold leading-tight">
-                            <% if (currentRole === 'bidan') { %>Bidan Ratna
-                            <% } else if (currentRole === 'ptm') { %>Dr. Hendra
-                            <% } else if (currentRole === 'kepala') { %>Dr. Amelia
-                            <% } else { %>Sari Dewi<% } %>
-                        </p>
-                        <p class="text-[#6B7280] text-[11px] font-medium mt-0.5">
-                            <% if (currentRole === 'bidan') { %>Bidan Desa
-                            <% } else if (currentRole === 'ptm') { %>PJ Program PTM
-                            <% } else if (currentRole === 'kepala') { %>Kepala Puskesmas
-                            <% } else { %>Kader Posbindu<% } %>
-                        </p>
-                    </div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
                 <% } %>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><path d="m6 9 6 6 6-6"/></svg>
-            </button>
-
-            <!-- Panel Profil -->
-            <div class="dropdown-panel w-64" id="profilePanel">
-                <div class="px-4 py-4 border-b border-gray-100">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 rounded-full bg-[#2563EB] text-white flex items-center justify-center font-bold text-lg shadow">
-                            <% if (typeof currentUser !== 'undefined' && currentUser) { %><%= currentUser.nama.charAt(0).toUpperCase() %><% } else if (currentRole === 'bidan') { %>B<% } else if (currentRole === 'ptm') { %>H<% } else if (currentRole === 'kepala') { %>A<% } else { %>K<% } %>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-[#1F2937] text-sm">
-                                <% if (typeof currentUser !== 'undefined' && currentUser) { %><%= currentUser.nama %><% } else { %>-<% } %>
-                            </p>
-                            <p class="text-xs text-[#6B7280]">
-                                <% if (typeof currentUser !== 'undefined' && currentUser) { %><%= currentUser.username %><% } else { %>-<% } %>
-                            </p>
-                            <span class="text-[10px] px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full font-medium">
-                                <% if (currentRole === 'bidan') { %>Bidan Desa<% } else if (currentRole === 'ptm') { %>PJ PTM<% } else if (currentRole === 'kepala') { %>Kepala Puskesmas<% } else { %>Kader Posbindu<% } %>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="py-2">
-                    <a href="#" onclick="if(typeof openProfilModal==='function'){openProfilModal();}return false;" class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-sm text-[#374151] transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        Profil Saya
-                    </a>
-                    <a href="#" onclick="if(typeof openUbahPasswordModal==='function'){openUbahPasswordModal();}return false;" class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-sm text-[#374151] transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                        Ubah Password
-                    </a>
-                </div>
-                <div class="border-t border-gray-100 py-2">
-                    <a href="/logout" class="flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 text-sm text-red-500 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
-                        Logout
-                    </a>
-                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm text-[#1F2937] leading-snug"><%= n.pesan %></p>
+                <% if (n.tipe === 'revisi' && n.id_skrining) { %>
+                <a href="/skrining/edit/<%= n.id_skrining %>" class="text-xs text-[#2563EB] hover:underline mt-1 inline-block">Perbaiki sekarang →</a>
+                <% } %>
+              </div>
             </div>
+          </div>
+          <% }) } %>
         </div>
-
+        <div class="px-4 py-2.5 border-t border-gray-100">
+          <%
+          const riwayatUrl = currentUser && currentUser.role === 'kader' ? '/riwayat' :
+                              currentUser && currentUser.role === 'bidan' ? '/bidan/validasi' :
+                              currentUser && currentUser.role === 'pj_ptm' ? '/ptm/laporan' :
+                              currentUser && currentUser.role === 'kepala_puskesmas' ? '/kepala/persetujuan' : '/';
+          %>
+          <a href="<%= riwayatUrl %>" class="text-xs text-[#2563EB] hover:underline">Lihat semua riwayat →</a>
+        </div>
+      </div>
     </div>
+
+    <!-- PROFIL -->
+    <div class="relative" id="profileWrapper">
+      <button onclick="togglePanel('profilePanel')" class="flex items-center gap-2 md:gap-3 pl-3 md:pl-5 border-l border-gray-200 hover:opacity-80 transition-opacity">
+        <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+          <div class="w-9 h-9 rounded-full bg-[#2563EB] text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0"><%= currentUser.nama.charAt(0).toUpperCase() %></div>
+          <div class="hidden sm:block text-right">
+            <p class="text-[#1F2937] text-sm font-semibold leading-tight truncate max-w-[120px]"><%= currentUser.nama %></p>
+            <p class="text-[#6B7280] text-[11px] font-medium mt-0.5">
+              <% if (currentRole === 'bidan') { %>Bidan Desa
+              <% } else if (currentRole === 'pj_ptm') { %>PJ Program PTM
+              <% } else if (currentRole === 'kepala_puskesmas') { %>Kepala Puskesmas
+              <% } else { %>Kader Posbindu<% } %>
+            </p>
+          </div>
+        <% } else { %>
+          <div class="w-9 h-9 rounded-full bg-[#2563EB] text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">U</div>
+        <% } %>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 hidden sm:block"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+
+      <!-- Panel Profil -->
+      <div class="dropdown-panel w-64" id="profilePanel">
+        <div class="px-4 py-4 border-b border-gray-100">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full bg-[#2563EB] text-white flex items-center justify-center font-bold text-lg shadow flex-shrink-0">
+              <% if (typeof currentUser !== 'undefined' && currentUser) { %><%= currentUser.nama.charAt(0).toUpperCase() %><% } else { %>U<% } %>
+            </div>
+            <div class="min-w-0">
+              <p class="font-semibold text-[#1F2937] text-sm truncate">
+                <% if (typeof currentUser !== 'undefined' && currentUser) { %><%= currentUser.nama %><% } else { %>-<% } %>
+              </p>
+              <p class="text-xs text-[#6B7280] truncate">
+                <% if (typeof currentUser !== 'undefined' && currentUser) { %><%= currentUser.username %><% } else { %>-<% } %>
+              </p>
+              <span class="text-[10px] px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full font-medium">
+                <% if (currentRole === 'bidan') { %>Bidan Desa
+                <% } else if (currentRole === 'pj_ptm') { %>PJ PTM
+                <% } else if (currentRole === 'kepala_puskesmas') { %>Kepala Puskesmas
+                <% } else { %>Kader Posbindu<% } %>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="py-2">
+          <a href="#" onclick="if(typeof openProfilModal==='function'){openProfilModal();}return false;" class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-sm text-[#374151] transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Profil Saya
+          </a>
+          <a href="#" onclick="if(typeof openUbahPasswordModal==='function'){openUbahPasswordModal();}return false;" class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-sm text-[#374151] transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Ubah Password
+          </a>
+        </div>
+        <div class="border-t border-gray-100 py-2">
+          <a href="/logout" class="flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 text-sm text-red-500 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+            Logout
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
 </header>
 
-<!-- Script toggle dropdown — berlaku di semua halaman yang include header ini -->
 <script>
   (function() {
     function togglePanel(id) {
