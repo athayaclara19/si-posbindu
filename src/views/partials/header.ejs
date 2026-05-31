@@ -7,12 +7,18 @@
     box-shadow: 0 10px 30px rgba(0,0,0,0.12); z-index: 999;
   }
   .dropdown-panel.open { display: block; }
+
+  /* Tombol hamburger hanya muncul di mobile/tablet */
+  #hamburgerBtn { display: flex; }
+  @media (min-width: 1024px) {
+    #hamburgerBtn { display: none; }
+  }
 </style>
 
 <header class="bg-white border-b border-gray-100 px-4 md:px-8 py-3 md:py-4 flex items-center justify-between sticky top-0 z-20">
   <div class="flex items-center gap-3">
-    <!-- Tombol Hamburger (tampil hanya di mobile/tablet) -->
-    <button onclick="openSidebar()" class="lg:hidden text-gray-500 hover:text-[#2563EB] transition-colors p-1.5 rounded-lg hover:bg-gray-100 flex-shrink-0" aria-label="Buka menu">
+    <!-- Tombol Hamburger (mobile & tablet) -->
+    <button id="hamburgerBtn" onclick="openSidebar()" class="text-gray-500 hover:text-[#2563EB] transition-colors p-1.5 rounded-lg hover:bg-gray-100 flex-shrink-0" aria-label="Buka menu">
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/>
       </svg>
@@ -33,7 +39,6 @@
         <% } %>
       </button>
 
-      <!-- Panel Notifikasi -->
       <div class="dropdown-panel w-80 md:w-96" id="notifPanel">
         <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
           <p class="font-semibold text-sm text-[#1F2937]">Notifikasi</p>
@@ -99,7 +104,6 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 hidden sm:block"><path d="m6 9 6 6 6-6"/></svg>
       </button>
 
-      <!-- Panel Profil -->
       <div class="dropdown-panel w-64" id="profilePanel">
         <div class="px-4 py-4 border-b border-gray-100">
           <div class="flex items-center gap-3">

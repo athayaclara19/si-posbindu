@@ -14,13 +14,13 @@
 </head>
 <body class="bg-slate-50 font-inter antialiased text-slate-800">
     
-    <div class="flex min-h-screen">
+    <div class="app-shell">
     <%- include('../partials/sidebar', { active: 'dashboard_bidan', role: 'bidan' }) %>
 
-    <div class="flex-1 flex flex-col min-w-0 lg:ml-64">
+    <div class="main-content-wrapper">
         <%- include('../partials/header', { pageTitle: 'Dashboard Bidan', role: 'bidan' }) %>
 
-        <main class="p-8 space-y-6 w-full">
+        <main class="p-4 md:p-6 lg:p-8 space-y-6 w-full">
             <div>
                 <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">
                     Dashboard Bidan - Kecamatan IV Koto Agam

@@ -2,11 +2,11 @@
   const currentRole = (currentUser && currentUser.role) ? currentUser.role : 'kader';
 %>
 
-<!-- OVERLAY (mobile) -->
-<div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden" onclick="closeSidebar()"></div>
+<!-- OVERLAY -->
+<div id="sidebarOverlay" onclick="closeSidebar()"></div>
 
 <!-- SIDEBAR -->
-<aside id="mainSidebar" class="fixed lg:static inset-y-0 left-0 z-40 w-64 bg-[#1F2937] min-h-screen flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+<aside id="mainSidebar">
   
   <!-- Logo -->
   <div class="flex items-center gap-3 px-6 py-5 border-b border-white/10">
@@ -17,8 +17,8 @@
       <p class="text-white text-sm font-semibold truncate">SI-Posbindu</p>
       <p class="text-white/50 text-xs truncate">Puskesmas IV Koto Agam</p>
     </div>
-    <!-- Tombol tutup sidebar (mobile only) -->
-    <button onclick="closeSidebar()" class="ml-auto lg:hidden text-white/50 hover:text-white p-1">
+    <!-- Tombol tutup sidebar (mobile/tablet only) -->
+    <button id="closeSidebarBtn" onclick="closeSidebar()" class="ml-auto text-white/50 hover:text-white p-1">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
     </button>
   </div>
@@ -187,16 +187,62 @@
   </div>
 </aside>
 
-<!-- Script sidebar drawer -->
+<style>
+  /* ===== SIDEBAR STYLES ===== */
+  #sidebarOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 30;
+  }
+  #sidebarOverlay.active {
+    display: block;
+  }
+
+  #mainSidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 256px;
+    background: #1F2937;
+    display: flex;
+    flex-direction: column;
+    z-index: 40;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+  }
+  #mainSidebar.open {
+    transform: translateX(0);
+  }
+
+  /* Desktop: sidebar selalu tampil, jadi bagian dari layout */
+  @media (min-width: 1024px) {
+    #mainSidebar {
+      position: relative;
+      transform: translateX(0) !important;
+      flex-shrink: 0;
+      height: 100vh;
+      top: auto; left: auto; bottom: auto;
+    }
+    #sidebarOverlay {
+      display: none !important;
+    }
+    #closeSidebarBtn {
+      display: none;
+    }
+  }
+</style>
+
 <script>
   function openSidebar() {
-    document.getElementById('mainSidebar').classList.remove('-translate-x-full');
-    document.getElementById('sidebarOverlay').classList.remove('hidden');
+    document.getElementById('mainSidebar').classList.add('open');
+    document.getElementById('sidebarOverlay').classList.add('active');
     document.body.style.overflow = 'hidden';
   }
   function closeSidebar() {
-    document.getElementById('mainSidebar').classList.add('-translate-x-full');
-    document.getElementById('sidebarOverlay').classList.add('hidden');
+    document.getElementById('mainSidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('active');
     document.body.style.overflow = '';
   }
   window.openSidebar = openSidebar;

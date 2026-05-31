@@ -2274,3 +2274,30 @@ body {
     }
   }
 }
+
+/* ===== RESPONSIVE LAYOUT FIX ===== */
+
+/* Mobile & Tablet: sidebar jadi overlay fixed, konten full width */
+.app-shell {
+  display: block;
+  min-height: 100vh;
+}
+
+.main-content-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Desktop (>=1024px): sidebar jadi kolom kiri, konten di kanan */
+@media (min-width: 1024px) {
+  .app-shell {
+    display: flex;
+  }
+  .main-content-wrapper {
+    flex: 1;
+    min-width: 0;
+    width: calc(100% - 256px);
+  }
+}
