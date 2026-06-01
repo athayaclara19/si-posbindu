@@ -81,22 +81,43 @@ app.get('/api/peta-hipertensi',
 app.post('/ubah-password', isAuthenticated, async (req, res) => {
     const { password_lama, password_baru, konfirmasi_password } = req.body;
     const id_user = req.session.user.id_user;
+    const roleMap = { kader: '/', bidan: '/bidan', pj_ptm: '/ptm', kepala_puskesmas: '/kepala' };
+    const dashboardUrl = roleMap[req.session.user.role] || '/';
+
     try {
+        // Validasi: password baru dan konfirmasi tidak sama
         if (password_baru !== konfirmasi_password) {
-            return res.redirect('back');
+            req.session.errorMessage = 'Password baru dan konfirmasi tidak sama.';
+            return res.redirect(dashboardUrl);
         }
+
+        // Validasi: password baru minimal 6 karakter
+        if (!password_baru || password_baru.trim().length < 6) {
+            req.session.errorMessage = 'Password baru minimal 6 karakter.';
+            return res.redirect(dashboardUrl);
+        }
+
         const result = await pool.query('SELECT * FROM "user" WHERE id_user=$1', [id_user]);
         const user   = result.rows[0];
         const bcrypt = require('bcryptjs');
         const isMatch = await bcrypt.compare(password_lama, user.password);
-        if (!isMatch) return res.redirect('back');
+
+        // Validasi: password lama salah
+        if (!isMatch) {
+            req.session.errorMessage = 'Password lama tidak sesuai.';
+            return res.redirect(dashboardUrl);
+        }
+
         const hash = await bcrypt.hash(password_baru, 10);
         await pool.query('UPDATE "user" SET password=$1 WHERE id_user=$2', [hash, id_user]);
-        const roleMap = { kader: '/', bidan: '/bidan', pj_ptm: '/ptm', kepala_puskesmas: '/kepala' };
-        res.redirect(roleMap[req.session.user.role] || '/');
+
+        req.session.successMessage = 'Password berhasil diubah.';
+        res.redirect(dashboardUrl);
+
     } catch (err) {
         console.error(err);
-        res.redirect('back');
+        req.session.errorMessage = 'Terjadi kesalahan sistem. Coba lagi.';
+        res.redirect(dashboardUrl);
     }
 });
 
