@@ -62,8 +62,12 @@ exports.renderDashboard = async (req, res) => {
             jumlahDitolak,
             antreanValidasi: antreanResult.rows,
             jorongStats: jorongStats.rows,
-            tensiStats: tensiStats.rows[0]
+            tensiStats: tensiStats.rows[0],
+            successMessage: req.session.successMessage || null,
+            errorMessage:   req.session.errorMessage   || null,
         });
+        delete req.session.successMessage;
+        delete req.session.errorMessage;
     } catch (err) {
         console.error(err);
         res.status(500).send("Gagal memuat dashboard bidan.");

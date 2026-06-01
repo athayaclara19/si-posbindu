@@ -77,7 +77,11 @@ exports.renderDashboardKepala = async (req, res) => {
             totalPasienSkrining:   totalPasien,
             laporanMenunggu: menungguRes.rows.map(fmt),
             riwayatLaporan:  riwayatRes.rows.map(fmt),
+            successMessage: req.session.successMessage || null,
+            errorMessage:   req.session.errorMessage   || null,
         });
+        delete req.session.successMessage;
+        delete req.session.errorMessage;
     } catch (err) {
         console.error('ERROR renderDashboardKepala:', err);
         res.status(500).render('partials/404', { message: 'Gagal memuat dashboard.' });

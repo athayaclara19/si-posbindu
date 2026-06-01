@@ -150,8 +150,12 @@ exports.renderDashboard = async (req, res) => {
             jadwalHariIni: jadwalHariIni.rows,
             notifikasi: notifikasi,
             currentUser: req.session.user || null,
-            role: req.session.user ? req.session.user.role : 'kader'
+            role: req.session.user ? req.session.user.role : 'kader',
+            successMessage: req.session.successMessage || null,
+            errorMessage:   req.session.errorMessage   || null,
         });
+        delete req.session.successMessage;
+        delete req.session.errorMessage;
     } catch (err) {
         console.error(err);
         res.status(500).send("Gagal memuat dashboard: " + err.message);

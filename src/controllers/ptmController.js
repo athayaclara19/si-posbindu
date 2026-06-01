@@ -234,7 +234,11 @@ exports.renderDashboardPTM = async (req, res) => {
             persenHipertensi,
             persenTerkendali,
             dataNagari,
+            successMessage: req.session.successMessage || null,
+            errorMessage:   req.session.errorMessage   || null,
         });
+        delete req.session.successMessage;
+        delete req.session.errorMessage;
 
     } catch (err) {
         console.error('ERROR RENDER DASHBOARD PTM:', err);

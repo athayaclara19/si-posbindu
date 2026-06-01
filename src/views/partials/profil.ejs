@@ -105,6 +105,11 @@
 </div>
 
 <!-- =========================================================== -->
+<!-- SweetAlert2 (dimuat di sini agar tersedia di semua halaman) -->
+<!-- =========================================================== -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- =========================================================== -->
 <!-- SCRIPT: fungsi buka/tutup modal + validasi konfirmasi pw    -->
 <!-- =========================================================== -->
 <script>
@@ -130,7 +135,10 @@
       });
     }
   });
+
+  // ─────────────────────────────────────────────────────────────
   // Validasi konfirmasi password sebelum submit
+  // ─────────────────────────────────────────────────────────────
   var formPw = document.getElementById('formUbahPassword');
   if (formPw) {
     formPw.addEventListener('submit', function(e) {
@@ -140,15 +148,21 @@
       if (baru !== conf) {
         e.preventDefault();
         pesan.classList.remove('hidden');
-
-        // SweetAlert jika tersedia, fallback ke alert biasa
-        if (typeof Swal !== 'undefined') {
-          Swal.fire({ icon: 'error', title: 'Password Tidak Cocok', text: 'Password baru dan konfirmasi tidak sama.', confirmButtonColor: '#2563EB' });
-        }
+        Swal.fire({
+          icon: 'error',
+          title: 'Password Tidak Cocok',
+          text: 'Password baru dan konfirmasi password tidak sama. Silakan periksa kembali.',
+          confirmButtonColor: '#2563EB',
+          confirmButtonText: 'Oke'
+        }).then(function() {
+          // Buka kembali modal ubah password setelah user klik Oke
+          openUbahPasswordModal();
+        });
       } else {
         pesan.classList.add('hidden');
       }
     });
+
     document.getElementById('inputKonfirmasi').addEventListener('input', function() {
       var baru = document.getElementById('inputPasswordBaru').value;
       var pesan = document.getElementById('pesanKonfirmasi');
@@ -159,4 +173,31 @@
       }
     });
   }
+
+  // ─────────────────────────────────────────────────────────────
+  // Tampilkan flash message dari server (errorMessage / successMessage)
+  // Ini menangani kasus di mana validasi lolos di frontend tapi
+  // gagal di backend (mis. password lama salah).
+  // ─────────────────────────────────────────────────────────────
+  <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
+    Swal.fire({
+      icon: 'error',
+      title: 'Gagal',
+      text: '<%= errorMessage %>',
+      confirmButtonColor: '#2563EB',
+      confirmButtonText: 'Oke'
+    }).then(function() {
+      openUbahPasswordModal();
+    });
+  <% } %>
+
+  <% if (typeof successMessage !== 'undefined' && successMessage) { %>
+    Swal.fire({
+      icon: 'success',
+      title: 'Berhasil',
+      text: '<%= successMessage %>',
+      confirmButtonColor: '#2563EB',
+      confirmButtonText: 'Oke'
+    });
+  <% } %>
 </script>
