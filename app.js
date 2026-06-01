@@ -104,9 +104,11 @@ app.post('/ubah-password', isAuthenticated, async (req, res) => {
 // BAGIAN 7: START SERVER
 // ============================================================
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server berjalan di http://localhost:${PORT}`);
-    console.log(`Mode: ${process.env.NODE_ENV || 'development'}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server berjalan di http://localhost:${PORT}`);
+        console.log(`Mode: ${process.env.NODE_ENV || 'development'}`);
+    });
+}
 
-module.exports = app; // untuk keperluan testing
+module.exports = app;

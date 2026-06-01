@@ -12,7 +12,7 @@ const rekapController   = require('../controllers/rekapController');
 const guard = [isAuthenticated, isAuthorized('pj_ptm')];
 
 // --- Dashboard ---
-router.get('/', isAuthenticated, ptmController.renderDashboardPTM);
+router.get('/', ...guard, ptmController.renderDashboardPTM);
 
 // --- Rekap ---
 router.get('/rekap', ...guard, rekapController.renderRekapPTM);
