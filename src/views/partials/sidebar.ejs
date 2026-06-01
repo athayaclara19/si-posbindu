@@ -219,11 +219,12 @@
   /* Desktop: sidebar selalu tampil, jadi bagian dari layout */
   @media (min-width: 1024px) {
     #mainSidebar {
-      position: relative;
+      position: sticky;
+      top: 0;
       transform: translateX(0) !important;
       flex-shrink: 0;
       height: 100vh;
-      top: auto; left: auto; bottom: auto;
+      overflow-y: auto;
     }
     #sidebarOverlay {
       display: none !important;

@@ -243,7 +243,7 @@
             box.classList.remove('hidden');
         }
 
-        // ── Modal Hapus ──────────────────────────────────────
+        // Hapus Target
         function konfirmasiHapus(idTarget, tahun) {
             document.getElementById('pesanHapus').textContent =
                 `Target tahun ${tahun} akan dihapus permanen. Data capaian pasien tidak terpengaruh.`;
@@ -252,6 +252,7 @@
         }
     </script>
 
+<%- include("../partials/profil") %>
 </div>
 </body>
 </html>
