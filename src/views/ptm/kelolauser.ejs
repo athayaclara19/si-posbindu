@@ -308,7 +308,8 @@
                         Batal
                     </button>
                     <button type="submit" id="btnToggleAksi"
-                        class="flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors text-white">
+                        class="flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors text-white"
+                        style="background-color:#EF4444;">
                         Konfirmasi
                     </button>
                 </div>
@@ -382,7 +383,8 @@
             document.getElementById('pesanToggle').textContent = pesan;
             document.getElementById('formToggle').action = `/ptm/user/toggle/${idUser}`;
             document.getElementById('btnToggleAksi').className =
-                `flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors text-white ${warna}`;
+                `flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors text-white`;
+            document.getElementById('btnToggleAksi').style.backgroundColor = aktif ? '#EF4444' : '#22C55E';
 
             iconEl.className = `w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center ${aktif ? 'bg-red-100' : 'bg-green-100'}`;
             iconEl.innerHTML = aktif
