@@ -18,9 +18,11 @@ router.get('/', ...guard, ptmController.renderDashboardPTM);
 router.get('/rekap', ...guard, rekapController.renderRekapPTM);
 
 // --- Target ---
-router.get('/target',          ...guard, targetController.renderKelolaTarget);
-router.post('/target/simpan',  ...guard, targetController.handleSimpanTarget);
-router.post('/target/hapus/:id', ...guard, targetController.handleHapusTarget);
+// BARU
+router.get('/target',                  ...guard, targetController.renderKelolaTarget);
+router.post('/target/global',          ...guard, targetController.handleSimpanTargetGlobal);
+router.post('/target/nagari/edit',     ...guard, targetController.handleEditTargetNagari);
+router.post('/target/hapus/:tahun',    ...guard, targetController.handleHapusTarget);
 
 // --- Kelola User ---
 router.get('/user',                ...guard, userController.renderKelolaUser);

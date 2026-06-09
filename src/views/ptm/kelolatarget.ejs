@@ -24,7 +24,7 @@
             <!-- Page Title -->
             <div class="mt-2">
                 <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Kelola Target Capaian</h2>
-                <p class="text-[#6B7280] text-sm mt-1">Atur target jumlah pasien skrining hipertensi per tahun</p>
+                <p class="text-[#6B7280] text-sm mt-1">Atur target jumlah pasien skrining hipertensi per tahun dan per nagari</p>
             </div>
 
             <!-- Flash Messages -->
@@ -43,145 +43,190 @@
             </div>
             <% } %>
 
-            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
-
-                <!-- ─── FORM TAMBAH / EDIT TARGET ─── -->
-                <div class="lg:col-span-2 bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-                    <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
-                        </div>
-                        <h3 class="font-poppins font-semibold text-gray-800">Set Target Tahunan</h3>
+            <!-- STEP 1: SET TARGET GLOBAL -->
+            <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
                     </div>
+                    <div>
+                        <h3 class="font-poppins font-semibold text-gray-800">Step 1 — Set Target Global Tahunan</h3>
+                        <p class="text-xs text-gray-400 mt-0.5">Target global akan otomatis dibagi rata ke 7 nagari. Kamu bisa ubah per nagari setelah ini.</p>
+                    </div>
+                </div>
 
-                    <form action="/ptm/target/simpan" method="POST" class="px-6 py-5 space-y-4">
-
+                <form action="/ptm/target/global" method="POST" class="px-6 py-5">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                         <div>
                             <label class="block text-xs font-medium text-gray-600 mb-1.5">
                                 Tahun <span class="text-red-500">*</span>
                             </label>
                             <input type="number" name="tahun" id="inputTahun"
-                                value="<%= tahunIni %>" min="2020" max="2099" required
+                                value="<%= tahunDipilih %>" min="2020" max="2099" required
                                 class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                                placeholder="Contoh: 2025">
-                            <p class="text-xs text-gray-400 mt-1">Jika tahun sudah ada, data lama akan diperbarui.</p>
+                                placeholder="Contoh: 2026">
                         </div>
-
                         <div>
                             <label class="block text-xs font-medium text-gray-600 mb-1.5">
                                 Target Total Pasien <span class="text-red-500">*</span>
                             </label>
                             <div class="relative">
-                                <input type="number" name="target_total" id="inputTarget"
+                                <input type="number" name="target_global" id="inputTargetGlobal"
                                     min="1" required
-                                    class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 pr-20"
+                                    value="<%= targetGlobal > 0 ? targetGlobal : '' %>"
+                                    class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 pr-16"
                                     placeholder="Contoh: 2500">
                                 <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">pasien</span>
                             </div>
                         </div>
-
                         <div>
                             <label class="block text-xs font-medium text-gray-600 mb-1.5">Catatan <span class="text-gray-400">(opsional)</span></label>
-                            <textarea name="catatan" rows="2"
-                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
-                                placeholder="Contoh: Target naik 10% dari tahun lalu"></textarea>
+                            <input type="text" name="catatan"
+                                class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                placeholder="Contoh: Target naik 10%">
                         </div>
+                    </div>
 
-                        <!-- Preview kalkulasi -->
-                        <div id="previewKalkulasi" class="hidden bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-2">
-                            <p class="text-xs font-semibold text-blue-700 uppercase tracking-wider">Preview Distribusi</p>
-                            <div class="grid grid-cols-2 gap-2 text-xs text-blue-800">
-                                <div>Per bulan: <strong id="prevBulan">–</strong></div>
-                                <div>Per minggu: <strong id="prevMinggu">–</strong></div>
-                                <div>Per hari kerja: <strong id="prevHari">–</strong></div>
-                            </div>
+                    <!-- Preview kalkulasi -->
+                    <div id="previewKalkulasi" class="hidden mt-4 bg-blue-50 border border-blue-100 rounded-xl p-4">
+                        <p class="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-2">Preview Distribusi</p>
+                        <div class="flex flex-wrap gap-4 text-xs text-blue-800">
+                            <div>Per nagari (rata-rata): <strong id="prevNagari">–</strong></div>
+                            <div>Per bulan: <strong id="prevBulan">–</strong></div>
+                            <div>Per hari kerja: <strong id="prevHari">–</strong></div>
                         </div>
+                    </div>
 
+                    <div class="mt-4 flex items-center gap-3 flex-wrap">
                         <button type="submit"
-                            class="w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2">
+                            class="bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                            Simpan Target
+                            Simpan & Bagi Rata ke Nagari
                         </button>
-                    </form>
-                </div>
-
-                <!-- ─── TABEL RIWAYAT TARGET ─── -->
-                <div class="lg:col-span-3 bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-                    <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
-                        <h3 class="font-poppins font-semibold text-gray-800">Riwayat Target Per Tahun</h3>
-                        <span class="text-xs text-gray-400"><%= targets.length %> tahun tercatat</span>
+                        <% if (targetGlobal > 0) { %>
+                        <span class="text-xs text-gray-400">Target global saat ini: <strong class="text-gray-700"><%= targetGlobal.toLocaleString('id-ID') %> pasien</strong></span>
+                        <% } %>
                     </div>
-
-                    <% if (targets.length === 0) { %>
-                    <div class="px-6 py-12 text-center text-gray-400">
-                        <svg class="mx-auto mb-3 text-gray-300" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                        <p class="text-sm">Belum ada target yang disimpan.</p>
-                        <p class="text-xs mt-1">Gunakan form di sebelah kiri untuk menambahkan target pertama.</p>
-                    </div>
-                    <% } else { %>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead>
-                                <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
-                                    <th class="px-5 py-3 text-left font-medium">Tahun</th>
-                                    <th class="px-5 py-3 text-right font-medium">Target</th>
-                                    <th class="px-5 py-3 text-left font-medium">Catatan</th>
-                                    <th class="px-5 py-3 text-left font-medium">Diperbarui</th>
-                                    <th class="px-5 py-3 text-center font-medium">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                <% targets.forEach(t => { %>
-                                <tr class="hover:bg-gray-50/50 transition-colors">
-                                    <td class="px-5 py-4">
-                                        <div class="flex items-center gap-2">
-                                            <% if (t.tahun === tahunIni) { %>
-                                            <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-full">AKTIF</span>
-                                            <% } %>
-                                            <span class="font-poppins font-semibold text-gray-800 text-base"><%= t.tahun %></span>
-                                        </div>
-                                    </td>
-                                    <td class="px-5 py-4 text-right">
-                                        <span class="font-semibold text-gray-800"><%= parseInt(t.target_total).toLocaleString('id-ID') %></span>
-                                        <span class="text-xs text-gray-400 ml-1">pasien</span>
-                                    </td>
-                                    <td class="px-5 py-4 text-gray-500 text-xs max-w-[160px] truncate">
-                                        <%= t.catatan || '–' %>
-                                    </td>
-                                    <td class="px-5 py-4 text-gray-400 text-xs">
-                                        <%= new Date(t.diubah_pada).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }) %>
-                                    </td>
-                                    <td class="px-5 py-4 text-center">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <!-- Tombol Edit: isi form di kiri -->
-                                            <button onclick="isiForm(<%= t.tahun %>, <%= t.target_total %>, `<%= (t.catatan || '').replace(/`/g,'') %>`)"
-                                                class="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="Edit target ini">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-                                            </button>
-                                            <!-- Tombol Hapus -->
-                                            <button onclick="konfirmasiHapus(<%= t.id_target %>, <%= t.tahun %>)"
-                                                class="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors" title="Hapus target ini">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <% }) %>
-                            </tbody>
-                        </table>
-                    </div>
-                    <% } %>
-                </div>
+                </form>
             </div>
 
-            <!-- ─── INFO BOX ─── -->
+            <!-- STEP 2: TARGET PER NAGARI -->
+            <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between flex-wrap gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-poppins font-semibold text-gray-800">Step 2 — Target Per Nagari</h3>
+                            <p class="text-xs text-gray-400 mt-0.5">Sesuaikan target tiap nagari sesuai kebutuhan</p>
+                        </div>
+                    </div>
+                    <!-- Filter tahun -->
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs text-gray-500 font-medium">Tampilkan tahun:</label>
+                        <select onchange="window.location.href='/ptm/target?tahun='+this.value"
+                            class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+                            <option value="<%= tahunIni %>" <%= tahunDipilih === tahunIni ? 'selected' : '' %>><%= tahunIni %></option>
+                            <% tahunList.forEach(t => { %>
+                                <% if (t.tahun !== tahunIni) { %>
+                                <option value="<%= t.tahun %>" <%= tahunDipilih === t.tahun ? 'selected' : '' %>><%= t.tahun %></option>
+                                <% } %>
+                            <% }) %>
+                        </select>
+                    </div>
+                </div>
+
+                <% if (targetPerNagari.length === 0) { %>
+                <div class="px-6 py-12 text-center text-gray-400">
+                    <svg class="mx-auto mb-3 text-gray-300" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    <p class="text-sm font-medium text-gray-500">Belum ada target untuk tahun <%= tahunDipilih %>.</p>
+                    <p class="text-xs mt-1">Isi target global di atas lalu klik "Simpan & Bagi Rata ke Nagari".</p>
+                </div>
+                <% } else { %>
+
+                <!-- Summary bar -->
+                <div class="px-6 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
+                    <%
+                        const totalNagari = targetPerNagari.reduce((s, t) => s + t.target_total, 0);
+                        const selisih = totalNagari - targetGlobal;
+                    %>
+                    <div class="text-xs text-gray-500 flex flex-wrap items-center gap-3">
+                        <span>
+                            Total target nagari <strong class="text-gray-700"><%= tahunDipilih %></strong>:
+                            <strong class="text-blue-700 text-sm ml-1"><%= totalNagari.toLocaleString('id-ID') %></strong> pasien
+                        </span>
+                        <% if (targetGlobal > 0) { %>
+                        <span class="text-gray-300">|</span>
+                        <span>Target global: <strong class="text-gray-700"><%= targetGlobal.toLocaleString('id-ID') %></strong></span>
+                        <span class="text-gray-300">|</span>
+                        <% if (selisih === 0) { %>
+                            <span class="text-green-600 font-medium flex items-center gap-1">
+                                ✓ Sesuai target global
+                            </span>
+                        <% } else { %>
+                            <span class="<%= selisih > 0 ? 'text-amber-600' : 'text-red-500' %> font-medium flex items-center gap-1">
+                                ⚠ Selisih: <%= selisih > 0 ? '+' : '' %><%= selisih.toLocaleString('id-ID') %> pasien
+                            </span>
+                        <% } %>
+                        <% } %>
+                    </div>
+                    <button onclick="konfirmasiHapusTahun(<%= tahunDipilih %>)"
+                        class="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                        Hapus semua target tahun <%= tahunDipilih %>
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                                <th class="px-5 py-3 text-left font-medium">Nagari</th>
+                                <th class="px-5 py-3 text-right font-medium">Target Pasien</th>
+                                <th class="px-5 py-3 text-left font-medium">Catatan</th>
+                                <th class="px-5 py-3 text-left font-medium">Terakhir Diubah</th>
+                                <th class="px-5 py-3 text-center font-medium">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <% targetPerNagari.forEach(t => { %>
+                            <tr class="hover:bg-gray-50/50 transition-colors">
+                                <td class="px-5 py-4">
+                                    <span class="font-medium text-gray-800"><%= t.nama_nagari %></span>
+                                </td>
+                                <td class="px-5 py-4 text-right">
+                                    <span class="font-semibold text-gray-800"><%= parseInt(t.target_total).toLocaleString('id-ID') %></span>
+                                    <span class="text-xs text-gray-400 ml-1">pasien</span>
+                                </td>
+                                <td class="px-5 py-4 text-gray-500 text-xs max-w-[160px] truncate">
+                                    <%= t.catatan || '–' %>
+                                </td>
+                                <td class="px-5 py-4 text-gray-400 text-xs">
+                                    <%= new Date(t.diubah_pada).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }) %>
+                                </td>
+                                <td class="px-5 py-4 text-center">
+                                    <button onclick="bukaModalEdit(<%= t.id_target %>, '<%= t.nama_nagari.replace(/'/g, "\\'") %>', <%= t.target_total %>, `<%= (t.catatan || '').replace(/`/g,'') %>`, <%= t.tahun %>)"
+                                        class="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="Edit target nagari ini">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                                    </button>
+                                </td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+                <% } %>
+            </div>
+
+            <!-- INFO BOX -->
             <div class="bg-amber-50 border border-amber-200 rounded-2xl px-6 py-4 flex items-start gap-4">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0 mt-0.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
                 <div>
                     <p class="text-sm font-semibold text-amber-800">Catatan Penting</p>
                     <p class="text-xs text-amber-700 mt-1 leading-relaxed">
-                        Target yang disimpan di sini akan langsung digunakan oleh <strong>Dashboard PTM</strong> untuk menghitung persentase capaian tahun berjalan.
-                        Jika tidak ada target untuk tahun tertentu, sistem akan menggunakan nilai default <strong>2.000 pasien</strong>.
+                        Target global dibagi rata ke semua nagari aktif. Kamu bisa mengubah target per nagari sesuai kondisi lapangan.
+                        Dashboard PTM akan menggunakan <strong>total semua target nagari</strong> untuk menghitung capaian. Jika belum ada target, sistem pakai default <strong>2.000 pasien</strong>.
                     </p>
                 </div>
             </div>
@@ -190,7 +235,54 @@
     </div>
 
 
-    <!-- Modal Konfirmasi Hapus -->
+    <!-- Modal Edit Target Nagari -->
+    <div id="modalEditNagari" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+            <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                    <h3 class="font-poppins font-semibold text-gray-800">Edit Target Nagari</h3>
+                    <p class="text-xs text-gray-400 mt-0.5" id="modalNagariLabel">–</p>
+                </div>
+                <button onclick="tutupModalEdit()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+            <form action="/ptm/target/nagari/edit" method="POST" class="px-6 py-5 space-y-4">
+                <input type="hidden" name="id_target" id="modalIdTarget">
+                <input type="hidden" name="tahun" id="modalTahun">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1.5">
+                        Target Pasien <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <input type="number" name="target_total" id="modalTargetInput"
+                            min="1" required
+                            class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 pr-16"
+                            placeholder="Masukkan target">
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">pasien</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1.5">Catatan <span class="text-gray-400">(opsional)</span></label>
+                    <textarea name="catatan" id="modalCatatanInput" rows="2"
+                        class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
+                        placeholder="Catatan opsional"></textarea>
+                </div>
+                <div class="flex gap-3 pt-1">
+                    <button type="button" onclick="tutupModalEdit()"
+                        class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors">
+                        Batal
+                    </button>
+                    <button type="submit"
+                        class="flex-1 bg-[#2563EB] hover:bg-[#1D4ED8] text-white py-2.5 rounded-xl text-sm font-medium transition-colors">
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Hapus Tahun -->
     <div id="modalHapus" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
             <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
@@ -205,7 +297,8 @@
                         Batal
                     </button>
                     <button type="submit"
-                        class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-xl text-sm font-medium">
+                        style="background-color: #EF4444; color: white;"
+                        class="flex-1 py-2.5 rounded-xl text-sm font-medium hover:opacity-90">
                         Ya, Hapus
                     </button>
                 </div>
@@ -215,41 +308,56 @@
 
 
     <script>
-        // ── Isi form dari baris tabel (tombol Edit) ──────────
-        function isiForm(tahun, target, catatan) {
-            document.getElementById('inputTahun').value  = tahun;
-            document.getElementById('inputTarget').value = target;
-            document.querySelector('textarea[name="catatan"]').value = catatan;
-            hitungPreview();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // ── Preview distribusi target ────────────────────────
-        const inputTarget = document.getElementById('inputTarget');
-        inputTarget.addEventListener('input', hitungPreview);
+        // Preview kalkulasi target global
+        const inputTargetGlobal = document.getElementById('inputTargetGlobal');
+        inputTargetGlobal.addEventListener('input', hitungPreview);
 
         function hitungPreview() {
-            const total = parseInt(inputTarget.value);
+            const total = parseInt(inputTargetGlobal.value);
             const box   = document.getElementById('previewKalkulasi');
             if (!total || total <= 0) { box.classList.add('hidden'); return; }
 
+            const perNagari = Math.floor(total / 7);
             const perBulan  = Math.ceil(total / 12);
-            const perMinggu = Math.ceil(total / 52);
-            const perHari   = Math.ceil(total / (52 * 5)); // 5 hari kerja/minggu
+            const perHari   = Math.ceil(total / (52 * 5));
 
-            document.getElementById('prevBulan').textContent  = perBulan.toLocaleString('id-ID') + ' pasien';
-            document.getElementById('prevMinggu').textContent = perMinggu.toLocaleString('id-ID') + ' pasien';
-            document.getElementById('prevHari').textContent   = perHari.toLocaleString('id-ID') + ' pasien';
+            document.getElementById('prevNagari').textContent = '~' + perNagari.toLocaleString('id-ID') + ' pasien';
+            document.getElementById('prevBulan').textContent  = '~' + perBulan.toLocaleString('id-ID') + ' pasien';
+            document.getElementById('prevHari').textContent   = '~' + perHari.toLocaleString('id-ID') + ' pasien';
             box.classList.remove('hidden');
         }
 
-        // Hapus
-        function konfirmasiHapus(idTarget, tahun) {
+        if (inputTargetGlobal.value) hitungPreview();
+
+        // Modal Edit Per Nagari
+        function bukaModalEdit(idTarget, namaNagari, targetTotal, catatan, tahun) {
+            document.getElementById('modalNagariLabel').textContent = namaNagari;
+            document.getElementById('modalIdTarget').value = idTarget;
+            document.getElementById('modalTahun').value = tahun;
+            document.getElementById('modalTargetInput').value = targetTotal;
+            document.getElementById('modalCatatanInput').value = catatan;
+            document.getElementById('modalEditNagari').classList.remove('hidden');
+        }
+
+        function tutupModalEdit() {
+            document.getElementById('modalEditNagari').classList.add('hidden');
+        }
+
+        document.getElementById('modalEditNagari').addEventListener('click', function(e) {
+            if (e.target === this) tutupModalEdit();
+        });
+
+        // Modal Hapus Tahun
+        function konfirmasiHapusTahun(tahun) {
             document.getElementById('pesanHapus').textContent =
-                `Target tahun ${tahun} akan dihapus permanen. Data capaian pasien tidak terpengaruh.`;
-            document.getElementById('formHapus').action = `/ptm/target/hapus/${idTarget}`;
+                'Semua target nagari untuk tahun ' + tahun + ' akan dihapus permanen. Data capaian pasien tidak terpengaruh.';
+            document.getElementById('formHapus').action = '/ptm/target/hapus/' + tahun;
             document.getElementById('modalHapus').classList.remove('hidden');
         }
+
+        document.getElementById('modalHapus').addEventListener('click', function(e) {
+            if (e.target === this) this.classList.add('hidden');
+        });
     </script>
 
 <%- include("../partials/profil") %>
