@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekap Periode <%= namaBulan %> <%= periode.periode_tahun %> - SI-Posbindu</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            color: #000;
+            background: #fff;
+        }
+
+        /* ── Tombol Cetak (hanya tampil di layar, hilang saat print) ── */
+        .print-toolbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: #1e40af;
+            color: #fff;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 999;
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+        }
+        .print-toolbar .toolbar-left { display: flex; align-items: center; gap: 10px; }
+        .btn-print {
+            background: #fff;
+            color: #1e40af;
+            border: none;
+            padding: 7px 18px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-print:hover { background: #dbeafe; }
+        .btn-back {
+            background: transparent;
+            color: #bfdbfe;
+            border: 1px solid #bfdbfe;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .btn-back:hover { color: #fff; border-color: #fff; }
+
+        /* ── Area konten dokumen ── */
+        .dokumen {
+            max-width: 210mm;
+            margin: 60px auto 40px auto;
+            padding: 20mm 20mm 20mm 25mm;
+            background: #fff;
+        }
+
+        /* ── Header Kop ── */
+        .kop {
+            text-align: center;
+            border-bottom: 3px double #000;
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+        }
+        .kop h1 { font-size: 14pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kop h2 { font-size: 12pt; font-weight: bold; text-transform: uppercase; }
+        .kop p  { font-size: 10pt; margin-top: 2px; }
+
+        /* ── Judul Dokumen ── */
+        .judul-dokumen {
+            text-align: center;
+            margin: 16px 0 20px;
+        }
+        .judul-dokumen h3 {
+            font-size: 13pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-decoration: underline;
+        }
+        .judul-dokumen p { font-size: 11pt; margin-top: 4px; }
+
+        /* ── Kartu Ringkasan ── */
+        .ringkasan-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .kartu {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            text-align: center;
+        }
+        .kartu .label { font-size: 9pt; color: #444; margin-bottom: 4px; }
+        .kartu .nilai { font-size: 16pt; font-weight: bold; }
+        .kartu .sub   { font-size: 8pt; color: #666; margin-top: 2px; }
+        .kartu.merah .nilai  { color: #dc2626; }
+        .kartu.hijau .nilai  { color: #16a34a; }
+
+        /* ── Tabel ── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 10.5pt;
+        }
+        th, td { border: 1px solid #000; padding: 5px 8px; }
+        th {
+            background: #1e3a8a;
+            color: #fff;
+            text-align: center;
+            font-size: 10pt;
+        }
+        td { vertical-align: middle; }
+        td.center { text-align: center; }
+        tbody tr:nth-child(even) { background: #f0f4ff; }
+
+        /* ── Tanda Tangan ── */
+        .ttd-section {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .ttd-box { text-align: center; width: 220px; }
+        .ttd-box .ttd-label { font-size: 10pt; margin-bottom: 70px; }
+        .ttd-box .ttd-nama  { font-size: 10pt; font-weight: bold; border-top: 1px solid #000; padding-top: 4px; }
+        .ttd-box .ttd-jabatan { font-size: 9pt; }
+
+        /* ── Catatan kaki ── */
+        .catatan {
+            margin-top: 16px;
+            font-size: 9pt;
+            color: #444;
+            border-top: 1px solid #ccc;
+            padding-top: 8px;
+        }
+
+        /* ── Print mode ── */
+        @media print {
+            .print-toolbar { display: none !important; }
+            .dokumen { margin: 0; padding: 15mm 15mm 15mm 20mm; max-width: 100%; }
+            body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+            th { background: #1e3a8a !important; color: #fff !important; }
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Toolbar (hilang saat print) -->
+    <div class="print-toolbar">
+        <div class="toolbar-left">
+            <a href="/ptm/rekap" class="btn-back">← Kembali</a>
+            <span>Pratinjau Cetak — Rekap Periode <%= namaBulan %> <%= periode.periode_tahun %></span>
+        </div>
+        <button class="btn-print" onclick="window.print()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Cetak / Simpan PDF
+        </button>
+    </div>
+
+    <!-- Dokumen -->
+    <div class="dokumen">
+
+        <!-- Kop Surat -->
+        <div class="kop">
+            <h1>Puskesmas IV Koto</h1>
+            <h2>Program Pengendalian Penyakit Tidak Menular (PTM)</h2>
+            <p>Kabupaten Agam, Sumatera Barat</p>
+        </div>
+
+        <!-- Judul -->
+        <div class="judul-dokumen">
+            <h3>Rekapitulasi Data Skrining Hipertensi</h3>
+            <p>Periode: <strong><%= namaBulan %> <%= periode.periode_tahun %></strong></p>
+        </div>
+
+        <!-- Kartu Ringkasan -->
+        <div class="ringkasan-grid">
+            <div class="kartu">
+                <div class="label">Total Pasien</div>
+                <div class="nilai"><%= agg.total_pasien %></div>
+                <div class="sub">pasien diperiksa</div>
+            </div>
+            <div class="kartu">
+                <div class="label">Total Kunjungan</div>
+                <div class="nilai"><%= agg.total_kunjungan %></div>
+                <div class="sub">total skrining dilakukan</div>
+            </div>
+            <div class="kartu merah">
+                <div class="label">Hipertensi</div>
+                <div class="nilai"><%= agg.total_hipertensi %></div>
+                <div class="sub">TD ≥ 140/90 mmHg</div>
+            </div>
+            <div class="kartu hijau">
+                <div class="label">Terkendali</div>
+                <div class="nilai"><%= agg.terkendali %></div>
+                <div class="sub">TD &lt; 140/90 (kunjungan terakhir)</div>
+            </div>
+        </div>
+
+        <!-- Tabel Distribusi Per Nagari -->
+        <% if (perNagari && perNagari.length > 0) { %>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:5%">No</th>
+                    <th style="width:35%">Nagari</th>
+                    <th style="width:20%">Total Pasien</th>
+                    <th style="width:20%">Total Kunjungan</th>
+                    <th style="width:20%">Hipertensi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% perNagari.forEach((n, i) => { %>
+                <tr>
+                    <td class="center"><%= i + 1 %></td>
+                    <td><%= n.nama_nagari %></td>
+                    <td class="center"><%= parseInt(n.total_pasien) || 0 %></td>
+                    <td class="center"><%= parseInt(n.total_kunjungan) || 0 %></td>
+                    <td class="center"><%= parseInt(n.hipertensi) || 0 %></td>
+                </tr>
+                <% }) %>
+                <tr style="font-weight:bold; background:#dbeafe;">
+                    <td colspan="2" class="center">TOTAL</td>
+                    <td class="center"><%= agg.total_pasien %></td>
+                    <td class="center"><%= agg.total_kunjungan %></td>
+                    <td class="center"><%= agg.total_hipertensi %></td>
+                </tr>
+            </tbody>
+        </table>
+        <% } else { %>
+        <p style="text-align:center; color:#666; margin: 20px 0;">Tidak ada data distribusi per nagari untuk periode ini.</p>
+        <% } %>
+
+        <!-- Catatan Metodologi -->
+        <div class="catatan">
+            <strong>Keterangan:</strong><br>
+            • <em>Hipertensi</em>: Pasien yang pada minimal satu kunjungan di periode ini memiliki tekanan darah sistolik ≥ 140 mmHg atau diastolik ≥ 90 mmHg.<br>
+            • <em>Terkendali</em>: Pasien yang pada kunjungan <em>terakhir</em> di periode ini memiliki tekanan darah &lt; 140/90 mmHg (mengacu Pedoman Pengendalian Hipertensi di FKTP, Kemenkes 2024).<br>
+            • Data hanya mencakup skrining yang telah diverifikasi oleh Bidan.
+        </div>
+
+        <!-- Tanda Tangan -->
+        <div class="ttd-section">
+            <div class="ttd-box">
+                <div class="ttd-label">
+                    IV Koto, <%= tanggalCetak %><br>
+                    Penanggung Jawab PTM,
+                </div>
+                <div class="ttd-nama"><%= currentUser ? currentUser.nama_user : '___________________' %></div>
+                <div class="ttd-jabatan">PJ Program PTM</div>
+            </div>
+        </div>
+
+    </div><!-- /dokumen -->
+
+</body>
+</html>

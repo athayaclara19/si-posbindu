@@ -16,6 +16,7 @@ router.get('/', ...guard, ptmController.renderDashboardPTM);
 
 // --- Rekap ---
 router.get('/rekap', ...guard, rekapController.renderRekapPTM);
+router.get('/rekap/cetak/:periode_id', ...guard, rekapController.renderCetakRekapPeriode);
 
 // --- Target ---
 // BARU

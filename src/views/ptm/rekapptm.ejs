@@ -12,7 +12,7 @@
     </style>
 </head>
 <body class="bg-slate-50 font-inter antialiased text-slate-800">
-    
+
     <div class="app-shell">
     <%- include('../partials/sidebar', { active: 'rekap', role: 'ptm' }) %>
 
@@ -24,28 +24,31 @@
                 <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">
                     Rekap Periode
                 </h2>
-                <p class="text-[#6B7280] text-sm mt-1">Pilih periode untuk melihat atau membuat laporan</p>
+                <p class="text-[#6B7280] text-sm mt-1">Ringkasan data skrining otomatis per periode. Untuk laporan resmi, gunakan menu Laporan.</p>
             </div>
 
+            <%# Banner menuju halaman Laporan %>
             <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
-                        <h3 class="text-[#1F2937] font-poppins font-semibold">Buat Laporan Baru</h3>
+                        <h3 class="text-[#1F2937] font-poppins font-semibold">Buat Laporan Resmi</h3>
                         <p class="text-[#6B7280] text-sm mt-1">Pergi ke halaman Laporan untuk membuat dan mengirim laporan resmi ke Kepala Puskesmas</p>
                     </div>
                     <a href="/ptm/laporan"
                        class="flex-shrink-0 flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm whitespace-nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        Buat Laporan →
+                        Ke Halaman Laporan →
                     </a>
                 </div>
             </div>
 
+            <%# Tabel Riwayat Rekap Periode %>
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div class="px-6 py-5 border-b border-gray-100">
-                    <h3 class="text-[#1F2937] font-poppins font-semibold">
-                        Riwayat Laporan
-                    </h3>
+                <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-[#1F2937] font-poppins font-semibold">Riwayat Rekap Per Periode</h3>
+                        <p class="text-[#6B7280] text-xs mt-0.5">Data diambil otomatis dari skrining yang sudah diverifikasi</p>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full">
@@ -53,76 +56,118 @@
                             <tr class="bg-[#F8FAFC] border-b border-gray-100">
                                 <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Periode</th>
                                 <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Total Pasien</th>
+                                <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Total Kunjungan</th>
                                 <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Hipertensi</th>
                                 <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Terkendali</th>
-                                <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Status</th>
-                                <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Aksi</th>
+                                <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50">
                             <% if (typeof rekapData !== 'undefined' && rekapData.length > 0) { %>
                                 <% const namaBulan = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]; %>
                                 <% rekapData.forEach(row => { %>
+                                    <%
+                                        const totalPasien     = parseInt(row.total_pasien_diperiksa) || 0;
+                                        const totalKunjungan  = parseInt(row.total_kunjungan)        || 0;
+                                        const totalHipertensi = parseInt(row.total_hipertensi)       || 0;
+                                        const terkendali      = parseInt(row.terkendali)             || 0;
+                                        const pctTerkendali   = totalPasien > 0
+                                            ? Math.round((terkendali / totalPasien) * 100)
+                                            : 0;
+                                    %>
                                     <tr class="hover:bg-gray-50 transition-colors">
+                                        <%# Kolom Periode %>
                                         <td class="px-6 py-4 text-sm text-[#1F2937] font-medium">
                                             <%= namaBulan[row.periode_bulan] %> <%= row.periode_tahun %>
                                         </td>
+
+                                        <%# Total Pasien Unik %>
                                         <td class="px-6 py-4 text-sm text-center text-[#1F2937]">
-                                            <%= row.total_pasien_diperiksa %> Pasien
+                                            <% if (totalPasien === 0) { %>
+                                                <span class="text-gray-400">-</span>
+                                            <% } else { %>
+                                                <span class="font-semibold"><%= totalPasien %></span>
+                                                <span class="text-gray-400 text-xs"> pasien</span>
+                                            <% } %>
                                         </td>
-                                        <td class="px-6 py-4 text-sm text-center text-[#EF4444] font-medium">
-                                            <%= row.total_kunjungan %> Total Kunjungan
+
+                                        <%# Total Kunjungan %>
+                                        <td class="px-6 py-4 text-sm text-center text-[#1F2937]">
+                                            <% if (totalKunjungan === 0) { %>
+                                                <span class="text-gray-400">-</span>
+                                            <% } else { %>
+                                                <span class="font-semibold"><%= totalKunjungan %></span>
+                                                <span class="text-gray-400 text-xs"> kunjungan</span>
+                                            <% } %>
                                         </td>
-                                        <td class="px-6 py-4 text-sm text-center text-[#10B981] font-medium">
-                                            -
+
+                                        <%# Hipertensi (sistole>=140 atau diastole>=90) %>
+                                        <td class="px-6 py-4 text-sm text-center">
+                                            <% if (totalPasien === 0) { %>
+                                                <span class="text-gray-400">-</span>
+                                            <% } else { %>
+                                                <span class="font-semibold text-[#EF4444]"><%= totalHipertensi %></span>
+                                                <span class="text-gray-400 text-xs"> pasien</span>
+                                            <% } %>
                                         </td>
+
+                                        <%# Terkendali (TD terakhir < 140/90) %>
+                                        <td class="px-6 py-4 text-sm text-center">
+                                            <% if (totalPasien === 0) { %>
+                                                <span class="text-gray-400">-</span>
+                                            <% } else { %>
+                                                <div class="flex flex-col items-center gap-0.5">
+                                                    <span class="font-semibold text-[#10B981]"><%= terkendali %></span>
+                                                    <span class="text-gray-400 text-xs">(<%= pctTerkendali %>%)</span>
+                                                </div>
+                                            <% } %>
+                                        </td>
+
+                                        <%# Aksi %>
                                         <td class="px-6 py-4">
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#E0F2FE] text-[#0369A1] text-xs font-semibold border border-[#BAE6FD]">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-[#0EA5E9]"></span>Terekap
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <button class="flex items-center gap-1.5 text-xs text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors cursor-not-allowed opacity-50" title="Fitur PDF akan segera hadir">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                                                PDF
-                                            </button>
+                                            <div class="flex items-center justify-center gap-3">
+                                                <% if (totalPasien > 0) { %>
+                                                    <a href="/ptm/rekap/cetak/<%= row.periode_id %>"
+                                                       target="_blank"
+                                                       title="Cetak / Simpan sebagai PDF"
+                                                       class="flex items-center gap-1.5 text-xs text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                                        Cetak / PDF
+                                                    </a>
+                                                <% } else { %>
+                                                    <span class="text-xs text-gray-300 cursor-not-allowed">Tidak ada data</span>
+                                                <% } %>
+                                            </div>
                                         </td>
                                     </tr>
                                 <% }) %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="6" class="px-6 py-8 text-center text-gray-500 text-sm">Belum ada data rekapitulasi skrining yang terverifikasi.</td>
+                                    <td colspan="6" class="px-6 py-10 text-center">
+                                        <div class="flex flex-col items-center gap-2 text-gray-400">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                            <span class="text-sm">Belum ada data skrining yang terverifikasi.</span>
+                                        </div>
+                                    </td>
                                 </tr>
                             <% } %>
                         </tbody>
                     </table>
                 </div>
+
+                <%# Keterangan kolom %>
+                <% if (typeof rekapData !== 'undefined' && rekapData.length > 0) { %>
+                <div class="px-6 py-3 border-t border-gray-50 bg-gray-50/50">
+                    <p class="text-xs text-gray-400">
+                        <span class="font-medium">Keterangan:</span>
+                        Hipertensi = pasien dengan TD ≥ 140/90 mmHg minimal 1x di periode ini.
+                        Terkendali = pasien yang pada kunjungan <em>terakhirnya</em> di periode ini memiliki TD &lt; 140/90 mmHg.
+                    </p>
+                </div>
+                <% } %>
             </div>
         </main>
     </div>
-
-
-    <script>
-    document.querySelector('form[action="/ptm/laporan/generate"]').addEventListener('submit', function(e) {
-    const bulan = parseInt(document.getElementById('selectBulanGenerate').value);
-    const tahun = parseInt(document.querySelector('select[name="periode_tahun"]').value);
-    const now = new Date();
-    const bulanSkrg = now.getMonth() + 1;
-    const tahunSkrg = now.getFullYear();
-
-    // Cegah generate untuk periode masa depan
-    if (tahun > tahunSkrg || (tahun === tahunSkrg && bulan > bulanSkrg)) {
-        e.preventDefault();
-        Swal.fire({
-        icon: 'warning',
-        title: 'Periode Tidak Valid',
-        text: 'Tidak bisa generate laporan untuk bulan yang belum terjadi.',
-        confirmButtonColor: '#2563EB'
-        });
-        return;
-    }
-    });
-    </script>
 
 <%- include('../partials/profil') %>
 
