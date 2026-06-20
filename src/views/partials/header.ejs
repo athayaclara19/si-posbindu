@@ -8,6 +8,16 @@
   }
   .dropdown-panel.open { display: block; }
 
+  /* Lebar panel notifikasi ditulis di sini (CSS murni, bukan class Tailwind)
+     supaya tidak bergantung pada proses build ulang output.css */
+  #notifPanel {
+    width: 352px;
+    max-width: 92vw;
+  }
+  @media (min-width: 768px) {
+    #notifPanel { width: 416px; }
+  }
+
   /* Tombol hamburger hanya muncul di mobile/tablet */
   #hamburgerBtn { display: flex; }
   @media (min-width: 1024px) {
@@ -39,7 +49,7 @@
         <% } %>
       </button>
 
-      <div class="dropdown-panel w-80 md:w-96" id="notifPanel">
+      <div class="dropdown-panel" id="notifPanel">
         <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
           <p class="font-semibold text-sm text-[#1F2937]">Notifikasi</p>
           <% if (typeof notifikasi !== 'undefined' && notifikasi && notifikasi.length > 0) { %>

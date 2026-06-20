@@ -9,6 +9,13 @@
     <style>
         .font-poppins { font-family: 'Poppins', sans-serif; }
         .font-inter { font-family: 'Inter', sans-serif; }
+        .fc-theme-standard .fc-scrollgrid { border: 1px solid #F3F4F6; border-radius: 0.75rem; overflow: hidden; }
+        .fc .fc-toolbar-title { font-family: 'Poppins', sans-serif; font-size: 1.1rem; font-weight: 600; color: #1F2937; }
+        .fc .fc-button-primary { background-color: #2563EB !important; border-color: #2563EB !important; text-transform: capitalize; border-radius: 0.5rem; }
+        .fc .fc-button-primary:hover { background-color: #1D4ED8 !important; }
+        .fc-daygrid-event { border-radius: 0.25rem; padding: 2px 4px; font-size: 0.75rem; font-weight: 500; }
+        .fc-col-header-cell-cushion { color: #6B7280; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
+        .fc-daygrid-day-number { color: #4B5563; font-weight: 500; font-size: 0.875rem; }
     </style>
 </head>
 <body class="bg-slate-50 font-inter antialiased text-slate-800">
@@ -71,6 +78,18 @@
                         <p class="text-[#6B7280] text-sm mt-1">Mendatang</p>
                     </div>
                     
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                        <h3 class="text-[#1F2937] font-poppins font-semibold">Kalender Jadwal Posbindu</h3>
+                        <div class="flex items-center gap-3 text-xs text-[#6B7280]">
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#10B981] inline-block"></span>Selesai</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#2563EB] inline-block"></span>Hari Ini</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#9CA3AF] inline-block"></span>Mendatang</span>
+                        </div>
+                    </div>
+                    <div id="calendarKader" class="w-full font-inter"></div>
                 </div>
 
                 <div class="flex items-center gap-3 pt-2">
@@ -197,6 +216,7 @@
         </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const dropdown = document.getElementById('filterPeriode');
@@ -225,6 +245,60 @@
 
                 if (teksHitung) teksHitung.textContent = count + ' jadwal ditemukan';
             });
+        });
+
+        // ==========================================
+        // KALENDER JADWAL (READ-ONLY untuk Kader)
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendarKader');
+            if (!calendarEl) return;
+
+            const rawJadwal = <%- JSON.stringify(jadwal || []) %>;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const calendarEvents = rawJadwal.map(item => {
+                const tgl = new Date(item.tanggal_kegiatan);
+                tgl.setHours(0, 0, 0, 0);
+                const yyyy = tgl.getFullYear();
+                const mm = String(tgl.getMonth() + 1).padStart(2, '0');
+                const dd = String(tgl.getDate()).padStart(2, '0');
+
+                let bg = '#F3F4F6', border = '#D1D5DB', text = '#374151';
+                if (tgl.getTime() === today.getTime()) {
+                    bg = '#EFF6FF'; border = '#93C5FD'; text = '#1E3A8A';
+                } else if (tgl < today) {
+                    bg = '#ECFDF5'; border = '#A7F3D0'; text = '#065F46';
+                }
+
+                return {
+                    title: 'Jorong ' + item.nama_jorong,
+                    start: `${yyyy}-${mm}-${dd}`,
+                    backgroundColor: bg,
+                    borderColor: border,
+                    textColor: text,
+                    extendedProps: { lokasi: item.lokasi }
+                };
+            });
+
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'id',
+                firstDay: 1,
+                height: 'auto',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,listMonth'
+                },
+                buttonText: { today: 'Hari Ini', month: 'Bulan', list: 'Agenda' },
+                events: calendarEvents,
+                eventDidMount: function(info) {
+                    info.el.title = info.event.title + ' — ' + info.event.extendedProps.lokasi;
+                }
+            });
+            calendar.render();
         });
     </script>
 
