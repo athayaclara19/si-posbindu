@@ -40,7 +40,7 @@
                         <select id="filterNagari" class="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-[160px]">
                             <option value="">Semua Nagari</option>
                             <% if (typeof nagari !== 'undefined') { nagari.forEach(n => { %>
-                                <option value="<%= n.id_nagari %>"><%= n.nama_nagari %></option>
+                                <option value="<%= n.id_nagari %>" <%= (typeof selectedNagari !== 'undefined' && String(selectedNagari) === String(n.id_nagari)) ? 'selected' : '' %>><%= n.nama_nagari %></option>
                             <% }); } %>
                         </select>
                     </div>
@@ -127,7 +127,7 @@
                                 <% }) %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="5" class="p-10 text-center text-gray-500">
+                                    <td colspan="7" class="p-10 text-center text-gray-500">
                                         <div class="flex flex-col items-center justify-center">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-300 mb-3"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>
                                             <p>Belum ada data pasien di database.</p>
@@ -138,6 +138,48 @@
                         </tbody>
                     </table>
                 </div>
+
+                <%# ====== PAGINATION ====== %>
+                <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+                <%
+                    const buildPtmPasienUrl = (p) => {
+                        const params = new URLSearchParams();
+                        if (search) params.set('search', search);
+                        if (typeof selectedNagari !== 'undefined' && selectedNagari) params.set('nagari', selectedNagari);
+                        if (typeof selectedJorong !== 'undefined' && selectedJorong) params.set('jorong', selectedJorong);
+                        params.set('page', p);
+                        return '/ptm/pasien?' + params.toString();
+                    };
+                %>
+                <div class="flex items-center justify-between mt-4 px-6 py-4 border-t border-gray-100">
+                    <p class="text-sm text-gray-500">
+                        Menampilkan halaman <%= page %> dari <%= totalPages %>
+                        (<%= totalData %> total pasien)
+                    </p>
+                    <div class="flex gap-2">
+                        <% if (page > 1) { %>
+                            <a href="<%= buildPtmPasienUrl(page - 1) %>"
+                               class="px-3 py-1.5 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+                                ← Sebelumnya
+                            </a>
+                        <% } %>
+                        <% for (let i = Math.max(1, page-2); i <= Math.min(totalPages, page+2); i++) { %>
+                            <a href="<%= buildPtmPasienUrl(i) %>"
+                               class="px-3 py-1.5 rounded-lg border text-sm
+                                      <%= i === page ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50' %>">
+                                <%= i %>
+                            </a>
+                        <% } %>
+                        <% if (page < totalPages) { %>
+                            <a href="<%= buildPtmPasienUrl(page + 1) %>"
+                               class="px-3 py-1.5 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+                                Berikutnya →
+                            </a>
+                        <% } %>
+                    </div>
+                </div>
+                <% } %>
+
             </div>
 
         </main>
@@ -198,39 +240,26 @@
     </script>
 
     <script>
-        // Data jorong per nagari (dari server)
+        // Data jorong per nagari (dari server) - untuk dropdown cascade
         const semuaJorong = <%- JSON.stringify(typeof jorong !== 'undefined' ? jorong : []) %>;
 
         document.addEventListener('DOMContentLoaded', function() {
-            const searchInput   = document.getElementById('searchPasien');
-            const filterNagari  = document.getElementById('filterNagari');
-            const filterJorong  = document.getElementById('filterJorong');
+            const searchInput  = document.getElementById('searchPasien');
+            const filterNagari = document.getElementById('filterNagari');
+            const filterJorong = document.getElementById('filterJorong');
             const btnReset      = document.getElementById('btnResetFilter');
-            const rows          = document.querySelectorAll('.baris-pasien');
 
-            function applyFilter() {
-                const q          = (searchInput.value || '').toLowerCase();
-                const nagariVal  = filterNagari.value;
-                const jorongVal  = filterJorong.value;
+            const urlParams      = new URLSearchParams(window.location.search);
+            const currentSearch  = urlParams.get('search') || '';
+            const currentNagari  = urlParams.get('nagari') || '';
+            const currentJorong  = urlParams.get('jorong') || '';
 
-                rows.forEach(row => {
-                    const teks    = row.textContent.toLowerCase();
-                    const nagari  = row.dataset.nagari || '';
-                    const jorong  = row.dataset.jorong || '';
+            searchInput.value = currentSearch;
+            if (currentNagari) filterNagari.value = currentNagari;
 
-                    const lolosSearch = !q || teks.includes(q);
-                    const lolosNagari = !nagariVal || nagari === nagariVal;
-                    const lolosJorong = !jorongVal || jorong === jorongVal;
-
-                    row.style.display = (lolosSearch && lolosNagari && lolosJorong) ? '' : 'none';
-                });
-            }
-
-            // Update dropdown jorong saat nagari dipilih
-            filterNagari.addEventListener('change', function() {
-                const idNagari = this.value;
+            // Bangun ulang dropdown jorong sesuai nagari yang aktif di URL
+            function populateJorong(idNagari, selectedJorongId) {
                 filterJorong.innerHTML = '<option value="">Semua Jorong</option>';
-
                 if (idNagari) {
                     filterJorong.disabled = false;
                     const jorongFiltered = semuaJorong.filter(j => String(j.id_nagari) === String(idNagari));
@@ -238,24 +267,53 @@
                         const opt = document.createElement('option');
                         opt.value = j.id_jorong;
                         opt.textContent = j.nama_jorong;
+                        if (selectedJorongId && String(j.id_jorong) === String(selectedJorongId)) opt.selected = true;
                         filterJorong.appendChild(opt);
                     });
                 } else {
                     filterJorong.disabled = true;
                     filterJorong.innerHTML = '<option value="">Pilih nagari dulu</option>';
                 }
-                applyFilter();
+            }
+            populateJorong(currentNagari, currentJorong);
+
+            // Kirim search/filter ke server (reset ke halaman 1), agar konsisten dengan pagination
+            function navigate(overrides) {
+                const params = new URLSearchParams(window.location.search);
+                const state = {
+                    search: params.get('search') || '',
+                    nagari: params.get('nagari') || '',
+                    jorong: params.get('jorong') || '',
+                    page:   params.get('page')   || 1,
+                };
+                Object.assign(state, overrides);
+
+                const qs = new URLSearchParams();
+                if (state.search) qs.set('search', state.search);
+                if (state.nagari) qs.set('nagari', state.nagari);
+                if (state.jorong) qs.set('jorong', state.jorong);
+                qs.set('page', state.page);
+                window.location.href = '/ptm/pasien?' + qs.toString();
+            }
+
+            let debounceTimer;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function() {
+                    navigate({ search: searchInput.value.trim(), page: 1 });
+                }, 500);
             });
 
-            filterJorong.addEventListener('change', applyFilter);
-            searchInput.addEventListener('input', applyFilter);
+            filterNagari.addEventListener('change', function() {
+                navigate({ nagari: filterNagari.value, jorong: '', page: 1 });
+            });
+
+            filterJorong.addEventListener('change', function() {
+                navigate({ jorong: filterJorong.value, page: 1 });
+            });
 
             btnReset.addEventListener('click', function() {
-                searchInput.value = '';
-                filterNagari.value = '';
-                filterJorong.disabled = true;
-                filterJorong.innerHTML = '<option value="">Pilih nagari dulu</option>';
-                applyFilter();
+                window.location.href = '/ptm/pasien';
             });
         });
     </script>

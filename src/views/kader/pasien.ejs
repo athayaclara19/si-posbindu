@@ -47,7 +47,7 @@
                         <option value="">Semua Nagari</option>
                         <% if (typeof nagari !== 'undefined') { %>
                             <% nagari.forEach(n => { %>
-                                <option value="<%= n.nama_nagari %>"><%= n.nama_nagari %></option>
+                                <option value="<%= n.id_nagari %>" <%= (typeof selectedNagari !== 'undefined' && String(selectedNagari) === String(n.id_nagari)) ? 'selected' : '' %>><%= n.nama_nagari %></option>
                             <% }) %>
                         <% } %>
                     </select>
@@ -56,11 +56,6 @@
                 <div class="w-full md:w-56">
                     <select id="filterJorong" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-all cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" title="Pilih Nagari terlebih dahulu">
                         <option value="">Semua Jorong</option>
-                        <% if (typeof jorong !== 'undefined') { %>
-                            <% jorong.forEach(j => { %>
-                                <option value="<%= j.nama_jorong %>"><%= j.nama_jorong %></option>
-                            <% }) %>
-                        <% } %>
                     </select>
                 </div>
 
@@ -74,6 +69,7 @@
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-10">NO</th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ID / NIK</th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Nama Pasien</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Nagari</th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Jorong</th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">L/P</th>
                                 <th class="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap w-32">Aksi</th>
@@ -98,6 +94,12 @@
                                         </td>
 
                                         <td class="p-4">
+                                            <span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-medium border border-emerald-100">
+                                                <%= p.nama_nagari %>
+                                            </span>
+                                        </td>
+
+                                        <td class="p-4">
                                             <span class="px-2.5 py-1 bg-blue-50 text-[#2563EB] rounded-lg text-xs font-medium border border-blue-100">
                                                 <%= p.nama_jorong %>
                                             </span>
@@ -113,7 +115,7 @@
                                 <% }) %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="5" class="p-10 text-center text-gray-500">
+                                    <td colspan="7" class="p-10 text-center text-gray-500">
                                         <div class="flex flex-col items-center justify-center">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-300 mb-3"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>
                                             <p>Belum ada data pasien.</p>
@@ -128,6 +130,16 @@
 
                 <%# ====== PAGINATION ====== %>
                 <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+                <% 
+                    const buildPasienUrl = (p) => {
+                        const params = new URLSearchParams();
+                        if (search) params.set('search', search);
+                        if (typeof selectedNagari !== 'undefined' && selectedNagari) params.set('nagari', selectedNagari);
+                        if (typeof selectedJorong !== 'undefined' && selectedJorong) params.set('jorong', selectedJorong);
+                        params.set('page', p);
+                        return '/pasien?' + params.toString();
+                    };
+                %>
                 <div class="flex items-center justify-between mt-4 px-2">
                     <p class="text-sm text-gray-500">
                         Menampilkan halaman <%= page %> dari <%= totalPages %> 
@@ -135,20 +147,20 @@
                     </p>
                     <div class="flex gap-2">
                         <% if (page > 1) { %>
-                            <a href="/pasien?search=<%= encodeURIComponent(search) %>&page=<%= page - 1 %>"
+                            <a href="<%= buildPasienUrl(page - 1) %>"
                                class="px-3 py-1.5 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
                                 ← Sebelumnya
                             </a>
                         <% } %>
                         <% for (let i = Math.max(1, page-2); i <= Math.min(totalPages, page+2); i++) { %>
-                            <a href="/pasien?search=<%= encodeURIComponent(search) %>&page=<%= i %>"
+                            <a href="<%= buildPasienUrl(i) %>"
                                class="px-3 py-1.5 rounded-lg border text-sm
                                       <%= i === page ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50' %>">
                                 <%= i %>
                             </a>
                         <% } %>
                         <% if (page < totalPages) { %>
-                            <a href="/pasien?search=<%= encodeURIComponent(search) %>&page=<%= page + 1 %>"
+                            <a href="<%= buildPasienUrl(page + 1) %>"
                                class="px-3 py-1.5 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
                                 Berikutnya →
                             </a>
@@ -168,50 +180,78 @@
             const filterNagari = document.getElementById('filterNagari');
             const filterJorong = document.getElementById('filterJorong');
 
-            // === SERVER-SIDE SEARCH ===
+            const urlParams      = new URLSearchParams(window.location.search);
+            const currentSearch  = urlParams.get('search') || '';
+            const currentNagari  = urlParams.get('nagari') || '';
+            const currentJorong  = urlParams.get('jorong') || '';
+
             // Isi nilai search dari URL agar kotak tidak kosong setelah submit
-            const urlParams   = new URLSearchParams(window.location.search);
-            const currentSearch = urlParams.get('search') || '';
             searchInput.value = currentSearch;
+            if (currentNagari) filterNagari.value = currentNagari;
 
-            // Kirim pencarian ke server saat Enter atau setelah berhenti mengetik (debounce)
-            let debounceTimer;
-            searchInput.addEventListener('input', function() {
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(function() {
-                    const q = searchInput.value.trim();
-                    window.location.href = '/pasien?search=' + encodeURIComponent(q) + '&page=1';
-                }, 500); // tunggu 500ms setelah berhenti mengetik
-            });
-
-            // === FILTER JORONG (client-side, hanya untuk dropdown cascade) ===
-            // Filter jorong dropdown berdasarkan nagari (tidak perlu reload halaman)
+            // === DATA JORONG (untuk dropdown cascade nagari -> jorong) ===
             const jorongOptions = [];
             <%- JSON.stringify(jorong || []) %>.forEach(j => {
-                jorongOptions.push({ jorong: j.nama_jorong, nagari: j.nama_nagari });
+                jorongOptions.push({ id: String(j.id_jorong), nagariId: String(j.id_nagari), nama: j.nama_jorong });
             });
 
-            function updateJorongDropdown() {
-                const nagariTerpilih = filterNagari.value.toLowerCase();
+            function updateJorongDropdown(selectedJorongId) {
+                const nagariTerpilih = filterNagari.value;
                 filterJorong.innerHTML = '<option value="">Semua Jorong</option>';
                 filterJorong.disabled  = nagariTerpilih === '';
 
                 const daftarJorong = nagariTerpilih === ''
                     ? jorongOptions
-                    : jorongOptions.filter(j => j.nagari.toLowerCase() === nagariTerpilih);
+                    : jorongOptions.filter(j => j.nagariId === nagariTerpilih);
 
-                daftarJorong.sort((a, b) => a.jorong.localeCompare(b.jorong));
+                daftarJorong.sort((a, b) => a.nama.localeCompare(b.nama));
                 daftarJorong.forEach(j => {
                     const opt = document.createElement('option');
-                    opt.value       = j.jorong;
-                    opt.textContent = j.jorong;
+                    opt.value       = j.id;
+                    opt.textContent = j.nama;
+                    if (selectedJorongId && j.id === String(selectedJorongId)) opt.selected = true;
                     filterJorong.appendChild(opt);
                 });
             }
 
-            filterJorong.disabled = true;
+            // Render ulang dropdown jorong sesuai state awal dari URL
+            updateJorongDropdown(currentJorong);
+
+            // === NAVIGASI: kirim search + filter ke server, lalu reload halaman 1 ===
+            function navigateWithFilters(overrides) {
+                const params = new URLSearchParams(window.location.search);
+                const state = {
+                    search: params.get('search') || '',
+                    nagari: params.get('nagari') || '',
+                    jorong: params.get('jorong') || '',
+                    page:   params.get('page')   || 1,
+                };
+                Object.assign(state, overrides);
+
+                const qs = new URLSearchParams();
+                if (state.search) qs.set('search', state.search);
+                if (state.nagari) qs.set('nagari', state.nagari);
+                if (state.jorong) qs.set('jorong', state.jorong);
+                qs.set('page', state.page);
+                window.location.href = '/pasien?' + qs.toString();
+            }
+
+            // Kirim pencarian ke server saat berhenti mengetik (debounce)
+            let debounceTimer;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function() {
+                    navigateWithFilters({ search: searchInput.value.trim(), page: 1 });
+                }, 500); // tunggu 500ms setelah berhenti mengetik
+            });
+
             filterNagari.addEventListener('change', function() {
-                updateJorongDropdown();
+                updateJorongDropdown('');
+                navigateWithFilters({ nagari: filterNagari.value, jorong: '', page: 1 });
+            });
+
+            filterJorong.addEventListener('change', function() {
+                navigateWithFilters({ jorong: filterJorong.value, page: 1 });
             });
         });
     </script>

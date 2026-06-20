@@ -2,16 +2,62 @@ const pool = require('../config/db');
 
 /**
  * 1. Menampilkan Halaman Daftar Pasien (Kelola Pasien)
+ *    Mendukung search, filter nagari/jorong, & pagination server-side
+ *    (sama seperti Daftar Pasien di role Kader).
  */
 exports.renderKelolaPasien = async (req, res) => {
     try {
-        const result = await pool.query(`
+        const search       = (req.query.search || '').trim();
+        const nagariFilter = (req.query.nagari || '').trim(); // id_nagari
+        const jorongFilter = (req.query.jorong || '').trim(); // id_jorong
+        const page          = Math.max(1, parseInt(req.query.page) || 1);
+        const limit          = 20; // tampilkan 20 data per halaman
+        const offset          = (page - 1) * limit;
+
+        const conditions  = [];
+        const queryParams = [];
+
+        if (search !== '') {
+            queryParams.push(`%${search}%`);
+            conditions.push(`(p.nama_pasien ILIKE $${queryParams.length} OR p.nik ILIKE $${queryParams.length})`);
+        }
+        if (nagariFilter !== '') {
+            queryParams.push(nagariFilter);
+            conditions.push(`n.id_nagari = $${queryParams.length}`);
+        }
+        if (jorongFilter !== '') {
+            queryParams.push(jorongFilter);
+            conditions.push(`p.id_jorong = $${queryParams.length}`);
+        }
+
+        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+        const countQuery = `
+            SELECT COUNT(*) 
+            FROM pasien p 
+            JOIN jorong j ON p.id_jorong = j.id_jorong
+            JOIN nagari n ON j.id_nagari = n.id_nagari
+            ${whereClause}
+        `;
+        const countResult = await pool.query(countQuery, queryParams);
+        const totalData   = parseInt(countResult.rows[0].count);
+        const totalPages  = Math.max(1, Math.ceil(totalData / limit));
+
+        const limitIdx   = queryParams.length + 1;
+        const offsetIdx  = queryParams.length + 2;
+        const dataParams = [...queryParams, limit, offset];
+
+        const dataQuery = `
             SELECT p.*, j.nama_jorong, n.nama_nagari, n.id_nagari
             FROM pasien p 
             JOIN jorong j ON p.id_jorong = j.id_jorong
             JOIN nagari n ON j.id_nagari = n.id_nagari
+            ${whereClause}
             ORDER BY p.nama_pasien ASC
-        `);
+            LIMIT $${limitIdx} OFFSET $${offsetIdx}
+        `;
+        const result = await pool.query(dataQuery, dataParams);
+
         const nagari = await pool.query('SELECT * FROM nagari ORDER BY nama_nagari ASC');
         const jorong = await pool.query(`
             SELECT j.*, n.nama_nagari 
@@ -25,8 +71,19 @@ exports.renderKelolaPasien = async (req, res) => {
             jorong: jorong.rows,
             active: 'pasien',
             currentUser: req.session.user || null,
-            role: req.session.user ? req.session.user.role : 'pj_ptm'
+            role: req.session.user ? req.session.user.role : 'pj_ptm',
+            search,
+            selectedNagari: nagariFilter,
+            selectedJorong: jorongFilter,
+            page,
+            totalPages,
+            totalData,
+            limit,
+            successMessage: req.session.successMessage || null,
+            errorMessage:   req.session.errorMessage   || null,
         });
+        delete req.session.successMessage;
+        delete req.session.errorMessage;
     } catch (err) {
         console.error("ERROR RENDER KELOLA PASIEN:", err);
         res.status(500).send("Gagal memuat daftar pasien.");
@@ -102,43 +159,16 @@ exports.handleDeletePasien = async (req, res) => {
     try {
         // 1. Hapus semua riwayat skrining
         await pool.query('DELETE FROM skrining WHERE id_pasien = $1', [id]);
-        
+
         // 2. Hapus data induknya (pasien)
         await pool.query('DELETE FROM pasien WHERE id_pasien = $1', [id]);
-        
-        // [DIUBAH] Ambil ulang data dan render halaman dengan membawa successMessage
-        const query = `
-            SELECT p.*, j.nama_jorong 
-            FROM pasien p 
-            JOIN jorong j ON p.id_jorong = j.id_jorong 
-            ORDER BY p.nama_pasien ASC
-        `;
-        const result = await pool.query(query);
 
-        res.render('ptm/kelolapasien', { 
-            pasien: result.rows,
-            active: 'pasien',
-            currentUser: req.session.user || null,
-            role: req.session.user ? req.session.user.role : 'pj_ptm',
-            successMessage: 'Data pasien beserta riwayatnya berhasil dihapus permanen!'
-        });
+        req.session.successMessage = 'Data pasien beserta riwayatnya berhasil dihapus permanen!';
     } catch (err) {
         console.error("ERROR DELETE PASIEN:", err);
-        // ... (kode error tangkapan catch tetap sama seperti sebelumnya)
-        try {
-            const query = `SELECT p.*, j.nama_jorong FROM pasien p JOIN jorong j ON p.id_jorong = j.id_jorong ORDER BY p.nama_pasien ASC`;
-            const result = await pool.query(query);
-            res.render('ptm/kelolapasien', { 
-                pasien: result.rows,
-                active: 'pasien',
-                currentUser: req.session.user || null,
-                role: req.session.user ? req.session.user.role : 'pj_ptm',
-                errorMessage: 'Gagal menghapus! Pastikan tidak ada data lain yang terkait dengan pasien ini.' 
-            });
-        } catch (fetchErr) {
-            res.status(500).send("Terjadi kesalahan sistem.");
-        }
+        req.session.errorMessage = 'Gagal menghapus! Pastikan tidak ada data lain yang terkait dengan pasien ini.';
     }
+    res.redirect('/ptm/pasien');
 };
 
 /**

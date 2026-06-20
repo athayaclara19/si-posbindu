@@ -10,3 +10,24 @@ body {
 .font-poppins {
   font-family: 'Poppins', sans-serif;
 }
+
+/* ===== APP SHELL LAYOUT =====
+   Dipakai di semua halaman (sidebar + main-content-wrapper) tapi sebelumnya
+   tidak pernah didefinisikan, jadi sidebar & konten tidak benar-benar
+   sejajar (side-by-side) dan tidak ada batas lebar yang pasti untuk konten.
+   Halaman dengan konten ringan kelihatan "kebetulan oke", tapi halaman
+   dengan konten berat (kalender, tabel lebar, form banyak kolom) seperti
+   Kelola Jadwal jadi melebar/tidak center karena tidak ada batas lebar. */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content-wrapper {
+  flex: 1 1 0%;
+  min-width: 0; /* mencegah konten lebar (tabel/kalender) mendorong layout */
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  overflow-x: hidden;
+}
