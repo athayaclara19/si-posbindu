@@ -96,10 +96,16 @@ exports.renderKelolaPasien = async (req, res) => {
 exports.renderEditPasien = async (req, res) => {
     const { id } = req.params; // Mengambil NIK/ID dari URL
     try {
-        // Ambil data pasien yang mau diedit
-        const resPasien = await pool.query('SELECT * FROM pasien WHERE id_pasien = $1', [id]);
-        
-        // Ambil juga daftar jorong untuk pilihan dropdown di form
+        // Ambil data pasien yang mau diedit (sertakan id_nagari saat ini lewat join jorong)
+        const resPasien = await pool.query(`
+            SELECT p.*, j.id_nagari
+            FROM pasien p
+            JOIN jorong j ON p.id_jorong = j.id_jorong
+            WHERE p.id_pasien = $1
+        `, [id]);
+
+        // Ambil juga daftar nagari & jorong untuk pilihan dropdown di form
+        const resNagari = await pool.query('SELECT * FROM nagari ORDER BY nama_nagari ASC');
         const resJorong = await pool.query('SELECT * FROM jorong ORDER BY nama_jorong ASC');
 
         if (resPasien.rows.length === 0) {
@@ -108,6 +114,7 @@ exports.renderEditPasien = async (req, res) => {
 
         res.render('ptm/edit_pasien', { 
             pasien: resPasien.rows[0],
+            nagari: resNagari.rows,
             jorong: resJorong.rows,
             active: 'pasien',
             currentUser: req.session.user || null,
@@ -221,28 +228,51 @@ exports.renderDashboardPTM = async (req, res) => {
             ? ((totalTerkendali / totalTercapai) * 100).toFixed(1) : 0;
 
         // ── 3. Capaian per Nagari ──
+        // FIX: filter tahun sebelumnya nempel di kondisi JOIN kegiatan (LEFT JOIN),
+        // sehingga tidak benar2 membatasi COUNT — capaian kebablasan menghitung
+        // skrining dari semua tahun. Sekarang dipisah jadi CTE dengan INNER JOIN
+        // supaya filter tahun & status_validasi benar2 berlaku.
         const qNagari = `
-            SELECT 
+            WITH capaian_per_nagari AS (
+                SELECT n.id_nagari, COUNT(DISTINCT s.id_pasien) AS capaian
+                FROM skrining s
+                JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
+                JOIN pasien   p ON s.id_pasien   = p.id_pasien
+                JOIN jorong   j ON p.id_jorong   = j.id_jorong
+                JOIN nagari   n ON j.id_nagari   = n.id_nagari
+                WHERE s.status_validasi = 'terverifikasi'
+                  AND EXTRACT(YEAR FROM k.tanggal_kegiatan) = $1
+                GROUP BY n.id_nagari
+            ),
+            pasien_per_nagari AS (
+                SELECT n.id_nagari, COUNT(DISTINCT p.id_pasien) AS total_pasien
+                FROM pasien p
+                JOIN jorong j ON p.id_jorong = j.id_jorong
+                JOIN nagari n ON j.id_nagari = n.id_nagari
+                GROUP BY n.id_nagari
+            )
+            SELECT
                 n.nama_nagari,
-                COUNT(DISTINCT s.id_pasien) as capaian
+                COALESCE(c.capaian, 0)       AS capaian,
+                COALESCE(t.total_pasien, 0)  AS total_pasien
             FROM nagari n
-            LEFT JOIN jorong j ON n.id_nagari = j.id_nagari
-            LEFT JOIN pasien p ON j.id_jorong = p.id_jorong
-            LEFT JOIN skrining s ON p.id_pasien = s.id_pasien AND s.status_validasi = 'terverifikasi'
-            LEFT JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan 
-                AND EXTRACT(YEAR FROM k.tanggal_kegiatan) = $1
-            GROUP BY n.nama_nagari
+            LEFT JOIN capaian_per_nagari c ON n.id_nagari = c.id_nagari
+            LEFT JOIN pasien_per_nagari  t ON n.id_nagari = t.id_nagari
             ORDER BY capaian DESC
         `;
         const resNagari = await pool.query(qNagari, [tahunIni]);
 
-        // Distribusi target per nagari proporsional terhadap TARGET_TAHUNAN
-        // (jika ingin per-nagari manual, bisa pakai tabel target_nagari nanti)
-        const jumlahNagari = resNagari.rows.length || 1;
+        // Distribusi target per nagari PROPORSIONAL terhadap jumlah pasien
+        // terdaftar di nagari itu (bukan disamaratakan) — nagari dengan lebih
+        // banyak warga terdaftar otomatis mendapat porsi target lebih besar
+        // dari TARGET_TAHUNAN, supaya persentase capaian masuk akal.
+        const totalPasienSemuaNagari = resNagari.rows.reduce((sum, row) => sum + (parseInt(row.total_pasien) || 0), 0);
         const dataNagari = resNagari.rows.map(row => {
-            const capaian = parseInt(row.capaian) || 0;
-            // Target tiap nagari = porsi proporsional dari total
-            const target = Math.round(TARGET_TAHUNAN / jumlahNagari);
+            const capaian      = parseInt(row.capaian) || 0;
+            const totalPasien  = parseInt(row.total_pasien) || 0;
+            const target = totalPasienSemuaNagari > 0
+                ? Math.max(1, Math.round((totalPasien / totalPasienSemuaNagari) * TARGET_TAHUNAN))
+                : 0;
             return {
                 nama_nagari: row.nama_nagari,
                 capaian,

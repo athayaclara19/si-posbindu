@@ -62,8 +62,8 @@ exports.getDataPetaHipertensi = async (req, res) => {
             const result = await pool.query(`
                 SELECT
                     n.nama_nagari,
-                    COUNT(DISTINCT s.id_pasien)                                           AS total_pasien,
-                    COUNT(CASE WHEN s.sistole >= 140 OR s.diastole >= 90 THEN 1 END)     AS total_hipertensi
+                    COUNT(DISTINCT s.id_pasien)                                                          AS total_pasien,
+                    COUNT(DISTINCT CASE WHEN s.sistole >= 140 OR s.diastole >= 90 THEN s.id_pasien END) AS total_hipertensi
                 FROM skrining s
                 JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
                 JOIN pasien p   ON s.id_pasien   = p.id_pasien
@@ -99,8 +99,8 @@ exports.getDataPetaHipertensi = async (req, res) => {
         const result = await pool.query(`
             SELECT
                 n.nama_nagari,
-                COUNT(DISTINCT s.id_pasien)                                           AS total_pasien,
-                COUNT(CASE WHEN s.sistole >= 140 OR s.diastole >= 90 THEN 1 END)     AS total_hipertensi
+                COUNT(DISTINCT s.id_pasien)                                                          AS total_pasien,
+                COUNT(DISTINCT CASE WHEN s.sistole >= 140 OR s.diastole >= 90 THEN s.id_pasien END) AS total_hipertensi
             FROM skrining s
             JOIN pasien p ON s.id_pasien   = p.id_pasien
             JOIN jorong j ON p.id_jorong   = j.id_jorong

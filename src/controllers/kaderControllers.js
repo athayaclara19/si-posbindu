@@ -7,6 +7,7 @@ exports.renderInputSkrining = async (req, res) => {
         const kegiatan = await pool.query('SELECT id_kegiatan, lokasi, tanggal_kegiatan FROM kegiatan ORDER BY tanggal_kegiatan DESC');
         res.render('kader/skrining', {
             pasien: pasien.rows, kegiatan: kegiatan.rows,
+            selectedPasienId: req.query.id_pasien || null,
             error: null, active: 'skrining',
             notifikasi: [],
             currentUser: req.session.user || null,

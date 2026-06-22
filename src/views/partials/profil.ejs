@@ -29,8 +29,8 @@
           </span>
         </div>
       </div>
-      <!-- Info profil (tampilan saja, tidak bisa edit di sini) -->
-      <div class="space-y-3">
+      <!-- Info profil: mode lihat -->
+      <div id="profilViewMode" class="space-y-3">
         <div class="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           <div>
@@ -60,9 +60,32 @@
           </div>
         </div>
       </div>
-      <div class="flex gap-3 mt-6">
+
+      <!-- Form profil: mode edit (tersembunyi sampai tombol "Edit Profil" diklik) -->
+      <form id="profilEditMode" action="/update-profil" method="POST" class="space-y-3" style="display:none;">
+        <div>
+          <label class="text-xs text-gray-400 block mb-1">Nama Lengkap</label>
+          <input type="text" name="nama_user" id="inputNamaProfil" required
+                 value="<%= typeof currentUser !== 'undefined' && currentUser ? currentUser.nama : '' %>"
+                 class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent">
+        </div>
+        <div>
+          <label class="text-xs text-gray-400 block mb-1">Username</label>
+          <input type="text" name="username" id="inputUsernameProfil" required
+                 value="<%= typeof currentUser !== 'undefined' && currentUser ? currentUser.username : '' %>"
+                 class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-transparent font-mono">
+        </div>
+        <p class="text-xs text-gray-400">Role / Jabatan tidak bisa diubah sendiri. Hubungi PJ PTM jika perlu mengganti role.</p>
+      </form>
+
+      <div id="profilViewFooter" class="flex gap-3 mt-6">
         <button type="button" onclick="closeModal('profilModal')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-medium py-2.5 rounded-xl text-sm transition-colors">Tutup</button>
+        <button type="button" onclick="toggleEditProfil(true)" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-medium py-2.5 rounded-xl text-sm transition-colors">Edit Profil</button>
         <button type="button" onclick="closeModal('profilModal'); openUbahPasswordModal();" class="flex-1 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-medium py-2.5 rounded-xl text-sm transition-colors">Ubah Password</button>
+      </div>
+      <div id="profilEditFooter" class="flex gap-3 mt-6" style="display:none;">
+        <button type="button" onclick="toggleEditProfil(false)" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-medium py-2.5 rounded-xl text-sm transition-colors">Batal</button>
+        <button type="button" onclick="document.getElementById('profilEditMode').requestSubmit()" class="flex-1 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-medium py-2.5 rounded-xl text-sm transition-colors">Simpan</button>
       </div>
     </div>
   </div>
@@ -125,6 +148,14 @@
   function closeModal(id) {
     var m = document.getElementById(id);
     if (m) { m.style.display = 'none'; }
+  }
+
+  // Toggle antara mode lihat & mode edit di modal Profil
+  function toggleEditProfil(edit) {
+    document.getElementById('profilViewMode').style.display   = edit ? 'none' : 'block';
+    document.getElementById('profilEditMode').style.display   = edit ? 'block' : 'none';
+    document.getElementById('profilViewFooter').style.display = edit ? 'none' : 'flex';
+    document.getElementById('profilEditFooter').style.display = edit ? 'flex' : 'none';
   }
   // Tutup modal saat klik luar area
   ['profilModal','ubahPasswordModal'].forEach(function(id) {

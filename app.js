@@ -49,6 +49,96 @@ app.use((req, res, next) => {
 });
 
 // ============================================================
+// BAGIAN 4b: NOTIFIKASI GLOBAL (semua role)
+// Mengisi res.locals.notifikasi secara otomatis di SETIAP
+// request berdasarkan role yang login, supaya ikon bel di
+// header selalu konsisten di semua halaman — tidak perlu
+// ditambahkan manual di tiap controller.
+// Catatan: kalau sebuah controller memanggil res.render(view,
+// { notifikasi: [...] }) secara eksplisit (misalnya dashboard
+// kader yang sudah punya logika detail), nilai eksplisit itu
+// akan menimpa nilai default dari middleware ini.
+// ============================================================
+app.use(async (req, res, next) => {
+    const user = req.session.user;
+    if (!user) { res.locals.notifikasi = []; return next(); }
+
+    try {
+        let rows = [];
+
+        if (user.role === 'kader') {
+            // Skrining milik kader ini yang ditolak/disetujui bidan
+            const r = await pool.query(`
+                SELECT s.id_skrining, p.nama_pasien, s.status_validasi, s.catatan_bidan
+                FROM skrining s
+                JOIN pasien p ON s.id_pasien = p.id_pasien
+                WHERE s.id_kader = $1 AND s.status_validasi IN ('revisi', 'terverifikasi')
+                ORDER BY s.tanggal_skrining DESC LIMIT 10
+            `, [user.id_user]);
+            rows = r.rows.map(n => ({
+                tipe: n.status_validasi === 'revisi' ? 'revisi' : 'disetujui',
+                pesan: n.status_validasi === 'revisi'
+                    ? `Skrining ${n.nama_pasien} ditolak: ${n.catatan_bidan || 'Perlu diperbaiki'}`
+                    : `Skrining ${n.nama_pasien} telah disetujui`,
+                id_skrining: n.id_skrining
+            }));
+
+        } else if (user.role === 'bidan') {
+            // Skrining baru dari kader yang belum divalidasi
+            const r = await pool.query(`
+                SELECT s.id_skrining, p.nama_pasien
+                FROM skrining s
+                JOIN pasien p ON s.id_pasien = p.id_pasien
+                WHERE s.status_validasi = 'menunggu'
+                ORDER BY s.tanggal_skrining DESC LIMIT 10
+            `);
+            rows = r.rows.map(n => ({
+                tipe: 'menunggu',
+                pesan: `Skrining baru ${n.nama_pasien} menunggu validasi Anda`,
+                link: '/bidan/validasi'
+            }));
+
+        } else if (user.role === 'pj_ptm') {
+            // Laporan yang ditolak Kepala Puskesmas (perlu direvisi/kirim ulang)
+            // dan laporan yang baru disetujui (informasi)
+            const r = await pool.query(`
+                SELECT id_laporan, status, catatan_tolak
+                FROM laporan
+                WHERE status IN ('ditolak', 'disetujui')
+                ORDER BY id_laporan DESC LIMIT 10
+            `);
+            rows = r.rows.map(n => ({
+                tipe: n.status === 'ditolak' ? 'ditolak' : 'disetujui',
+                pesan: n.status === 'ditolak'
+                    ? `Laporan ditolak Kepala Puskesmas: ${n.catatan_tolak || 'Perlu diperbaiki'}`
+                    : `Laporan telah disetujui Kepala Puskesmas`,
+                link: '/ptm/laporan'
+            }));
+
+        } else if (user.role === 'kepala_puskesmas') {
+            // Laporan baru dari PJ PTM yang menunggu persetujuan
+            const r = await pool.query(`
+                SELECT id_laporan
+                FROM laporan
+                WHERE status = 'dikirim'
+                ORDER BY id_laporan DESC LIMIT 10
+            `);
+            rows = r.rows.map(n => ({
+                tipe: 'dikirim',
+                pesan: `Ada laporan baru menunggu persetujuan Anda`,
+                link: '/kepala/persetujuan'
+            }));
+        }
+
+        res.locals.notifikasi = rows;
+    } catch (err) {
+        console.error('ERROR NOTIFIKASI GLOBAL:', err);
+        res.locals.notifikasi = [];
+    }
+    next();
+});
+
+// ============================================================
 // BAGIAN 5: ROUTES
 // ============================================================
 
@@ -120,6 +210,11 @@ app.post('/ubah-password', isAuthenticated, async (req, res) => {
         res.redirect(dashboardUrl);
     }
 });
+
+// ============================================================
+// BAGIAN 6b: UBAH PROFIL SENDIRI (semua role)
+// ============================================================
+app.post('/update-profil', isAuthenticated, require('./src/controllers/userController').handleUpdateProfilSendiri);
 
 // ============================================================
 // BAGIAN 7: START SERVER

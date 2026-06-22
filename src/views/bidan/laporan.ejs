@@ -33,6 +33,43 @@
                 </a>
             </div>
 
+            <%# ====== SEARCH & FILTER ====== %>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4">
+
+                <div class="w-full md:flex-1">
+                    <div class="flex items-center w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus-within:bg-white focus-within:border-[#2563EB] transition-all shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 flex-shrink-0 mr-3">
+                            <circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/>
+                        </svg>
+                        <input type="text" id="searchLaporan" placeholder="Cari Nama atau NIK Pasien..." class="w-full bg-transparent border-none outline-none p-0 text-sm text-[#1F2937] placeholder-gray-400 focus:ring-0">
+                    </div>
+                </div>
+
+                <div class="w-full md:w-56">
+                    <select id="filterJorong" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-all cursor-pointer shadow-sm">
+                        <option value="">Semua Jorong</option>
+                        <% if (typeof jorong !== 'undefined') { %>
+                            <% jorong.forEach(j => { %>
+                                <option value="<%= j.id_jorong %>" <%= (typeof selectedJorong !== 'undefined' && String(selectedJorong) === String(j.id_jorong)) ? 'selected' : '' %>><%= j.nama_jorong %></option>
+                            <% }) %>
+                        <% } %>
+                    </select>
+                </div>
+
+                <div class="w-full md:w-56">
+                    <select id="filterStatus" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-all cursor-pointer shadow-sm">
+                        <option value="">Semua Status Tensi</option>
+                        <option value="normal" <%= (typeof selectedStatus !== 'undefined' && selectedStatus === 'normal') ? 'selected' : '' %>>Normal (&lt;120)</option>
+                        <option value="pra"    <%= (typeof selectedStatus !== 'undefined' && selectedStatus === 'pra')    ? 'selected' : '' %>>Pra-Hipertensi (120-139)</option>
+                        <option value="ht1"    <%= (typeof selectedStatus !== 'undefined' && selectedStatus === 'ht1')    ? 'selected' : '' %>>Hipertensi Tkt.1 (140-159)</option>
+                        <option value="ht2"    <%= (typeof selectedStatus !== 'undefined' && selectedStatus === 'ht2')    ? 'selected' : '' %>>Hipertensi Tkt.2 (160-179)</option>
+                        <option value="krisis" <%= (typeof selectedStatus !== 'undefined' && selectedStatus === 'krisis') ? 'selected' : '' %>>Krisis (&ge;180)</option>
+                    </select>
+                </div>
+
+            </div>
+
+
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full">
@@ -77,10 +114,98 @@
                         </tbody>
                     </table>
                 </div>
+
+                <%# ====== PAGINATION ====== %>
+                <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+                <%
+                    const buildLaporanUrl = (p) => {
+                        const params = new URLSearchParams();
+                        if (search) params.set('search', search);
+                        if (typeof selectedJorong !== 'undefined' && selectedJorong) params.set('jorong', selectedJorong);
+                        if (typeof selectedStatus !== 'undefined' && selectedStatus) params.set('status', selectedStatus);
+                        params.set('page', p);
+                        return '/bidan/laporan?' + params.toString();
+                    };
+                %>
+                <div class="flex items-center justify-between mt-4 px-5 py-4">
+                    <p class="text-sm text-gray-500">
+                        Menampilkan halaman <%= page %> dari <%= totalPages %>
+                        (<%= totalData %> total data)
+                    </p>
+                    <div class="flex gap-2">
+                        <% if (page > 1) { %>
+                            <a href="<%= buildLaporanUrl(page - 1) %>"
+                               class="px-3 py-1.5 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+                                ← Sebelumnya
+                            </a>
+                        <% } %>
+                        <% for (let i = Math.max(1, page-2); i <= Math.min(totalPages, page+2); i++) { %>
+                            <a href="<%= buildLaporanUrl(i) %>"
+                               class="px-3 py-1.5 rounded-lg border text-sm
+                                      <%= i === page ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50' %>">
+                                <%= i %>
+                            </a>
+                        <% } %>
+                        <% if (page < totalPages) { %>
+                            <a href="<%= buildLaporanUrl(page + 1) %>"
+                               class="px-3 py-1.5 rounded-lg border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+                                Berikutnya →
+                            </a>
+                        <% } %>
+                    </div>
+                </div>
+                <% } %>
+
             </div>
 
         </main>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput  = document.getElementById('searchLaporan');
+            const filterJorong = document.getElementById('filterJorong');
+            const filterStatus = document.getElementById('filterStatus');
+
+            const urlParams = new URLSearchParams(window.location.search);
+            searchInput.value = urlParams.get('search') || '';
+
+            function navigateWithFilters(overrides) {
+                const params = new URLSearchParams(window.location.search);
+                const state = {
+                    search: params.get('search') || '',
+                    jorong: params.get('jorong') || '',
+                    status: params.get('status') || '',
+                    page:   params.get('page')   || 1,
+                };
+                Object.assign(state, overrides);
+
+                const qs = new URLSearchParams();
+                if (state.search) qs.set('search', state.search);
+                if (state.jorong) qs.set('jorong', state.jorong);
+                if (state.status) qs.set('status', state.status);
+                qs.set('page', state.page);
+                window.location.href = '/bidan/laporan?' + qs.toString();
+            }
+
+            // Kirim pencarian ke server saat berhenti mengetik (debounce)
+            let debounceTimer;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function() {
+                    navigateWithFilters({ search: searchInput.value.trim(), page: 1 });
+                }, 500);
+            });
+
+            filterJorong.addEventListener('change', function() {
+                navigateWithFilters({ jorong: filterJorong.value, page: 1 });
+            });
+
+            filterStatus.addEventListener('change', function() {
+                navigateWithFilters({ status: filterStatus.value, page: 1 });
+            });
+        });
+    </script>
 
 <%- include('../partials/profil') %>
 

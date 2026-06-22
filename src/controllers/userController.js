@@ -231,3 +231,56 @@ exports.handleResetPassword = async (req, res) => {
         res.redirect('/ptm/user');
     }
 };
+
+// ─────────────────────────────────────────────
+// 7. Proses Update Profil Sendiri (semua role)
+//    Dipanggil dari modal Profil → form "Edit Profil"
+//    Berbeda dari handleUpdateUser: ini tidak boleh
+//    mengubah role/jorong, hanya nama & username milik
+//    sendiri.
+// ─────────────────────────────────────────────
+exports.handleUpdateProfilSendiri = async (req, res) => {
+    const { nama_user, username } = req.body;
+    const id_user  = req.session.user.id_user;
+    const roleMap  = { kader: '/', bidan: '/bidan', pj_ptm: '/ptm', kepala_puskesmas: '/kepala' };
+    const backUrl  = roleMap[req.session.user.role] || '/';
+
+    try {
+        if (!nama_user || !nama_user.trim()) {
+            req.session.errorMessage = 'Nama lengkap tidak boleh kosong.';
+            return res.redirect(backUrl);
+        }
+        if (!username || !username.trim()) {
+            req.session.errorMessage = 'Username tidak boleh kosong.';
+            return res.redirect(backUrl);
+        }
+
+        // Cek username dipakai user lain
+        const cek = await pool.query(
+            'SELECT id_user FROM "user" WHERE username = $1 AND id_user != $2',
+            [username.trim(), id_user]
+        );
+        if (cek.rows.length > 0) {
+            req.session.errorMessage = `Username "${username}" sudah digunakan user lain.`;
+            return res.redirect(backUrl);
+        }
+
+        await pool.query(
+            'UPDATE "user" SET nama_user = $1, username = $2 WHERE id_user = $3',
+            [nama_user.trim(), username.trim(), id_user]
+        );
+
+        // Sinkronkan session supaya nama/username yang tampil di header & sidebar
+        // langsung berubah tanpa perlu logout-login ulang.
+        req.session.user.nama     = nama_user.trim();
+        req.session.user.username = username.trim();
+
+        req.session.successMessage = 'Profil berhasil diperbarui.';
+        res.redirect(backUrl);
+
+    } catch (err) {
+        console.error('ERROR UPDATE PROFIL SENDIRI:', err);
+        req.session.errorMessage = 'Gagal memperbarui profil. Terjadi kesalahan sistem.';
+        res.redirect(backUrl);
+    }
+};

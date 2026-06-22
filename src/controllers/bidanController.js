@@ -141,22 +141,86 @@ exports.handleActionValidasi = async (req, res) => {
 // 4. Halaman Laporan Bidan
 exports.renderLaporan = async (req, res) => {
     try {
+        // --- Ambil parameter pencarian, filter, & pagination dari query string ---
+        const search       = (req.query.search || '').trim();
+        const jorongFilter = (req.query.jorong || '').trim();   // id_jorong
+        const statusFilter = (req.query.status || '').trim();   // normal | pra | ht1 | ht2 | krisis
+        const page         = Math.max(1, parseInt(req.query.page) || 1);
+        const limit         = 20;
+        const offset         = (page - 1) * limit;
+
+        // --- Bangun kondisi WHERE secara dinamis ---
+        const conditions  = [`s.status_validasi = 'terverifikasi'`];
+        const queryParams = [];
+
+        if (search !== '') {
+            queryParams.push(`%${search}%`);
+            conditions.push(`(p.nama_pasien ILIKE $${queryParams.length} OR p.nik ILIKE $${queryParams.length})`);
+        }
+        if (jorongFilter !== '') {
+            queryParams.push(jorongFilter);
+            conditions.push(`p.id_jorong = $${queryParams.length}`);
+        }
+        if (statusFilter !== '') {
+            const bucketMap = {
+                normal: 's.sistole < 120',
+                pra:    's.sistole >= 120 AND s.sistole < 140',
+                ht1:    's.sistole >= 140 AND s.sistole < 160',
+                ht2:    's.sistole >= 160 AND s.sistole < 180',
+                krisis: 's.sistole >= 180',
+            };
+            if (bucketMap[statusFilter]) conditions.push(bucketMap[statusFilter]);
+        }
+
+        const whereClause = `WHERE ${conditions.join(' AND ')}`;
+
+        // --- Hitung total data (untuk pagination) ---
+        const countQuery = `
+            SELECT COUNT(*)
+            FROM skrining s
+            JOIN pasien  p ON s.id_pasien   = p.id_pasien
+            JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
+            JOIN jorong  j ON p.id_jorong   = j.id_jorong
+            ${whereClause}
+        `;
+        const countResult = await pool.query(countQuery, queryParams);
+        const totalData   = parseInt(countResult.rows[0].count);
+        const totalPages  = Math.max(1, Math.ceil(totalData / limit));
+
+        // --- Query data dengan LIMIT/OFFSET ---
+        const limitIdx  = queryParams.length + 1;
+        const offsetIdx = queryParams.length + 2;
+        const dataParams = [...queryParams, limit, offset];
+
         const query = `
             SELECT s.*, p.nama_pasien, p.nik, j.nama_jorong, k.tanggal_kegiatan
             FROM skrining s
             JOIN pasien  p ON s.id_pasien   = p.id_pasien
             JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
             JOIN jorong  j ON p.id_jorong   = j.id_jorong
-            WHERE s.status_validasi = 'terverifikasi'
+            ${whereClause}
             ORDER BY k.tanggal_kegiatan DESC
+            LIMIT $${limitIdx} OFFSET $${offsetIdx}
         `;
-        const result = await pool.query(query);
-        // FIX: tambahkan currentUser dan role
+        const result = await pool.query(query, dataParams);
+
+        // --- Data jorong untuk dropdown filter ---
+        const jorong = await pool.query('SELECT id_jorong, nama_jorong FROM jorong ORDER BY nama_jorong ASC');
+
         res.render('bidan/laporan', {
             laporanData: result.rows,
+            jorong: jorong.rows,
             active: 'laporan',
             currentUser: req.session.user || null,
-            role: req.session.user ? req.session.user.role : 'bidan'
+            role: req.session.user ? req.session.user.role : 'bidan',
+            // Data pencarian, filter & pagination untuk view
+            search,
+            selectedJorong: jorongFilter,
+            selectedStatus: statusFilter,
+            page,
+            totalPages,
+            totalData,
+            limit,
         });
     } catch (err) {
         console.error(err);

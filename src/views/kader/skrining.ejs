@@ -140,7 +140,8 @@
                                             <option 
                                                 value="<%= p.id_pasien %>"
                                                 data-usia="<%= p.usia || '' %>"
-                                                data-tahun-lahir="<%= p.tahun_lahir || '' %>">
+                                                data-tahun-lahir="<%= p.tahun_lahir || '' %>"
+                                                <%= (typeof selectedPasienId !== 'undefined' && selectedPasienId && String(p.id_pasien) === String(selectedPasienId)) ? 'selected' : '' %>>
                                                 <%= p.nama_pasien %> (<%= p.nik %>)
                                             </option>
                                         <% }) %>

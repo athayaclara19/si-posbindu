@@ -29,7 +29,60 @@ exports.renderJadwalKader = async (req, res) => {
 // ============================================================
 exports.renderJadwalPTM = async (req, res) => {
     try {
-        const kegiatan = await pool.query(`
+        // --- Parameter pencarian, filter & pagination dari query string ---
+        const search       = (req.query.search || '').trim();
+        const nagariFilter = (req.query.nagari || '').trim();   // id_nagari
+        const jorongFilter = (req.query.jorong || '').trim();   // id_jorong
+        const statusFilter = (req.query.status || '').trim();   // mendatang | hari_ini | selesai
+        const page         = Math.max(1, parseInt(req.query.page) || 1);
+        const limit         = 10;
+        const offset         = (page - 1) * limit;
+
+        // --- Bangun kondisi WHERE secara dinamis ---
+        const conditions  = [];
+        const queryParams = [];
+
+        if (search !== '') {
+            queryParams.push(`%${search}%`);
+            conditions.push(`(k.lokasi ILIKE $${queryParams.length} OR j.nama_jorong ILIKE $${queryParams.length} OR n.nama_nagari ILIKE $${queryParams.length})`);
+        }
+        if (nagariFilter !== '') {
+            queryParams.push(nagariFilter);
+            conditions.push(`n.id_nagari = $${queryParams.length}`);
+        }
+        if (jorongFilter !== '') {
+            queryParams.push(jorongFilter);
+            conditions.push(`k.id_jorong = $${queryParams.length}`);
+        }
+        if (statusFilter === 'mendatang') {
+            conditions.push(`DATE(k.tanggal_kegiatan) > CURRENT_DATE`);
+        } else if (statusFilter === 'hari_ini') {
+            conditions.push(`DATE(k.tanggal_kegiatan) = CURRENT_DATE`);
+        } else if (statusFilter === 'selesai') {
+            conditions.push(`DATE(k.tanggal_kegiatan) < CURRENT_DATE`);
+        }
+
+        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+        // --- Hitung total data (untuk pagination) ---
+        const countQuery = `
+            SELECT COUNT(*)
+            FROM kegiatan k
+            JOIN jorong  j ON k.id_jorong  = j.id_jorong
+            JOIN nagari  n ON j.id_nagari  = n.id_nagari
+            JOIN periode p ON k.id_periode = p.periode_id
+            ${whereClause}
+        `;
+        const countResult = await pool.query(countQuery, queryParams);
+        const totalData   = parseInt(countResult.rows[0].count);
+        const totalPages  = Math.max(1, Math.ceil(totalData / limit));
+
+        // --- Query data tabel dengan LIMIT/OFFSET ---
+        const limitIdx  = queryParams.length + 1;
+        const offsetIdx = queryParams.length + 2;
+        const dataParams = [...queryParams, limit, offset];
+
+        const dataQuery = `
             SELECT k.*, j.nama_jorong, n.nama_nagari,
                    p.periode_bulan, p.periode_tahun,
                    (SELECT COUNT(*) FROM skrining s WHERE s.id_kegiatan = k.id_kegiatan) AS jumlah_skrining
@@ -37,18 +90,42 @@ exports.renderJadwalPTM = async (req, res) => {
             JOIN jorong  j ON k.id_jorong  = j.id_jorong
             JOIN nagari  n ON j.id_nagari  = n.id_nagari
             JOIN periode p ON k.id_periode = p.periode_id
+            ${whereClause}
+            ORDER BY k.tanggal_kegiatan DESC
+            LIMIT $${limitIdx} OFFSET $${offsetIdx}
+        `;
+        const result = await pool.query(dataQuery, dataParams);
+
+        // --- Data lengkap (TANPA filter/pagination) khusus untuk Kalender ---
+        // Kalender harus selalu menampilkan SEMUA jadwal, terlepas dari
+        // pencarian/filter/halaman yang sedang aktif di tabel.
+        const semuaJadwal = await pool.query(`
+            SELECT k.id_kegiatan, k.tanggal_kegiatan, k.lokasi, j.nama_jorong
+            FROM kegiatan k
+            JOIN jorong j ON k.id_jorong = j.id_jorong
             ORDER BY k.tanggal_kegiatan DESC
         `);
+
         const jorong = await pool.query('SELECT * FROM jorong ORDER BY nama_jorong ASC');
         const nagari = await pool.query('SELECT * FROM nagari ORDER BY nama_nagari ASC');
 
         res.render('ptm/jadwalptm', {
-            jadwal: kegiatan.rows,
+            jadwal: result.rows,
+            jadwalKalender: semuaJadwal.rows,
             jorong: jorong.rows,
             nagari: nagari.rows,
             active: 'jadwal',
             currentUser: req.session.user || null,
-            role: req.session.user ? req.session.user.role : 'pj_ptm'
+            role: req.session.user ? req.session.user.role : 'pj_ptm',
+            // Data pencarian, filter & pagination untuk view
+            search,
+            selectedNagari: nagariFilter,
+            selectedJorong: jorongFilter,
+            selectedStatus: statusFilter,
+            page,
+            totalPages,
+            totalData,
+            limit,
         });
     } catch (err) {
         console.error('ERROR renderJadwalPTM:', err);

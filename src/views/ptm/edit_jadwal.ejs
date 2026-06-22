@@ -3,172 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Jadwal - PJ PTM</title>
+    <title>Edit Data Pasien - SI Posbindu</title>
     <link rel="stylesheet" href="/css/output.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        .font-poppins { font-family: 'Poppins', sans-serif; }
-        .font-inter   { font-family: 'Inter', sans-serif; }
-    </style>
 </head>
 <body class="bg-slate-50 font-inter antialiased text-slate-800">
 
     <div class="app-shell">
-    <%- include('../partials/sidebar', { active: 'jadwal', role: 'ptm' }) %>
+    <%- include('../partials/sidebar', { active: 'pasien' }) %>
 
     <div class="main-content-wrapper">
-        <%- include('../partials/header', { pageTitle: 'Edit Jadwal', role: 'ptm' }) %>
+        <%- include('../partials/header', { pageTitle: 'Edit Data Pasien' }) %>
 
-        <main class="p-8 w-full space-y-6">
+        <main class="p-4 md:p-6 lg:p-8 space-y-6 w-full">
 
             <!-- Breadcrumb -->
-            <div class="flex items-center gap-2 text-sm text-gray-400">
-                <a href="/ptm/jadwal" class="hover:text-[#2563EB] transition-colors">Jadwal</a>
-                <span>/</span>
-                <span class="text-gray-700 font-medium">Edit Jadwal</span>
+            <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+                <a href="/ptm/pasien" class="hover:text-blue-600 transition-colors">Kelola Pasien</a>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                <span class="text-gray-800 font-medium">Edit Data Pasien</span>
             </div>
 
-            <div>
-                <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Edit Jadwal Kegiatan</h2>
-                <p class="text-[#6B7280] text-sm mt-1">Ubah detail jadwal kegiatan Posbindu.</p>
-            </div>
+            <!-- Card Form -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
 
-            <!-- WARNING: Kalau sudah ada skrining, tanggal tidak bisa diubah -->
-            <% if (sudahAdaSkrining) { %>
-            <div class="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                <div>
-                    <p class="text-amber-800 font-semibold text-sm">Tanggal Tidak Bisa Diubah</p>
-                    <p class="text-amber-700 text-sm mt-0.5 leading-relaxed">
-                        Jadwal ini sudah memiliki data skrining yang terinput oleh kader.
-                        Anda hanya bisa mengubah <strong>lokasi</strong> dan <strong>jorong</strong>.
-                        Tanggal dikunci untuk menjaga konsistensi data.
-                    </p>
+                <!-- Header Card -->
+                <div class="px-8 py-5 border-b border-gray-100 flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-800 font-poppins">Edit Data Pasien</h3>
+                        <p class="text-xs text-gray-500 mt-0.5">Perubahan akan langsung tersimpan ke database</p>
+                    </div>
                 </div>
-            </div>
-            <% } %>
 
-            <!-- Form Edit -->
-            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <form action="/ptm/jadwal/edit/<%= kegiatan.id_kegiatan %>" method="POST" class="space-y-5">
+                <!-- Form -->
+                <!--
+                    Field yang dikirim ke POST /ptm/pasien/update:
+                    id_pasien, nik, nama_pasien, usia, jenis_kelamin,
+                    id_jorong, alamat, no_hp, pekerjaan, agama
+                -->
+                <form action="/ptm/pasien/update" method="POST" class="px-8 py-6 space-y-5">
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <!-- Hidden: id_pasien untuk WHERE clause di query UPDATE -->
+                    <input type="hidden" name="id_pasien" value="<%= pasien.id_pasien %>">
 
-                        <!-- Tanggal: dikunci jika sudah ada skrining -->
+                    <!-- Baris 1: NIK & Nama Lengkap -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
-                            <label class="text-sm text-[#1F2937] font-medium mb-1.5 block">
-                                Tanggal Kegiatan
-                                <% if (sudahAdaSkrining) { %>
-                                <span class="ml-1 text-xs text-amber-600 font-normal">(terkunci)</span>
-                                <% } %>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                NIK <span class="text-red-500">*</span>
                             </label>
-                            <%
-                                const tglObj = new Date(kegiatan.tanggal_kegiatan);
-                                const tglVal = tglObj.toISOString().split('T')[0];
-                            %>
-                            <input type="date" name="tanggal_kegiatan"
-                                   value="<%= tglVal %>"
-                                   onchange="validasiTanggal(this)"
-                                   <%= sudahAdaSkrining ? 'readonly' : 'required' %>
-                                   class="w-full px-4 py-2.5 rounded-xl border text-sm outline-none transition-colors
-                                          <%= sudahAdaSkrining ? 'bg-gray-100 border-gray-200 cursor-not-allowed text-gray-400' : 'border-gray-200 bg-gray-50 hover:bg-white focus:border-[#2563EB]' %>">
+                            <input
+                                type="text"
+                                name="nik"
+                                value="<%= pasien.nik || '' %>"
+                                maxlength="16"
+                                placeholder="16 digit NIK"
+                                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            >
                         </div>
-
-                        <!-- Lokasi -->
                         <div>
-                            <label class="text-sm text-[#1F2937] font-medium mb-1.5 block">Lokasi (Tempat)</label>
-                            <input type="text" name="lokasi" required
-                                   value="<%= kegiatan.lokasi %>"
-                                   placeholder="Contoh: Posyandu Melati 1"
-                                   class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-colors">
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                Nama Lengkap <span class="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                name="nama_pasien"
+                                value="<%= pasien.nama_pasien || '' %>"
+                                placeholder="Nama lengkap pasien"
+                                required
+                                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            >
                         </div>
-
-                        <!-- Nagari (untuk filter jorong) -->
-                        <div>
-                            <label class="text-sm text-[#1F2937] font-medium mb-1.5 block">Nagari</label>
-                            <select id="select-nagari-edit" onchange="filterJorongEdit()" required
-                                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-colors cursor-pointer">
-                                <option value="">-- Pilih Nagari --</option>
-                                <% if (typeof nagari !== 'undefined') { %>
-                                    <% nagari.forEach(n => { %>
-                                        <option value="<%= n.id_nagari %>"
-                                                <%= n.id_nagari == kegiatan.id_nagari ? 'selected' : '' %>>
-                                            <%= n.nama_nagari %>
-                                        </option>
-                                    <% }) %>
-                                <% } %>
-                            </select>
-                        </div>
-
-                        <!-- Jorong -->
-                        <div>
-                            <label class="text-sm text-[#1F2937] font-medium mb-1.5 block">Jorong</label>
-                            <select id="select-jorong-edit" name="id_jorong" required
-                                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-colors cursor-pointer">
-                                <option value="">-- Pilih Jorong --</option>
-                                <% if (typeof jorong !== 'undefined') { %>
-                                    <% jorong.forEach(j => { %>
-                                        <% if (j.id_nagari == kegiatan.id_nagari) { %>
-                                            <option value="<%= j.id_jorong %>"
-                                                    data-nagari="<%= j.id_nagari %>"
-                                                    <%= j.id_jorong == kegiatan.id_jorong ? 'selected' : '' %>>
-                                                <%= j.nama_jorong %>
-                                            </option>
-                                        <% } %>
-                                    <% }) %>
-                                <% } %>
-                            </select>
-                        </div>
-
                     </div>
 
-                    <!-- Tombol -->
-                    <div class="flex gap-3 pt-2 md:w-1/2">
-                        <a href="/ptm/jadwal"
-                           class="flex-1 text-center bg-gray-100 hover:bg-gray-200 text-gray-600 font-medium py-2.5 rounded-xl text-sm transition-colors">
+                    <!-- Baris 2: Usia & Jenis Kelamin -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                Usia (Tahun) <span class="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="number"
+                                name="usia"
+                                value="<%= pasien.usia || '' %>"
+                                min="1"
+                                max="120"
+                                placeholder="Contoh: 45"
+                                required
+                                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                Jenis Kelamin <span class="text-red-500">*</span>
+                            </label>
+                            <select
+                                name="jenis_kelamin"
+                                required
+                                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                            >
+                                <option value="">-- Pilih --</option>
+                                <option value="Laki-laki"  <%= pasien.jenis_kelamin === 'Laki-laki'  ? 'selected' : '' %>>Laki-laki</option>
+                                <option value="Perempuan"  <%= pasien.jenis_kelamin === 'Perempuan'  ? 'selected' : '' %>>Perempuan</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Baris 3: Nagari & Jorong -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                Nagari <span class="text-red-500">*</span>
+                            </label>
+                            <select
+                                id="select-nagari-edit"
+                                onchange="filterJorongEditPasien()"
+                                required
+                                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                            >
+                                <option value="">-- Pilih Nagari --</option>
+                                <% nagari.forEach(n => { %>
+                                    <option value="<%= n.id_nagari %>"
+                                        <%= pasien.id_nagari === n.id_nagari ? 'selected' : '' %>>
+                                        <%= n.nama_nagari %>
+                                    </option>
+                                <% }) %>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                                Jorong <span class="text-red-500">*</span>
+                            </label>
+                            <select
+                                id="select-jorong-edit"
+                                name="id_jorong"
+                                required
+                                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                            >
+                                <option value="">-- Pilih Jorong --</option>
+                                <% jorong.forEach(j => { %>
+                                    <% if (j.id_nagari === pasien.id_nagari) { %>
+                                        <option value="<%= j.id_jorong %>" data-nagari="<%= j.id_nagari %>"
+                                            <%= pasien.id_jorong === j.id_jorong ? 'selected' : '' %>>
+                                            <%= j.nama_jorong %>
+                                        </option>
+                                    <% } %>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Baris 4: Alamat -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Alamat</label>
+                        <textarea
+                            name="alamat"
+                            rows="2"
+                            placeholder="Alamat lengkap pasien"
+                            class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                        ><%= pasien.alamat || '' %></textarea>
+                    </div>
+
+                    <!-- Baris 5: No HP & Pekerjaan -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">No. HP</label>
+                            <input
+                                type="text"
+                                name="no_hp"
+                                value="<%= pasien.no_hp || '' %>"
+                                placeholder="Contoh: 0812xxxxxxxx"
+                                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Pekerjaan</label>
+                            <input
+                                type="text"
+                                name="pekerjaan"
+                                value="<%= pasien.pekerjaan || '' %>"
+                                placeholder="Contoh: Petani, IRT, PNS"
+                                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Baris 6: Agama -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Agama</label>
+                        <select
+                            name="agama"
+                            class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                        >
+                            <option value="">-- Pilih Agama --</option>
+                            <option value="Islam"     <%= pasien.agama === 'Islam'     ? 'selected' : '' %>>Islam</option>
+                            <option value="Kristen"   <%= pasien.agama === 'Kristen'   ? 'selected' : '' %>>Kristen</option>
+                            <option value="Katolik"   <%= pasien.agama === 'Katolik'   ? 'selected' : '' %>>Katolik</option>
+                            <option value="Hindu"     <%= pasien.agama === 'Hindu'     ? 'selected' : '' %>>Hindu</option>
+                            <option value="Buddha"    <%= pasien.agama === 'Buddha'    ? 'selected' : '' %>>Buddha</option>
+                            <option value="Konghucu"  <%= pasien.agama === 'Konghucu'  ? 'selected' : '' %>>Konghucu</option>
+                        </select>
+                    </div>
+
+                    <!-- Tombol Aksi -->
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
+                        <!-- Tombol Batal: kembali ke halaman kelola pasien tanpa menyimpan -->
+                        <a href="/ptm/pasien"
+                           class="px-5 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm hover:bg-gray-50 transition-colors font-medium">
                             Batal
                         </a>
-                        <button type="submit"
-                                class="flex-1 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-medium py-2.5 rounded-xl text-sm transition-colors shadow-sm">
+                        <!-- Tombol Simpan: submit form ke POST /ptm/pasien/update -->
+                        <button
+                            type="submit"
+                            class="px-6 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl text-sm font-medium transition-colors shadow-sm flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                             Simpan Perubahan
                         </button>
                     </div>
+
                 </form>
             </div>
+
         </main>
     </div>
 
     <script>
-        // Validasi hari Minggu
-        function validasiTanggal(input) {
-            if (!input.value) return;
-            const d = new Date(input.value);
-            if (d.getDay() === 0) {
-                Swal.fire({ icon: 'error', title: 'Tidak Bisa Hari Minggu!', text: 'Jadwal hanya bisa Senin–Sabtu.', confirmButtonColor: '#2563EB' });
-                input.value = '';
-            }
-        }
+        // ==========================================
+        // CASCADING NAGARI -> JORONG (Edit Data Pasien)
+        // ==========================================
+        const semuaJorongEditPasien = <%- JSON.stringify(jorong.map(j => ({
+            id: j.id_jorong, nagariId: j.id_nagari, nama: j.nama_jorong
+        }))) %>;
+        const jorongTerpilihAwal = <%- JSON.stringify(pasien.id_jorong) %>;
 
-        // Filter jorong berdasarkan nagari yang dipilih
-        const allJorongOpts = <%- JSON.stringify((jorong || []).map(j => ({ id_jorong: j.id_jorong, nama_jorong: j.nama_jorong, id_nagari: j.id_nagari }))) %>;
-
-        function filterJorongEdit() {
-            const nagariId = document.getElementById('select-nagari-edit').value;
+        function filterJorongEditPasien() {
+            const nagariId = parseInt(document.getElementById('select-nagari-edit').value);
             const jorongSelect = document.getElementById('select-jorong-edit');
-            const currentJorong = '<%= kegiatan.id_jorong %>';
             jorongSelect.innerHTML = '<option value="">-- Pilih Jorong --</option>';
-            if (nagariId) {
-                allJorongOpts
-                    .filter(j => String(j.id_nagari) === nagariId)
-                    .forEach(j => {
-                        const opt = document.createElement('option');
-                        opt.value = j.id_jorong;
-                        opt.textContent = j.nama_jorong;
-                        if (String(j.id_jorong) === currentJorong) opt.selected = true;
-                        jorongSelect.appendChild(opt);
-                    });
-            }
+
+            semuaJorongEditPasien
+                .filter(j => j.nagariId === nagariId)
+                .sort((a, b) => a.nama.localeCompare(b.nama))
+                .forEach(j => {
+                    const opt = document.createElement('option');
+                    opt.value = j.id;
+                    opt.textContent = j.nama;
+                    if (j.id === jorongTerpilihAwal) opt.selected = true;
+                    jorongSelect.appendChild(opt);
+                });
         }
     </script>
 
