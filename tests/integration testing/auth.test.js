@@ -6,12 +6,8 @@ const bcrypt  = require('bcryptjs');
 // ──────────────────────────────────────────────────────────────
 // SETUP & TEARDOWN
 // ──────────────────────────────────────────────────────────────
-
-// Sebelum semua test di file ini: masukkan user dummy ke DB test
 beforeAll(async () => {
   const hash = await bcrypt.hash('Password123!', 10);
-
-  // Masukkan 4 user dummy — satu per role
   await pool.query(`
     INSERT INTO "user" (nama_user, username, password, role, is_active)
     VALUES
@@ -23,7 +19,6 @@ beforeAll(async () => {
   `, [hash]);
 });
 
-// Setelah semua test selesai: hapus user dummy dan tutup koneksi pool
 afterAll(async () => {
   await pool.query(`
     DELETE FROM "user"
@@ -39,71 +34,56 @@ describe('POST /login', () => {
 
   test('kredensial benar (kader) → redirect 302 ke /', async () => {
     const res = await request(app)
-      .post('/login')
-      .type('form')
+      .post('/login').type('form')
       .send({ email: 'test_kader', password: 'Password123!' });
-
     expect(res.statusCode).toBe(302);
     expect(res.headers.location).toBe('/');
   });
 
   test('kredensial benar (bidan) → redirect ke /bidan', async () => {
     const res = await request(app)
-      .post('/login')
-      .type('form')
+      .post('/login').type('form')
       .send({ email: 'test_bidan', password: 'Password123!' });
-
     expect(res.statusCode).toBe(302);
     expect(res.headers.location).toBe('/bidan');
   });
 
   test('kredensial benar (pj_ptm) → redirect ke /ptm', async () => {
     const res = await request(app)
-      .post('/login')
-      .type('form')
+      .post('/login').type('form')
       .send({ email: 'test_ptm', password: 'Password123!' });
-
     expect(res.statusCode).toBe(302);
     expect(res.headers.location).toBe('/ptm');
   });
 
   test('kredensial benar (kepala_puskesmas) → redirect ke /kepala', async () => {
     const res = await request(app)
-      .post('/login')
-      .type('form')
+      .post('/login').type('form')
       .send({ email: 'test_kepala', password: 'Password123!' });
-
     expect(res.statusCode).toBe(302);
     expect(res.headers.location).toBe('/kepala');
   });
 
   test('password salah → status 200 dan tampil pesan error', async () => {
     const res = await request(app)
-      .post('/login')
-      .type('form')
+      .post('/login').type('form')
       .send({ email: 'test_kader', password: 'passwordSalah' });
-
     expect(res.statusCode).toBe(200);
     expect(res.text).toMatch(/Username atau Password salah/);
   });
 
   test('username tidak terdaftar → status 200 dan tampil pesan error', async () => {
     const res = await request(app)
-      .post('/login')
-      .type('form')
+      .post('/login').type('form')
       .send({ email: 'user_tidak_ada', password: 'apapun' });
-
     expect(res.statusCode).toBe(200);
     expect(res.text).toMatch(/Username atau Password salah/);
   });
 
   test('form kosong → tidak crash, tampil halaman login', async () => {
     const res = await request(app)
-      .post('/login')
-      .type('form')
+      .post('/login').type('form')
       .send({ email: '', password: '' });
-
-    // Harus tetap merespons (tidak 500)
     expect(res.statusCode).not.toBe(500);
   });
 
@@ -121,7 +101,6 @@ describe('GET /login', () => {
 
   test('halaman login berisi form (ada kata login/masuk)', async () => {
     const res = await request(app).get('/login');
-    // Halaman harus memuat konten form login
     expect(res.text.toLowerCase()).toMatch(/login|masuk|username|password/i);
   });
 
@@ -177,61 +156,118 @@ describe('Proteksi route tanpa autentikasi', () => {
 });
 
 // ──────────────────────────────────────────────────────────────
-// GRUP 4: Otorisasi role — login sebagai role A, akses area role B
+// GRUP 4: Otorisasi role (RBAC)
 // ──────────────────────────────────────────────────────────────
 describe('Otorisasi lintas role (RBAC)', () => {
 
-  // Helper: login dan ambil cookie session
   async function loginDan(username, password) {
     const res = await request(app)
-      .post('/login')
-      .type('form')
+      .post('/login').type('form')
       .send({ email: username, password });
     return res.headers['set-cookie'];
   }
 
+  // ── KADER ──
   test('kader tidak bisa akses /bidan → 403', async () => {
     const cookie = await loginDan('test_kader', 'Password123!');
-    const res = await request(app)
-      .get('/bidan')
-      .set('Cookie', cookie);
+    const res = await request(app).get('/bidan').set('Cookie', cookie);
     expect(res.statusCode).toBe(403);
   });
 
   test('kader tidak bisa akses /ptm → 403', async () => {
     const cookie = await loginDan('test_kader', 'Password123!');
-    const res = await request(app)
-      .get('/ptm')
-      .set('Cookie', cookie);
+    const res = await request(app).get('/ptm').set('Cookie', cookie);
     expect(res.statusCode).toBe(403);
   });
 
   test('kader tidak bisa akses /kepala → 403', async () => {
     const cookie = await loginDan('test_kader', 'Password123!');
-    const res = await request(app)
-      .get('/kepala')
-      .set('Cookie', cookie);
+    const res = await request(app).get('/kepala').set('Cookie', cookie);
     expect(res.statusCode).toBe(403);
   });
 
+  test('kader bisa akses / → bukan 403 dan bukan redirect login', async () => {
+    const cookie = await loginDan('test_kader', 'Password123!');
+    const res = await request(app).get('/').set('Cookie', cookie);
+    expect(res.statusCode).not.toBe(403);
+    if (res.statusCode === 302) {
+      expect(res.headers.location).not.toBe('/login');
+    }
+  });
+
+  // ── BIDAN ──
   test('bidan tidak bisa akses /ptm → 403', async () => {
     const cookie = await loginDan('test_bidan', 'Password123!');
-    const res = await request(app)
-      .get('/ptm')
-      .set('Cookie', cookie);
+    const res = await request(app).get('/ptm').set('Cookie', cookie);
+    expect(res.statusCode).toBe(403);
+  });
+
+  test('bidan tidak bisa akses /kepala → 403', async () => {
+    const cookie = await loginDan('test_bidan', 'Password123!');
+    const res = await request(app).get('/kepala').set('Cookie', cookie);
     expect(res.statusCode).toBe(403);
   });
 
   test('bidan bisa akses /bidan → bukan 403 dan bukan redirect login', async () => {
     const cookie = await loginDan('test_bidan', 'Password123!');
-    const res = await request(app)
-      .get('/bidan')
-      .set('Cookie', cookie);
-    // Bisa 200 atau redirect internal, tapi bukan 403 atau redirect ke /login
+    const res = await request(app).get('/bidan').set('Cookie', cookie);
     expect(res.statusCode).not.toBe(403);
     if (res.statusCode === 302) {
       expect(res.headers.location).not.toBe('/login');
     }
+  });
+
+  // ── PJ PTM ──
+  test('pj_ptm tidak bisa akses /bidan → 403', async () => {
+    const cookie = await loginDan('test_ptm', 'Password123!');
+    const res = await request(app).get('/bidan').set('Cookie', cookie);
+    expect(res.statusCode).toBe(403);
+  });
+
+  test('pj_ptm tidak bisa akses /kepala → 403', async () => {
+    const cookie = await loginDan('test_ptm', 'Password123!');
+    const res = await request(app).get('/kepala').set('Cookie', cookie);
+    expect(res.statusCode).toBe(403);
+  });
+
+  test('pj_ptm bisa akses /ptm → bukan 403 dan bukan redirect login', async () => {
+    const cookie = await loginDan('test_ptm', 'Password123!');
+    const res = await request(app).get('/ptm').set('Cookie', cookie);
+    expect(res.statusCode).not.toBe(403);
+    if (res.statusCode === 302) {
+      expect(res.headers.location).not.toBe('/login');
+    }
+  });
+
+  // ── KEPALA PUSKESMAS ──
+  test('kepala tidak bisa akses /bidan → 403', async () => {
+    const cookie = await loginDan('test_kepala', 'Password123!');
+    const res = await request(app).get('/bidan').set('Cookie', cookie);
+    expect(res.statusCode).toBe(403);
+  });
+
+  test('kepala tidak bisa akses /ptm → 403', async () => {
+    const cookie = await loginDan('test_kepala', 'Password123!');
+    const res = await request(app).get('/ptm').set('Cookie', cookie);
+    expect(res.statusCode).toBe(403);
+  });
+
+  test('kepala bisa akses /kepala → bukan 403 dan bukan redirect login', async () => {
+    const cookie = await loginDan('test_kepala', 'Password123!');
+    const res = await request(app).get('/kepala').set('Cookie', cookie);
+    expect(res.statusCode).not.toBe(403);
+    if (res.statusCode === 302) {
+      expect(res.headers.location).not.toBe('/login');
+    }
+  });
+
+  // ── LOGOUT ──
+  test('setelah logout, akses / diarahkan ke /login', async () => {
+    const cookie = await loginDan('test_kader', 'Password123!');
+    await request(app).get('/logout').set('Cookie', cookie);
+    const res = await request(app).get('/').set('Cookie', cookie);
+    expect(res.statusCode).toBe(302);
+    expect(res.headers.location).toBe('/login');
   });
 
 });

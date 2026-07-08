@@ -152,7 +152,9 @@ app.use('/', require('./src/routes/kader'));
 app.use('/bidan', require('./src/routes/bidan'));
 
 // PJ PTM — prefix: /ptm
-app.use('/ptm', require('./src/routes/ptm'));
+const ptmRouter = require('./src/routes/ptm');
+console.log('TYPE PTM ROUTER:', typeof ptmRouter);
+app.use('/ptm', ptmRouter);
 
 // Kepala Puskesmas — prefix: /kepala
 app.use('/kepala', require('./src/routes/kepala'));
