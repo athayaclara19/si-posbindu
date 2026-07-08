@@ -91,7 +91,47 @@ exports.renderKelolaPasien = async (req, res) => {
 };
 
 /**
- * 2. Menampilkan Form Edit Pasien
+ * 2. Menampilkan Halaman Detail Pasien (read-only)
+ *    Menampilkan biodata lengkap + riwayat skrining pasien.
+ */
+exports.renderDetailPasien = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const resPasien = await pool.query(`
+            SELECT p.*, j.nama_jorong, n.nama_nagari
+            FROM pasien p
+            JOIN jorong j ON p.id_jorong = j.id_jorong
+            JOIN nagari n ON j.id_nagari = n.id_nagari
+            WHERE p.id_pasien = $1
+        `, [id]);
+
+        if (resPasien.rows.length === 0) {
+            return res.status(404).send("Data pasien tidak ditemukan.");
+        }
+
+        const resRiwayat = await pool.query(`
+            SELECT s.*, k.tanggal_kegiatan, k.lokasi
+            FROM skrining s
+            LEFT JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
+            WHERE s.id_pasien = $1
+            ORDER BY s.tanggal_skrining DESC
+        `, [id]);
+
+        res.render('ptm/detail_pasien', {
+            pasien: resPasien.rows[0],
+            riwayat: resRiwayat.rows,
+            active: 'pasien',
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'pj_ptm'
+        });
+    } catch (err) {
+        console.error("ERROR RENDER DETAIL PASIEN:", err);
+        res.status(500).send("Terjadi kesalahan saat mengambil data detail pasien.");
+    }
+};
+
+/**
+ * 3. Menampilkan Form Edit Pasien
  */
 exports.renderEditPasien = async (req, res) => {
     const { id } = req.params; // Mengambil NIK/ID dari URL
@@ -127,7 +167,7 @@ exports.renderEditPasien = async (req, res) => {
 };
 
 /**
- * 3. Memproses Update Data Pasien
+ * 4. Memproses Update Data Pasien
  */
 exports.handleUpdatePasien = async (req, res) => {
     // Ambil semua data yang dikirim dari form
@@ -160,7 +200,7 @@ exports.handleUpdatePasien = async (req, res) => {
 };
 
 
- //4. Memproses Hapus Data Pasien
+ //5. Memproses Hapus Data Pasien
 exports.handleDeletePasien = async (req, res) => {
     const { id } = req.params;
     try {
@@ -179,7 +219,7 @@ exports.handleDeletePasien = async (req, res) => {
 };
 
 /**
- * 5. Menampilkan Halaman Dashboard PTM
+ * 6. Menampilkan Halaman Dashboard PTM
  */
 exports.renderDashboardPTM = async (req, res) => {
     try {

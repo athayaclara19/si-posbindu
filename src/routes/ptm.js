@@ -35,6 +35,7 @@ router.post('/user/reset/:id',     ...guard, userController.handleResetPassword)
 
 // --- Kelola Pasien ---
 router.get('/pasien',              ...guard, ptmController.renderKelolaPasien);
+router.get('/pasien/detail/:id',   ...guard, ptmController.renderDetailPasien);
 router.get('/pasien/edit/:id',     ...guard, ptmController.renderEditPasien);
 router.post('/pasien/update',      ...guard, ptmController.handleUpdatePasien);
 router.post('/pasien/delete/:id',  ...guard, ptmController.handleDeletePasien);

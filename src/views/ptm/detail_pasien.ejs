@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Pasien - SI Posbindu</title>
+    <link rel="stylesheet" href="/css/output.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-slate-50 font-inter antialiased text-slate-800">
+
+    <div class="app-shell">
+    <%- include('../partials/sidebar', { active: 'pasien' }) %>
+
+    <div class="main-content-wrapper">
+        <%- include('../partials/header', { pageTitle: 'Detail Pasien' }) %>
+
+        <main class="p-4 md:p-6 lg:p-8 space-y-6 w-full">
+
+            <!-- Breadcrumb -->
+            <div class="flex items-center gap-2 text-sm text-gray-500 mb-6">
+                <a href="/ptm/pasien" class="hover:text-blue-600 transition-colors">Kelola Pasien</a>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                <span class="text-gray-800 font-medium">Detail Pasien</span>
+            </div>
+
+            <!-- Card Biodata -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+                <!-- Header Card -->
+                <div class="px-8 py-5 border-b border-gray-100 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-800 font-poppins"><%= pasien.nama_pasien %></h3>
+                            <p class="text-xs text-gray-500 mt-0.5">NIK: <%= pasien.nik || '-' %></p>
+                        </div>
+                    </div>
+                    <a href="/ptm/pasien/edit/<%= pasien.id_pasien %>"
+                       class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-white bg-[#2563EB] hover:bg-[#1D4ED8] transition-colors shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        Edit Pasien
+                    </a>
+                </div>
+
+                <!-- Biodata Grid -->
+                <div class="px-8 py-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
+                    <div>
+                        <p class="text-xs text-gray-500 mb-1">Usia</p>
+                        <p class="text-sm font-medium text-gray-800"><%= pasien.usia || '-' %> Tahun</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 mb-1">Jenis Kelamin</p>
+                        <p class="text-sm font-medium text-gray-800"><%= pasien.jenis_kelamin || '-' %></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 mb-1">Tahun Lahir</p>
+                        <p class="text-sm font-medium text-gray-800"><%= pasien.tahun_lahir || '-' %></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 mb-1">Nagari</p>
+                        <p class="text-sm font-medium text-gray-800"><%= pasien.nama_nagari || '-' %></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 mb-1">Jorong</p>
+                        <p class="text-sm font-medium text-gray-800"><%= pasien.nama_jorong || '-' %></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 mb-1">No. HP</p>
+                        <p class="text-sm font-medium text-gray-800"><%= pasien.no_hp || '-' %></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 mb-1">Pekerjaan</p>
+                        <p class="text-sm font-medium text-gray-800"><%= pasien.pekerjaan || '-' %></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 mb-1">Agama</p>
+                        <p class="text-sm font-medium text-gray-800"><%= pasien.agama || '-' %></p>
+                    </div>
+                    <div class="sm:col-span-2 lg:col-span-3">
+                        <p class="text-xs text-gray-500 mb-1">Alamat</p>
+                        <p class="text-sm font-medium text-gray-800"><%= pasien.alamat || '-' %></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Riwayat Skrining -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-8 py-5 border-b border-gray-100">
+                    <h3 class="font-semibold text-gray-800 font-poppins">Riwayat Skrining</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Riwayat hasil pemeriksaan pasien dari waktu ke waktu</p>
+                </div>
+
+                <% if (riwayat && riwayat.length > 0) { %>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wide">
+                                <th class="px-6 py-3 font-medium">Tanggal</th>
+                                <th class="px-6 py-3 font-medium">Tensi (Sistole/Diastole)</th>
+                                <th class="px-6 py-3 font-medium">Gula Darah</th>
+                                <th class="px-6 py-3 font-medium">Kolesterol</th>
+                                <th class="px-6 py-3 font-medium">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <% riwayat.forEach(r => { %>
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-3 text-gray-700">
+                                    <%= r.tanggal_skrining ? new Date(r.tanggal_skrining).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-' %>
+                                </td>
+                                <td class="px-6 py-3 text-gray-700"><%= r.sistole || '-' %>/<%= r.diastole || '-' %> mmHg</td>
+                                <td class="px-6 py-3 text-gray-700"><%= r.gula_darah || '-' %></td>
+                                <td class="px-6 py-3 text-gray-700"><%= r.kolesterol || '-' %></td>
+                                <td class="px-6 py-3">
+                                    <% if (r.status_validasi === 'terverifikasi') { %>
+                                        <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-600">Terverifikasi</span>
+                                    <% } else if (r.status_validasi === 'ditolak') { %>
+                                        <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-600">Ditolak</span>
+                                    <% } else { %>
+                                        <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-50 text-yellow-600">Menunggu</span>
+                                    <% } %>
+                                </td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+                <% } else { %>
+                <div class="px-8 py-10 text-center text-sm text-gray-400">
+                    Belum ada riwayat skrining untuk pasien ini.
+                </div>
+                <% } %>
+            </div>
+
+        </main>
+    </div>
+
+<%- include('../partials/profil') %>
+
+</div>
+</body>
+</html>
