@@ -1,23 +1,41 @@
+<!--
+  =================================================================
+  CATATAN PENTING (baca dulu sebelum dipakai):
+  File ini adalah VIEW baru untuk form skrining multi-PTM.
+  Backend-nya (controller kaderControllers.js -> handleInputSkrining)
+  BELUM disesuaikan untuk menerima payload multi-PTM ini -- itu
+  pekerjaan lanjutan setelah dapat konfirmasi dari dospem.
+
+  Untuk sekarang, file ini AMAN dipakai untuk:
+  - didemokan ke dospem (render tampilannya persis, checklist + field
+    dinamis + preview data jalan semua)
+  - jadi acuan struktur nama field (name="...") buat nanti controller-nya
+    dibuat menyesuaikan
+
+  Kalau langsung disubmit ke /skrining sekarang, backend LAMA
+  kaderControllers.js belum tau cara baca field-field baru ini
+  (hipertensi[sistole], dm[gula_darah], dst) -- jadi submit beneran
+  belum akan berhasil sampai controllernya diupdate.
+  =================================================================
+-->
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Input Skrining - Kader</title>
+    <title>Input Skrining Multi-PTM - Kader</title>
     <link rel="stylesheet" href="/css/output.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
-    <!-- CSS Tom Select wajib ada agar kolom Pilih Pasien tampil dengan benar -->
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.min.css" rel="stylesheet">
     <style>
         .font-poppins { font-family: 'Poppins', sans-serif; }
         .font-inter { font-family: 'Inter', sans-serif; }
         .hidden-step { display: none; }
 
-        /* [DIUBAH] CSS Tom Select yang disempurnakan */
         .ts-control {
             border-radius: 0.75rem !important;
             border-color: #E5E7EB !important;
-            padding: 0.625rem 0.75rem 0.625rem 2.5rem !important; /* Ruang untuk ikon di kiri */
+            padding: 0.625rem 0.75rem 0.625rem 2.5rem !important;
             background-color: #F9FAFB !important;
             font-size: 0.875rem !important;
             min-height: 42px !important;
@@ -34,70 +52,68 @@
             margin-top: 5px !important;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1) !important;
         }
-
-        /* [BARU] Memaksa input full width HANYA jika belum ada pasien yang dipilih */
-        .ts-wrapper.single:not(.has-items) .ts-control input {
-            width: 100% !important;
-        }
-
-        /* [BARU] Menyembunyikan input ketikan yang bikin space kosong setelah pasien dipilih */
+        .ts-wrapper.single:not(.has-items) .ts-control input { width: 100% !important; }
         .ts-wrapper.single.has-items .ts-control input {
-            width: 0 !important;
-            opacity: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
+            width: 0 !important; opacity: 0 !important; margin: 0 !important; padding: 0 !important;
         }
 
-        /* === KATEGORI TEKANAN DARAH WRAPPER === */
-        #kategori-wrapper {
-            transition: background 0.4s ease, border-color 0.4s ease;
-        }
-        #badge-kategori {
-            transition: background-color 0.3s ease, color 0.3s ease,
-                        border-color 0.3s ease, box-shadow 0.3s ease;
-            letter-spacing: 0.01em;
-        }
-        #text-kategori {
-            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-        }
-
-        /* === DAPAT OBAT: default abu, aktif biru === */
-        .obat-card {
-            border: 2px solid #E5E7EB !important; /* abu-abu default */
-            background-color: #ffffff !important;
-            transition: border-color 0.15s, background-color 0.15s;
-        }
-        .obat-card.aktif {
-            border: 2px solid #2563EB !important; /* biru saat dipilih */
-            background-color: #EFF6FF !important;
-        }
-
-        /* === RUJUKAN: default abu, aktif biru === */
-        .rujuk-card {
+        .obat-card, .rujuk-card, .yatidak-card {
             border: 2px solid #E5E7EB !important;
             background-color: #ffffff !important;
             transition: border-color 0.15s, background-color 0.15s;
         }
-        .rujuk-card.aktif {
+        .obat-card.aktif, .rujuk-card.aktif, .yatidak-card.aktif {
             border: 2px solid #2563EB !important;
             background-color: #EFF6FF !important;
         }
+
+        /* ==== PTM CHECKLIST CARD ==== */
+        .ptm-card {
+            border: 2px solid #E5E7EB;
+            background: #fff;
+            transition: all .15s;
+            cursor: pointer;
+        }
+        .ptm-card.aktif { border-color: #2563EB; background: #EFF6FF; }
+        .ptm-card.aktif .ptm-check { background: #2563EB; border-color: #2563EB; }
+        .ptm-check {
+            width: 20px; height: 20px; border: 2px solid #D1D5DB; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .ptm-check::after {
+            content: ''; width: 10px; height: 10px; border-radius: 2px;
+        }
+        .ptm-card.aktif .ptm-check::after { content: '✓'; color: #fff; font-size: 13px; line-height: 1; }
+
+        .ptm-detail { display: none; }
+        .ptm-detail.show { display: block; }
+
+        .srq-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 12px; border-bottom: 1px solid #F3F4F6;
+        }
+        .srq-row:last-child { border-bottom: none; }
+        .toggle-yatidak label {
+            cursor: pointer; padding: 6px 14px; border-radius: 8px; font-size: 12px;
+            font-weight: 600; border: 1.5px solid #E5E7EB; color: #6B7280;
+        }
+        .toggle-yatidak input:checked + label { background: #2563EB; border-color: #2563EB; color: #fff; }
     </style>
 </head>
 <body class="bg-slate-50 font-inter antialiased text-slate-800">
-    
+
     <div class="app-shell">
     <%- include('../partials/sidebar', { active: 'skrining' }) %>
 
     <div class="main-content-wrapper">
-        <%- include('../partials/header', { pageTitle: 'Input Skrining' }) %>
+        <%- include('../partials/header', { pageTitle: 'Input Skrining Multi-PTM' }) %>
 
         <main class="p-8 w-full">
             <div class="w-full space-y-6">
-            
+
                 <div id="form-header">
-                    <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Form Input Skrining</h2>
-                    <p class="text-[#6B7280] text-sm">Isi data pemeriksaan dengan lengkap dan benar</p>
+                    <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Form Input Skrining — Multi PTM</h2>
+                    <p class="text-[#6B7280] text-sm">Satu kunjungan pasien bisa langsung mencatat beberapa jenis PTM sekaligus</p>
                 </div>
 
                 <div id="stepper-container" class="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-4">
@@ -107,13 +123,13 @@
                             <span id="step-text-1" class="text-xs hidden sm:block text-[#2563EB] font-semibold">Data Pasien</span>
                         </div>
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-300 flex-shrink-0"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                        
+
                         <div class="flex items-center gap-2">
                             <div id="step-circle-2" class="w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0 transition-all bg-gray-200 text-gray-500 font-semibold">2</div>
-                            <span id="step-text-2" class="text-xs hidden sm:block text-[#6B7280]">Hasil Pengukuran</span>
+                            <span id="step-text-2" class="text-xs hidden sm:block text-[#6B7280]">Jenis PTM & Hasil</span>
                         </div>
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-300 flex-shrink-0"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                        
+
                         <div class="flex items-center gap-2">
                             <div id="step-circle-3" class="w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0 transition-all bg-gray-200 text-gray-500 font-semibold">3</div>
                             <span id="step-text-3" class="text-xs hidden sm:block text-[#6B7280]">Faktor Risiko & Edukasi</span>
@@ -121,23 +137,22 @@
                     </div>
                 </div>
 
-                <form id="skrining-form" action="/skrining" method="POST">                
+                <form id="skrining-form" action="/skrining" method="POST">
+                    <!-- ============== STEP 1 — DATA PASIEN (sama seperti form asli) ============== -->
                     <div id="step-1" class="bg-white rounded-2xl border border-gray-100 shadow-sm">
                         <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#2563EB]"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             <h3 class="text-[#1F2937] font-poppins font-semibold">Step 1 — Data Pasien</h3>
                         </div>
                         <div class="px-6 py-5 space-y-4">
-                            
                             <div>
                                 <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Pilih Pasien <span class="text-[#EF4444]">*</span></label>
                                 <div class="relative">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 pointer-events-none"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                    
                                     <select id="input-pasien" name="id_pasien" placeholder="Cari Nama atau NIK Pasien..." autocomplete="off" style="display: none;">
                                         <option value=""></option>
                                         <% pasien.forEach(p => { %>
-                                            <option 
+                                            <option
                                                 value="<%= p.id_pasien %>"
                                                 data-usia="<%= p.usia || '' %>"
                                                 data-tahun-lahir="<%= p.tahun_lahir || '' %>"
@@ -154,30 +169,23 @@
                                 <select id="input-kegiatan" name="id_kegiatan" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white" onchange="updateTanggal()" required>
                                     <option value=""> Pilih kegiatan </option>
                                     <% if (typeof kegiatan !== 'undefined') { %>
-                                        <% 
-                                        // [BARU] Dapatkan tanggal hari ini (tanpa jam) untuk filter
+                                        <%
                                         const today = new Date();
                                         today.setHours(0, 0, 0, 0);
-                                        
-                                        kegiatan.forEach(k => { 
-                                            // Ubah ke format Date untuk perbandingan
+                                        kegiatan.forEach(k => {
                                             const tglKegiatan = new Date(k.tanggal_kegiatan);
                                             tglKegiatan.setHours(0, 0, 0, 0);
-                                            
-                                            // Format YYYY-MM-DD untuk ditampilkan dan disisipkan
                                             const formattedDate = k.tanggal_kegiatan
                                                 ? new Date(k.tanggal_kegiatan).toISOString().split('T')[0]
                                                 : '';
-
-                                            // [BARU] Hanya tampilkan jika kegiatan HARI INI atau DI MASA DEPAN (>= today)
                                             if (tglKegiatan >= today) {
                                         %>
                                             <option value="<%= k.id_kegiatan %>" data-tanggal="<%= formattedDate %>">
                                                 <%= k.lokasi %> (<%= formattedDate %>)
                                             </option>
-                                        <% 
-                                            } // end if
-                                        }) 
+                                        <%
+                                            }
+                                        })
                                         %>
                                     <% } %>
                                 </select>
@@ -187,14 +195,6 @@
                                 <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Tanggal Pemeriksaan <span class="text-[#EF4444]">*</span></label>
                                 <input type="date" id="input-tanggal" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white" required readonly>
                             </div>
-
-                            <div>
-                                <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Status (Otomatis)</label>
-                                <div class="px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 flex items-center gap-2">
-                                    <span class="w-2 h-2 bg-[#F59E0B] rounded-full"></span>
-                                    <span class="text-[#D97706] text-sm font-medium">Menunggu Validasi</span>
-                                </div>
-                            </div>
                         </div>
                         <div class="px-6 py-4 border-t border-gray-100 flex justify-end">
                             <button type="button" onclick="goToStep(2)" class="flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all">
@@ -203,90 +203,33 @@
                         </div>
                     </div>
 
+                    <!-- ============== STEP 2 — CHECKLIST 6 PTM + FIELD DINAMIS (BARU) ============== -->
                     <div id="step-2" class="bg-white rounded-2xl border border-gray-100 shadow-sm hidden-step">
                         <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#2563EB]"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                            <h3 class="text-[#1F2937] font-poppins font-semibold">Step 2 — Hasil Pengukuran</h3>
+                            <h3 class="text-[#1F2937] font-poppins font-semibold">Step 2 — Pilih & Isi Jenis PTM</h3>
+                        </div>
+                        <div class="px-6 py-5">
+                            <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Jenis PTM yang Diperiksa <span class="text-[#EF4444]">*</span></label>
+                            <p class="text-xs text-gray-400 mb-3">Centang semua yang diperiksa hari ini — boleh lebih dari satu</p>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="ptm-checklist"></div>
                         </div>
 
-                        <div class="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 gap-4">    
-                            <div>
-                                <div>
-                                    <label class="text-sm font-medium text-gray-700 mb-1 block">Sistole (mmHg)</label>
-                                    <input type="number" id="input-sistole" name="sistole" placeholder="120" oninput="checkBP()" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none">
-                                </div>
-                            </div>
-                            <div>
-                                <div>
-                                    <label class="text-sm font-medium text-gray-700 mb-1 block">Diastole (mmHg)</label>
-                                    <input type="number" id="input-diastole" name="diastole" placeholder="80" oninput="checkBP()" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none">
-                                </div>
-                            </div>
+                        <div id="ptm-details" class="px-6 pb-2 space-y-4"></div>
 
-                            <div id="box-kategori" class="sm:col-span-2 hidden-step">
-                                <label class="text-sm text-[#1F2937] mb-2 block font-medium">Kategori Tekanan Darah (Otomatis)</label>
-                                <div class="rounded-2xl border-2 p-4 transition-all duration-300" id="kategori-wrapper" style="border-color:#E5E7EB; background:linear-gradient(135deg,#F9FAFB,#F3F4F6)">
-                                    <div class="flex items-center gap-3 flex-wrap mb-3">
-                                        <span id="badge-kategori" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold shadow-lg border-2 transition-all duration-300">
-                                            <span id="badge-icon" class="text-base">&#9679;</span>
-                                            <span id="badge-label" class="tracking-wide">-</span>
-                                        </span>
-                                        <span id="badge-usia-mode" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/80 text-slate-500 border border-slate-200 shadow-sm">&#128100; Dewasa</span>
-                                    </div>
-                                    <p id="text-kategori" class="text-xs font-semibold leading-relaxed rounded-xl px-4 py-3 border-2 transition-all duration-300">-</p>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Berat Badan</label>
-                                <div class="relative">
-                                    <input type="number" step="0.1" id="input-bb" name="berat_badan" placeholder="kg" class="w-full px-4 py-2.5 pr-10 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white">
-                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] text-xs">kg</span>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Tinggi Badan</label>
-                                <div class="relative">
-                                    <input type="number" id="input-tb" name="tinggi_badan" placeholder="cm" class="w-full px-4 py-2.5 pr-10 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white">
-                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] text-xs">cm</span>
-                                </div>
-                            </div>
-
-                            <div id="box-imt" class="sm:col-span-2 items-center gap-3 px-4 py-2.5 bg-[#F0F9FF] rounded-xl border border-[#BAE6FD] hidden-step flex">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#0284C7]"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                <span class="text-[#0284C7] text-sm">IMT: <strong id="text-imt-val">0</strong></span>
-                                <span id="text-imt-status" class="text-[#6B7280] text-xs"></span>
-                            </div>
-
-                            <div>
-                                <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Gula Darah</label>
-                                <div class="relative">
-                                    <input type="number" id="input-gula" name="gula_darah" placeholder="40 - 600" class="w-full px-4 py-2.5 pr-16 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white">
-                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] text-xs">mg/dL</span>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Kolesterol</label>
-                                <div class="relative">
-                                    <input type="number" id="input-kolesterol" name="kolesterol" placeholder="50 - 600" class="w-full px-4 py-2.5 pr-16 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white">
-                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] text-xs">mg/dL</span>
-                                </div>
-                            </div>
-                        </div>
-                        
                         <div class="px-6 py-4 border-t border-gray-100 flex justify-between">
                             <button type="button" onclick="goToStep(1)" class="flex items-center gap-2 border border-gray-300 text-[#1F2937] px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all">← Kembali</button>
                             <button type="button" onclick="goToStep(3)" class="flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all">Lanjut <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
                         </div>
                     </div>
 
+                    <!-- ============== STEP 3 — FAKTOR RISIKO & EDUKASI (sama seperti form asli, berlaku umum) ============== -->
                     <div id="step-3" class="bg-white rounded-2xl border border-gray-100 shadow-sm hidden-step">
                         <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#2563EB]"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                             <h3 class="text-[#1F2937] font-poppins font-semibold">Step 3 — Faktor Risiko & Edukasi</h3>
                         </div>
                         <div class="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            
                             <div>
                                 <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Merokok</label>
                                 <select name="merokok" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white">
@@ -304,7 +247,6 @@
                                 </select>
                             </div>
 
-                            <!-- ===== EDUKASI ===== -->
                             <div class="sm:col-span-2 border-t border-gray-100 pt-4 mt-1">
                                 <label class="text-sm text-[#1F2937] mb-1.5 block font-semibold">Edukasi</label>
                                 <p class="text-xs text-gray-400 mb-3">Status edukasi otomatis <b>Ada</b> jika catatan diisi, <b>Tidak</b> jika dikosongkan.</p>
@@ -318,65 +260,46 @@
                                 </div>
                             </div>
 
-                            <!-- ===== DAPAT OBAT ===== -->
                             <div class="sm:col-span-2 border-t border-gray-100 pt-4">
                                 <label class="text-sm text-[#1F2937] mb-1.5 block font-semibold">Dapat Obat</label>
                                 <p class="text-xs text-gray-400 mb-3">Pilih sumber obat yang diperoleh pasien setelah skrining.</p>
                                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="obat-options">
                                     <label id="card-tidak" onclick="pilihObat('tidak')" class="obat-card aktif cursor-pointer rounded-xl p-3 flex flex-col items-center gap-2 text-center">
                                         <input type="radio" name="dapat_obat" value="tidak" class="hidden" checked>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
                                         <span class="text-xs font-medium text-gray-600">Tidak Dapat</span>
                                     </label>
                                     <label id="card-beli_sendiri" onclick="pilihObat('beli_sendiri')" class="obat-card cursor-pointer rounded-xl p-3 flex flex-col items-center gap-2 text-center">
                                         <input type="radio" name="dapat_obat" value="beli_sendiri" class="hidden">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
                                         <span class="text-xs font-medium text-gray-600">Beli Sendiri</span>
                                     </label>
                                     <label id="card-dari_puskesmas" onclick="pilihObat('dari_puskesmas')" class="obat-card cursor-pointer rounded-xl p-3 flex flex-col items-center gap-2 text-center">
                                         <input type="radio" name="dapat_obat" value="dari_puskesmas" class="hidden">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                                         <span class="text-xs font-medium text-gray-600">Dari Puskesmas</span>
                                     </label>
                                     <label id="card-dari_rumah_sakit" onclick="pilihObat('dari_rumah_sakit')" class="obat-card cursor-pointer rounded-xl p-3 flex flex-col items-center gap-2 text-center">
                                         <input type="radio" name="dapat_obat" value="dari_rumah_sakit" class="hidden">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400">
-                                            <path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/>
-                                            <path d="M9 21v-4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v4"/>
-                                            <line x1="12" y1="9" x2="12" y2="13"/><line x1="10" y1="11" x2="14" y2="11"/>
-                                        </svg>
                                         <span class="text-xs font-medium text-gray-600">Dari Rumah Sakit</span>
                                     </label>
                                 </div>
                             </div>
 
-                            <!--== STATUS RUJUKAN == -->
                             <div class="sm:col-span-2 border-t border-gray-100 pt-4">
                                 <label class="text-sm text-[#1F2937] mb-1.5 block font-semibold">Dirujuk ke Rumah Sakit?</label>
-                                <p class="text-xs text-gray-400 mb-3">Pilih <b>Iya</b> jika pasien langsung dirujuk ke rumah sakit setelah skrining.</p>
                                 <div class="flex gap-3">
                                     <label id="rujuk-tidak" onclick="pilihRujukan('tidak')" class="rujuk-card aktif cursor-pointer flex-1 rounded-xl px-4 py-3 flex items-center gap-3">
                                         <input type="radio" name="status_rujukan" value="tidak" class="hidden" checked>
-                                        <div>
-                                            <p class="text-sm font-medium text-gray-700">Tidak Dirujuk</p>
-                                            <p class="text-xs text-gray-400">Pasien tidak perlu dirujuk</p>
-                                        </div>
+                                        <div><p class="text-sm font-medium text-gray-700">Tidak Dirujuk</p></div>
                                     </label>
                                     <label id="rujuk-iya" onclick="pilihRujukan('iya')" class="rujuk-card cursor-pointer flex-1 rounded-xl px-4 py-3 flex items-center gap-3">
                                         <input type="radio" name="status_rujukan" value="iya" class="hidden">
-                                        <div>
-                                            <p class="text-sm font-medium text-orange-700">Dirujuk ke RS</p>
-                                            <p class="text-xs text-orange-400">Pasien dirujuk ke rumah sakit</p>
-                                        </div>
+                                        <div><p class="text-sm font-medium text-orange-700">Dirujuk ke RS</p></div>
                                     </label>
                                 </div>
                             </div>
-
                         </div>
                         <div class="px-6 py-4 border-t border-gray-100 flex justify-between">
                             <button type="button" onclick="goToStep(2)" class="flex items-center gap-2 border border-gray-300 text-[#1F2937] px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all">← Kembali</button>
                             <button type="button" onclick="submitData()" class="flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                                 Kirim Data
                             </button>
                         </div>
@@ -388,448 +311,88 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#10B981]"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                     </div>
                     <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Mengirim Data...</h2>
-                    <p class="text-[#6B7280] text-sm text-center max-w-sm">
-                        Mohon tunggu sebentar.
-                    </p>
+                    <p class="text-[#6B7280] text-sm text-center max-w-sm">Mohon tunggu sebentar.</p>
                 </div>
             </div>
         </main>
     </div>
 
     <script>
-        // Set tanggal hari ini otomatis
+        // ============== SETUP DASAR (sama seperti form asli) ==============
         function updateTanggal() {
             const selectKegiatan = document.getElementById('input-kegiatan');
             const inputTanggal = document.getElementById('input-tanggal');
-            
-            // Ambil opsi (option) yang sedang dipilih pengguna
             const selectedOption = selectKegiatan.options[selectKegiatan.selectedIndex];
-            
-            // Jika opsi tersebut punya data-tanggal, masukkan ke form input tanggal
             if (selectedOption && selectedOption.getAttribute('data-tanggal')) {
                 inputTanggal.value = selectedOption.getAttribute('data-tanggal');
             } else {
-                inputTanggal.value = ''; // Kosongkan jika memilih "-- Pilih kegiatan --"
+                inputTanggal.value = '';
             }
         }
 
-        // Navigasi Antar Step
-        function goToStep(step) {
-            // Validasi sederhana sebelum lanjut ke Step 2
-            if (step === 2) {
-                const p = document.getElementById('input-pasien').value;
-                const k = document.getElementById('input-kegiatan').value;
-                if (!p || !k) {
-                    // [DIUBAH] Menggunakan SweetAlert menggantikan alert biasa
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Data Belum Lengkap!',
-                        text: 'Pilih pasien dan kegiatan terlebih dahulu sebelum lanjut.',
-                        confirmButtonColor: '#2563EB',
-                        customClass: { popup: 'rounded-2xl font-inter' }
-                    });
-                    return; // Hentikan fungsi agar tidak pindah step
-                }
-            }
-            
-            // Validasi sederhana sebelum lanjut ke Step 3
-            if (step === 3) {
-                const s = document.getElementById('input-sistole').value;
-                const d = document.getElementById('input-diastole').value;
-                if (!s || !d) {
-                    // [DIUBAH] Menggunakan SweetAlert menggantikan alert biasa
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Data Belum Lengkap!',
-                        text: 'Sistole dan Diastole wajib diisi untuk menentukan kategori.',
-                        confirmButtonColor: '#2563EB',
-                        customClass: { popup: 'rounded-2xl font-inter' }
-                    });
-                    return; // Hentikan fungsi agar tidak pindah step
-                }
-            }
-
-            // Sembunyikan semua step
-            document.getElementById('step-1').classList.add('hidden-step');
-            document.getElementById('step-2').classList.add('hidden-step');
-            document.getElementById('step-3').classList.add('hidden-step');
-            
-            // Tampilkan step yang dituju
-            document.getElementById('step-' + step).classList.remove('hidden-step');
-
-            // Update UI Stepper
-            for (let i = 1; i <= 3; i++) {
-                let circle = document.getElementById('step-circle-' + i);
-                let text = document.getElementById('step-text-' + i);
-                
-                if (i < step) { // Step yang sudah dilewati (Hijau)
-                    circle.className = "w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0 transition-all bg-[#10B981] text-white font-semibold";
-                    circle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
-                    text.className = "text-xs hidden sm:block text-[#059669]";
-                } else if (i === step) { // Step saat ini (Biru)
-                    circle.className = "w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0 transition-all bg-[#2563EB] text-white font-semibold";
-                    circle.innerHTML = i;
-                    text.className = "text-xs hidden sm:block text-[#2563EB] font-semibold";
-                } else { // Step masa depan (Abu-abu)
-                    circle.className = "w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0 transition-all bg-gray-200 text-gray-500 font-semibold";
-                    circle.innerHTML = i;
-                    text.className = "text-xs hidden sm:block text-[#6B7280]";
-                }
-            }
-        }
-
-        // Hitung Kategori Tekanan Darah Otomatis
-        const sysInput = document.getElementById('input-sistole');
-        const diaInput = document.getElementById('input-diastole');
-        const boxKat = document.getElementById('box-kategori');
-        const badgeKat = document.getElementById('badge-kategori');
-        const textKat = document.getElementById('text-kategori');
-
-        // =====================================================================
-        // Fungsi klasifikasi tekanan darah sesuai Pedoman Kemenkes 2024
-        // Dewasa (≥18 th): 7 kategori (Tabel 2.1 ESC/ESH via Kemenkes)
-        // Anak (<18 th): 4 kategori (Tabel 2.2 AAP 2017 via Kemenkes)
-        // =====================================================================
-        function getUsiaFromPasien() {
-            const select = document.getElementById('input-pasien');
-            const selectedOption = select.options[select.selectedIndex];
-            if (!selectedOption || !selectedOption.value) return null;
-
-            // Coba ambil dari data-usia langsung
-            const usia = parseInt(selectedOption.getAttribute('data-usia'));
-            if (!isNaN(usia) && usia > 0) return usia;
-
-            // Fallback: hitung dari tahun lahir
-            const tahunLahir = parseInt(selectedOption.getAttribute('data-tahun-lahir'));
-            if (!isNaN(tahunLahir) && tahunLahir > 0) {
-                return new Date().getFullYear() - tahunLahir;
-            }
-            return null; // tidak diketahui → asumsikan dewasa
-        }
-
-        function checkBP() {
-            const sysVal = document.getElementById('input-sistole').value;
-            const diaVal = document.getElementById('input-diastole').value;
-            const sys    = parseInt(sysVal);
-            const dia    = parseInt(diaVal);
-
-            const box   = document.getElementById('box-kategori');
-            const badge = document.getElementById('badge-kategori');
-            const text  = document.getElementById('text-kategori');
-            const modeBadge = document.getElementById('badge-usia-mode');
-
-            if (!sysVal || !diaVal || isNaN(sys) || isNaN(dia)) {
-                box.classList.add('hidden-step');
-                return;
-            }
-
-            box.classList.remove('hidden-step');
-
-            const usia = getUsiaFromPasien();
-            const isAnak = (usia !== null && usia < 18);
-
-            let kategori = '';
-            let warnaClass = '';
-            let pesan = '';
-
-            if (isAnak) {
-                // ── ANAK (< 18 tahun) ── Tabel 2.2 Kemenkes 2024 (AAP 2017)
-                // Anak usia ≥ 13 tahun menggunakan nilai absolut
-                // Anak usia 1–12 tahun menggunakan persentil (disederhanakan ke nilai umum)
-                modeBadge.textContent = `Anak (${usia} th)`;
-                modeBadge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-600 border border-purple-200';
-
-                if (usia >= 13) {
-                    // Anak ≥ 13 tahun — nilai absolut mmHg
-                    if (sys >= 140 || dia >= 90) {
-                        kategori  = 'Hipertensi Tingkat 2';
-                        warnaClass = 'bg-red-100 text-red-700 border-red-200';
-                        pesan     = `Anak ≥13 th: Sistolik ≥140 atau Diastolik ≥90 mmHg. Rujuk ke FKRTL.`;
-                    } else if ((sys >= 130 && sys <= 139) || (dia >= 80 && dia <= 89)) {
-                        kategori  = 'Hipertensi Tingkat 1';
-                        warnaClass = 'bg-orange-100 text-orange-700 border-orange-200';
-                        pesan     = `Anak ≥13 th: Sistolik 130–138 atau Diastolik 80–89 mmHg. Perlu tatalaksana dan monitoring.`;
-                    } else if ((sys >= 120 && sys < 130) || (dia >= 80 && dia < 80)) {
-                        kategori  = 'Pre Hipertensi';
-                        warnaClass = 'bg-yellow-100 text-yellow-700 border-yellow-200';
-                        pesan     = `Anak ≥13 th: Sistolik 120–129 / Diastolik <80 mmHg. Perlu edukasi perubahan gaya hidup.`;
-                    } else if (sys < 120 && dia < 80) {
-                        kategori  = 'Tekanan Darah Normal';
-                        warnaClass = 'bg-green-100 text-green-700 border-green-200';
-                        pesan     = `Anak ≥13 th: Tekanan darah <120/80 mmHg. Pertahankan gaya hidup sehat.`;
-                    } else {
-                        kategori  = 'Pre Hipertensi';
-                        warnaClass = 'bg-yellow-100 text-yellow-700 border-yellow-200';
-                        pesan     = `Anak ≥13 th: Perlu monitoring lebih lanjut.`;
-                    }
-                } else {
-                    // Anak 1–12 tahun — berbasis persentil (pendekatan praktis)
-                    if (sys >= 130 || dia >= 80) {
-                        kategori  = 'Hipertensi Tingkat 2';
-                        warnaClass = 'bg-red-100 text-red-700 border-red-200';
-                        pesan     = `Anak 1–12 th: Sistolik/Diastolik ≥persentil 95+12 mmHg. Rujuk ke FKRTL segera.`;
-                    } else if (sys >= 120 || dia >= 70) {
-                        kategori  = 'Hipertensi Tingkat 1';
-                        warnaClass = 'bg-orange-100 text-orange-700 border-orange-200';
-                        pesan     = `Anak 1–12 th: Nilai antara persentil 95 dan 95+12 mmHg. Perlu pemeriksaan lebih lanjut.`;
-                    } else if (sys >= 100 || dia >= 65) {
-                        kategori  = 'Pre Hipertensi';
-                        warnaClass = 'bg-yellow-100 text-yellow-700 border-yellow-200';
-                        pesan     = `Anak 1–12 th: Antara persentil 90 dan <persentil 95. Perlu edukasi dan monitoring.`;
-                    } else {
-                        kategori  = 'Tekanan Darah Normal';
-                        warnaClass = 'bg-green-100 text-green-700 border-green-200';
-                        pesan     = `Anak 1–12 th: Sistolik dan Diastolik <persentil 90. Tekanan darah normal untuk usia ini.`;
-                    }
-                }
-
-            } else {
-                // ── DEWASA (≥18 tahun atau usia tidak diketahui) ──
-                // 7 Kategori sesuai Tabel 2.1 Pedoman Kemenkes 2024 (ESC/ESH 2018)
-                modeBadge.textContent = usia ? `Dewasa (${usia} th)` : 'Dewasa';
-                modeBadge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200';
-
-                if (sys >= 180 || dia >= 110) {
-                    // Hipertensi Derajat 3
-                    kategori  = 'Hipertensi Derajat 3';
-                    warnaClass = 'bg-red-200 text-red-800 border-red-300';
-                    pesan     = `Sistolik ≥180 dan/atau Diastolik ≥110 mmHg. KRISIS — Segera rujuk ke FKRTL!`;
-
-                } else if ((sys >= 160 && sys <= 179) || (dia >= 100 && dia <= 109)) {
-                    // Hipertensi Derajat 2
-                    kategori  = 'Hipertensi Derajat 2';
-                    warnaClass = 'bg-red-100 text-red-700 border-red-200';
-                    pesan     = `Sistolik 160–179 dan/atau Diastolik 100–109 mmHg. Perlu pengobatan segera dan monitor ketat.`;
-
-                } else if ((sys >= 140 && sys <= 159) || (dia >= 90 && dia <= 99)) {
-                    // Hipertensi Derajat 1
-                    kategori  = 'Hipertensi Derajat 1';
-                    warnaClass = 'bg-orange-100 text-orange-700 border-orange-200';
-                    pesan     = `Sistolik 140–159 dan/atau Diastolik 90–99 mmHg. Perlu tatalaksana farmakologi dan non-farmakologi.`;
-
-                } else if ((sys >= 130 && sys <= 139) || (dia >= 85 && dia <= 89)) {
-                    // Prehipertensi / Normal Tinggi
-                    kategori  = 'Prehipertensi (Normal Tinggi)';
-                    warnaClass = 'bg-yellow-100 text-yellow-700 border-yellow-200';
-                    pesan     = `Sistolik 130–139 dan/atau Diastolik 85–89 mmHg. Perlu pengawasan dan modifikasi gaya hidup.`;
-
-                } else if ((sys >= 120 && sys <= 129) && (dia >= 80 && dia <= 84)) {
-                    // Normal
-                    kategori  = 'Normal';
-                    warnaClass = 'bg-blue-100 text-blue-700 border-blue-200';
-                    pesan     = `Sistolik 120–129 dan Diastolik 80–84 mmHg. Pertahankan pola hidup sehat.`;
-
-                } else if (sys < 120 && dia < 80) {
-                    // Optimal
-                    kategori  = 'Optimal';
-                    warnaClass = 'bg-green-100 text-green-700 border-green-200';
-                    pesan     = `Sistolik <120 dan Diastolik <80 mmHg. Tekanan darah sangat baik!`;
-
-                } else if (sys >= 140 && dia < 90) {
-                    // Hipertensi Sistolik Terisolasi
-                    kategori  = 'Hipertensi Sistolik Terisolasi';
-                    warnaClass = 'bg-purple-100 text-purple-700 border-purple-200';
-                    pesan     = `Sistolik ≥140 dan Diastolik <90 mmHg. Perlu tatalaksana dan pemantauan.`;
-
-                } else {
-                    // Fallback ke Prehipertensi jika tidak masuk kondisi di atas
-                    kategori  = 'Prehipertensi (Normal Tinggi)';
-                    warnaClass = 'bg-yellow-100 text-yellow-700 border-yellow-200';
-                    pesan     = `Tekanan darah di batas atas normal. Perlu monitoring rutin.`;
-                }
-            }
-
-            // === Peta ikon per kategori ===
-            const ikonMap = {
-                // Dewasa
-                'Optimal':                        '&#128994;', // hijau solid
-                'Normal':                         '&#128309;', // biru
-                'Prehipertensi (Normal Tinggi)':  '&#128993;', // kuning
-                'Hipertensi Derajat 1':           '&#128992;', // oranye
-                'Hipertensi Derajat 2':           '&#128308;', // merah
-                'Hipertensi Derajat 3':           '&#128721;', // stop
-                'Hipertensi Sistolik Terisolasi': '&#128310;', // ungu
-                // Anak
-                'Tekanan Darah Normal':           '&#128994;',
-                'Pre Hipertensi':                 '&#128993;',
-                'Hipertensi Tingkat 1':           '&#128992;',
-                'Hipertensi Tingkat 2':           '&#128308;',
-            };
-
-            // === Peta warna INLINE STYLE per kategori (badge) ===
-            // bg: warna latar badge, color: warna teks, border: warna garis tepi badge
-            const warnaMap = {
-                'Optimal':                        { bg:'#059669', color:'#ffffff', border:'#047857' },
-                'Normal':                         { bg:'#3B82F6', color:'#ffffff', border:'#2563EB' },
-                'Prehipertensi (Normal Tinggi)':  { bg:'#FCD34D', color:'#78350F', border:'#F59E0B' },
-                'Hipertensi Derajat 1':           { bg:'#F97316', color:'#ffffff', border:'#EA580C' },
-                'Hipertensi Derajat 2':           { bg:'#EF4444', color:'#ffffff', border:'#DC2626' },
-                'Hipertensi Derajat 3':           { bg:'#991B1B', color:'#ffffff', border:'#7F1D1D' },
-                'Hipertensi Sistolik Terisolasi': { bg:'#A855F7', color:'#ffffff', border:'#9333EA' },
-                'Tekanan Darah Normal':           { bg:'#059669', color:'#ffffff', border:'#047857' },
-                'Pre Hipertensi':                 { bg:'#FCD34D', color:'#78350F', border:'#F59E0B' },
-                'Hipertensi Tingkat 1':           { bg:'#F97316', color:'#ffffff', border:'#EA580C' },
-                'Hipertensi Tingkat 2':           { bg:'#EF4444', color:'#ffffff', border:'#DC2626' },
-            };
-
-            // === Peta warna INLINE STYLE kotak deskripsi ===
-            const textWarnaBg = {
-                'Optimal':                        { bg:'#ECFDF5', color:'#065F46', border:'#6EE7B7' },
-                'Normal':                         { bg:'#EFF6FF', color:'#1E40AF', border:'#93C5FD' },
-                'Prehipertensi (Normal Tinggi)':  { bg:'#FFFBEB', color:'#92400E', border:'#FCD34D' },
-                'Hipertensi Derajat 1':           { bg:'#FFF7ED', color:'#9A3412', border:'#FDBA74' },
-                'Hipertensi Derajat 2':           { bg:'#FEF2F2', color:'#991B1B', border:'#FCA5A5' },
-                'Hipertensi Derajat 3':           { bg:'#FEE2E2', color:'#7F1D1D', border:'#F87171' },
-                'Hipertensi Sistolik Terisolasi': { bg:'#F5F3FF', color:'#5B21B6', border:'#C4B5FD' },
-                'Tekanan Darah Normal':           { bg:'#ECFDF5', color:'#065F46', border:'#6EE7B7' },
-                'Pre Hipertensi':                 { bg:'#FFFBEB', color:'#92400E', border:'#FCD34D' },
-                'Hipertensi Tingkat 1':           { bg:'#FFF7ED', color:'#9A3412', border:'#FDBA74' },
-                'Hipertensi Tingkat 2':           { bg:'#FEF2F2', color:'#991B1B', border:'#FCA5A5' },
-            };
-
-            const finalWarna   = warnaMap[kategori]    || { bg:'#E5E7EB', color:'#374151', border:'#D1D5DB' };
-            const finalTextBg  = textWarnaBg[kategori] || { bg:'#F9FAFB', color:'#374151', border:'#E5E7EB' };
-            const finalIkon    = ikonMap[kategori]     || '&#9679;';
-
-            // === Peta warna wrapper card (background + border luar) ===
-            const wrapperMap = {
-                'Optimal':                        { bg: 'linear-gradient(135deg,#ECFDF5,#D1FAE5)', border: '#059669' },
-                'Normal':                         { bg: 'linear-gradient(135deg,#EFF6FF,#DBEAFE)', border: '#3B82F6' },
-                'Prehipertensi (Normal Tinggi)':  { bg: 'linear-gradient(135deg,#FFFBEB,#FEF3C7)', border: '#F59E0B' },
-                'Hipertensi Derajat 1':           { bg: 'linear-gradient(135deg,#FFF7ED,#FFEDD5)', border: '#F97316' },
-                'Hipertensi Derajat 2':           { bg: 'linear-gradient(135deg,#FEF2F2,#FEE2E2)', border: '#EF4444' },
-                'Hipertensi Derajat 3':           { bg: 'linear-gradient(135deg,#FEE2E2,#FECACA)', border: '#991B1B' },
-                'Hipertensi Sistolik Terisolasi': { bg: 'linear-gradient(135deg,#F5F3FF,#EDE9FE)', border: '#A855F7' },
-                'Tekanan Darah Normal':           { bg: 'linear-gradient(135deg,#ECFDF5,#D1FAE5)', border: '#059669' },
-                'Pre Hipertensi':                 { bg: 'linear-gradient(135deg,#FFFBEB,#FEF3C7)', border: '#F59E0B' },
-                'Hipertensi Tingkat 1':           { bg: 'linear-gradient(135deg,#FFF7ED,#FFEDD5)', border: '#F97316' },
-                'Hipertensi Tingkat 2':           { bg: 'linear-gradient(135deg,#FEF2F2,#FEE2E2)', border: '#EF4444' },
-            };
-
-            const wrapper = document.getElementById('kategori-wrapper');
-            const wStyle  = wrapperMap[kategori] || { bg: 'linear-gradient(135deg,#F9FAFB,#F3F4F6)', border: '#D1D5DB' };
-            wrapper.style.background   = wStyle.bg;
-            wrapper.style.borderColor  = wStyle.border;
-
-            // Update badge — pakai inline style agar tidak bergantung Tailwind purge
-            badge.className = 'inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold shadow-lg border-2 transition-all duration-300';
-            badge.style.backgroundColor = finalWarna.bg;
-            badge.style.color           = finalWarna.color;
-            badge.style.borderColor     = finalWarna.border;
-            document.getElementById('badge-icon').innerHTML  = finalIkon;
-            document.getElementById('badge-label').innerText = kategori;
-
-            // Update deskripsi — pakai inline style juga
-            text.className = 'text-xs font-semibold leading-relaxed rounded-xl px-4 py-3 border-2 transition-all duration-300';
-            text.style.backgroundColor = finalTextBg.bg;
-            text.style.color           = finalTextBg.color;
-            text.style.borderColor     = finalTextBg.border;
-            text.innerText = pesan;
-        }
+        const steps = [document.getElementById('step-1'), document.getElementById('step-2'), document.getElementById('step-3')];
+        const indicators = [document.getElementById('step-circle-1'), document.getElementById('step-circle-2'), document.getElementById('step-circle-3')];
+        const labels = [document.getElementById('step-text-1'), document.getElementById('step-text-2'), document.getElementById('step-text-3')];
 
         function showStep(stepIndex) {
             steps.forEach((step, index) => {
                 if (index === stepIndex) {
                     step.classList.remove('hidden-step');
-                    // Update indikator stepper
                     indicators[index].classList.remove('bg-gray-200', 'text-gray-500');
                     indicators[index].classList.add('bg-[#2563EB]', 'text-white', 'ring-4', 'ring-blue-100');
                     labels[index].classList.remove('text-gray-400');
                     labels[index].classList.add('text-[#2563EB]', 'font-bold');
                 } else {
                     step.classList.add('hidden-step');
-                    // Reset indikator
                     indicators[index].classList.add('bg-gray-200', 'text-gray-500');
                     indicators[index].classList.remove('bg-[#2563EB]', 'text-white', 'ring-4', 'ring-blue-100');
                     labels[index].classList.add('text-gray-400');
                     labels[index].classList.remove('text-[#2563EB]', 'font-bold');
                 }
             });
-
-            // [BARU] Panggil ulang checkBP() khusus saat kembali ke Step 2 (Pemeriksaan Fisik)
-            // Ini menjamin badge kategori tidak akan hilang saat kamu mondar-mandir antar step
-            if (stepIndex === 1) {
-                checkBP();
-            }
-
-            // (Kode tombol prev/next tetap sama...)
-            if (stepIndex === 0) {
-                document.getElementById('btn-prev').classList.add('hidden');
-            } else {
-                document.getElementById('btn-prev').classList.remove('hidden');
-            }
-
-            if (stepIndex === steps.length - 1) {
-                document.getElementById('btn-next').classList.add('hidden');
-                document.getElementById('btn-submit').classList.remove('hidden');
-            } else {
-                document.getElementById('btn-next').classList.remove('hidden');
-                document.getElementById('btn-submit').classList.add('hidden');
-            }
         }
 
-        sysInput.addEventListener('input', checkBP);
-        diaInput.addEventListener('input', checkBP);
-
-        // Recalculate when patient changes (usia may differ → dewasa vs anak)
-        document.getElementById('input-pasien').addEventListener('change', checkBP);
-
-        // Hitung IMT Otomatis
-        const bbInput = document.getElementById('input-bb');
-        const tbInput = document.getElementById('input-tb');
-        const boxImt = document.getElementById('box-imt');
-        const textImtVal = document.getElementById('text-imt-val');
-        const textImtStatus = document.getElementById('text-imt-status');
-
-        function checkIMT() {
-            const bb = parseFloat(bbInput.value);
-            const tb = parseFloat(tbInput.value);
-            if (bb && tb) {
-                const imt = (bb / Math.pow(tb / 100, 2)).toFixed(1);
-                textImtVal.innerText = imt + " kg/m²";
-                textImtStatus.innerText = imt < 18.5 ? "Kurus" : imt < 25 ? "Normal" : imt < 30 ? "Gemuk" : "Obesitas";
-                boxImt.classList.remove('hidden-step');
-            } else {
-                boxImt.classList.add('hidden-step');
+        function goToStep(step) {
+            if (step === 2) {
+                const p = document.getElementById('input-pasien').value;
+                const k = document.getElementById('input-kegiatan').value;
+                if (!p || !k) {
+                    Swal.fire({ icon: 'warning', title: 'Data Belum Lengkap!', text: 'Pilih pasien dan kegiatan terlebih dahulu sebelum lanjut.', confirmButtonColor: '#2563EB', customClass: { popup: 'rounded-2xl font-inter' } });
+                    return;
+                }
             }
+            if (step === 3) {
+                const adaPTMDicentang = PTM_LIST.some(p => document.getElementById('card-' + p.id).classList.contains('aktif'));
+                if (!adaPTMDicentang) {
+                    Swal.fire({ icon: 'warning', title: 'Belum Ada PTM Dipilih!', text: 'Centang minimal 1 jenis PTM yang diperiksa sebelum lanjut.', confirmButtonColor: '#2563EB', customClass: { popup: 'rounded-2xl font-inter' } });
+                    return;
+                }
+            }
+            showStep(step - 1);
         }
-        bbInput.addEventListener('input', checkIMT);
-        tbInput.addEventListener('input', checkIMT);
 
-        // Submit Form
         function submitData() {
-            // Tampilkan animasi loading singkat
             document.getElementById('form-header').classList.add('hidden-step');
             document.getElementById('stepper-container').classList.add('hidden-step');
             document.getElementById('skrining-form').classList.add('hidden-step');
             document.getElementById('step-success').classList.remove('hidden-step');
             document.getElementById('step-success').classList.add('flex');
-            
-            // Jeda sebentar agar user melihat pesan "Mengirim Data..." 
-            // lalu submit form secara nyata ke backend
-            setTimeout(() => {
-                document.getElementById('skrining-form').submit();
-            }, 500);
+            setTimeout(() => { document.getElementById('skrining-form').submit(); }, 500);
         }
-        // Update status edukasi otomatis
+
         function updateEdukasiStatus() {
             const val = document.getElementById("input-edukasi").value.trim();
             const status = document.getElementById("edukasi-status");
-            if (val.length > 0) { status.classList.remove("hidden"); }
-            else { status.classList.add("hidden"); }
+            if (val.length > 0) { status.classList.remove("hidden"); } else { status.classList.add("hidden"); }
         }
 
-        // Pilih dapat obat — ubah warna kartu aktif
         const nilaiObat = ['tidak', 'beli_sendiri', 'dari_puskesmas', 'dari_rumah_sakit'];
         function pilihObat(nilai) {
             document.querySelector('input[name="dapat_obat"][value="' + nilai + '"]').checked = true;
-            nilaiObat.forEach(function(v) {
-                document.getElementById('card-' + v).classList.remove('aktif');
-            });
+            nilaiObat.forEach(function(v) { document.getElementById('card-' + v).classList.remove('aktif'); });
             document.getElementById('card-' + nilai).classList.add('aktif');
         }
 
-        // Pilih rujukan — ubah warna kartu aktif
         function pilihRujukan(nilai) {
             document.querySelector('input[name="status_rujukan"][value="' + nilai + '"]').checked = true;
             document.getElementById('rujuk-tidak').classList.remove('aktif');
@@ -839,16 +402,10 @@
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
-
     <script>
-        // Inisialisasi Tom Select pada input pasien
         new TomSelect("#input-pasien", {
             create: false,
-            sortField: {
-                field: "text",
-                direction: "asc"
-            },
-            // Fitur pencarian otomatis akan mencari di Nama dan NIK karena keduanya ada di dalam teks option
+            sortField: { field: "text", direction: "asc" },
             render: {
                 option: function(data, escape) {
                     return '<div class="py-2 px-3"> <div class="font-medium">' + escape(data.text) + '</div> </div>';
@@ -857,6 +414,213 @@
         });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- ============== BAGIAN BARU: CHECKLIST 6 PTM + FIELD DINAMIS ============== -->
+    <script>
+        const PTM_LIST = [
+            { id: 'hipertensi', label: 'Hipertensi', icon: '❤️' },
+            { id: 'dm', label: 'Diabetes Melitus', icon: '🩸' },
+            { id: 'obesitas', label: 'Obesitas', icon: '⚖️' },
+            { id: 'ppok', label: 'PPOK', icon: '🫁' },
+            { id: 'gangguan_indra', label: 'Gangguan Indra', icon: '👁️' },
+            { id: 'kesehatan_jiwa', label: 'Kesehatan Jiwa', icon: '🧠' },
+        ];
+
+        const checklistEl = document.getElementById('ptm-checklist');
+        const detailsEl = document.getElementById('ptm-details');
+
+        PTM_LIST.forEach(ptm => {
+            const card = document.createElement('label');
+            card.className = 'ptm-card rounded-xl p-3 flex items-center gap-2';
+            card.id = 'card-' + ptm.id;
+            card.innerHTML =
+                '<input type="checkbox" name="jenis_ptm[]" value="' + ptm.id + '" class="hidden" onchange="togglePTM(\'' + ptm.id + '\', this.checked)">' +
+                '<span class="ptm-check"></span>' +
+                '<span class="text-sm font-medium">' + ptm.icon + ' ' + ptm.label + '</span>';
+            card.onclick = (e) => {
+                if (e.target.tagName !== 'INPUT') {
+                    const cb = card.querySelector('input');
+                    cb.checked = !cb.checked;
+                    togglePTM(ptm.id, cb.checked);
+                }
+            };
+            checklistEl.appendChild(card);
+        });
+
+        function togglePTM(id, checked) {
+            document.getElementById('card-' + id).classList.toggle('aktif', checked);
+            document.getElementById('detail-' + id).classList.toggle('show', checked);
+        }
+
+        function detailWrapper(id, title, innerHTML) {
+            const div = document.createElement('div');
+            div.id = 'detail-' + id;
+            div.className = 'ptm-detail bg-[#F9FAFB] rounded-2xl border border-gray-100 mt-2';
+            div.innerHTML =
+                '<div class="px-5 py-3 border-b border-gray-100"><h4 class="text-[#1F2937] font-poppins font-semibold text-sm">' + title + '</h4></div>' +
+                '<div class="px-5 py-4 space-y-4">' + innerHTML + '</div>';
+            detailsEl.appendChild(div);
+        }
+
+        // -- HIPERTENSI --
+        detailWrapper('hipertensi', '❤️ Detail Hipertensi', `
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Sistole (mmHg)</label>
+                    <input type="number" id="ht-sistole" name="hipertensi[sistole]" placeholder="120" oninput="checkBP()" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white">
+                </div>
+                <div>
+                    <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Diastole (mmHg)</label>
+                    <input type="number" id="ht-diastole" name="hipertensi[diastole]" placeholder="80" oninput="checkBP()" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white">
+                </div>
+            </div>
+            <div id="ht-badge" class="hidden rounded-xl border-2 p-3 text-sm font-semibold"></div>
+        `);
+        function checkBP() {
+            const sys = parseInt(document.getElementById('ht-sistole').value);
+            const dia = parseInt(document.getElementById('ht-diastole').value);
+            const badge = document.getElementById('ht-badge');
+            if (!sys || !dia) { badge.classList.add('hidden'); return; }
+            let kat, style;
+            if (sys >= 140 || dia >= 90) { kat = 'Hipertensi'; style = 'background:#FEF2F2;border-color:#FCA5A5;color:#991B1B'; }
+            else if (sys >= 130 || dia >= 85) { kat = 'Prehipertensi'; style = 'background:#FFFBEB;border-color:#FCD34D;color:#92400E'; }
+            else { kat = 'Normal'; style = 'background:#ECFDF5;border-color:#6EE7B7;color:#065F46'; }
+            badge.className = 'rounded-xl border-2 p-3 text-sm font-semibold';
+            badge.setAttribute('style', style);
+            badge.textContent = 'Kategori: ' + kat + ' (otomatis)';
+            badge.classList.remove('hidden');
+        }
+
+        // -- DM --
+        detailWrapper('dm', '🩸 Detail Diabetes Melitus', `
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Gula Darah (mg/dL)</label>
+                    <input type="number" name="dm[gula_darah]" placeholder="110" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white">
+                </div>
+                <div>
+                    <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Jenis Pemeriksaan</label>
+                    <select name="dm[jenis_pemeriksaan]" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white">
+                        <option value="sewaktu">Gula Darah Sewaktu</option>
+                        <option value="puasa">Gula Darah Puasa</option>
+                    </select>
+                </div>
+            </div>
+        `);
+
+        // -- OBESITAS --
+        detailWrapper('obesitas', '⚖️ Detail Obesitas', `
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Berat Badan (kg)</label>
+                    <input type="number" step="0.1" id="ob-bb" name="obesitas[berat_badan]" oninput="checkIMTObesitas()" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white">
+                </div>
+                <div>
+                    <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Tinggi Badan (cm)</label>
+                    <input type="number" id="ob-tb" name="obesitas[tinggi_badan]" oninput="checkIMTObesitas()" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white">
+                </div>
+            </div>
+            <div>
+                <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Lingkar Perut (cm)</label>
+                <input type="number" name="obesitas[lingkar_perut]" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white">
+            </div>
+            <div id="ob-imt" class="hidden text-sm font-semibold rounded-xl bg-blue-50 border border-blue-200 p-3 text-blue-700"></div>
+        `);
+        function checkIMTObesitas() {
+            const bb = parseFloat(document.getElementById('ob-bb').value);
+            const tb = parseFloat(document.getElementById('ob-tb').value);
+            const box = document.getElementById('ob-imt');
+            if (!bb || !tb) { box.classList.add('hidden'); return; }
+            const imt = (bb / Math.pow(tb/100, 2)).toFixed(1);
+            const kat = imt < 18.5 ? 'Kurus' : imt < 25 ? 'Normal' : imt < 30 ? 'Berlebih' : 'Obesitas';
+            box.textContent = 'IMT: ' + imt + ' kg/m² (' + kat + ') — dihitung otomatis';
+            box.classList.remove('hidden');
+        }
+
+        // -- PPOK (Form PUMA) --
+        detailWrapper('ppok', '🫁 Detail PPOK (mengikuti Form PUMA)', `
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Berat Badan (kg)</label>
+                    <input type="number" step="0.1" name="ppok[berat_badan]" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white">
+                </div>
+                <div>
+                    <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Tinggi Badan (cm)</label>
+                    <input type="number" name="ppok[tinggi_badan]" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white">
+                </div>
+                <div>
+                    <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Rata-rata Rokok/hari (batang)</label>
+                    <input type="number" name="ppok[jumlah_batang_rokok_per_hari]" placeholder="0" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white">
+                </div>
+                <div>
+                    <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Lama Merokok (tahun)</label>
+                    <input type="number" name="ppok[lama_tahun_merokok]" placeholder="0" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white">
+                </div>
+            </div>
+            <div class="flex items-center justify-between py-2 border-t border-gray-100">
+                <span class="text-sm font-medium text-gray-700">Sesak napas saat jalan cepat / menanjak?</span>
+                <div class="toggle-yatidak flex gap-2">
+                    <span><input type="radio" name="ppok[sesak_napas]" value="false" id="pk-sesak-tidak" class="hidden" checked><label for="pk-sesak-tidak">Tidak</label></span>
+                    <span><input type="radio" name="ppok[sesak_napas]" value="true" id="pk-sesak-ya" class="hidden"><label for="pk-sesak-ya">Ya</label></span>
+                </div>
+            </div>
+            <div class="flex items-center justify-between py-2 border-t border-gray-100">
+                <span class="text-sm font-medium text-gray-700">Batuk berdahak kronis (≥3 bulan/tahun)?</span>
+                <div class="toggle-yatidak flex gap-2">
+                    <span><input type="radio" name="ppok[batuk_berdahak_kronis]" value="false" id="pk-batuk-tidak" class="hidden" checked><label for="pk-batuk-tidak">Tidak</label></span>
+                    <span><input type="radio" name="ppok[batuk_berdahak_kronis]" value="true" id="pk-batuk-ya" class="hidden"><label for="pk-batuk-ya">Ya</label></span>
+                </div>
+            </div>
+            <p class="text-xs text-gray-400">Skor total PUMA dihitung dari usia pasien + 4 poin di atas. Skor ≥6 → risiko tinggi, disarankan rujuk pemeriksaan spirometri.</p>
+        `);
+
+        // -- GANGGUAN INDRA --
+        detailWrapper('gangguan_indra', '👁️ Detail Gangguan Indra', `
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Hasil Pemeriksaan Mata</label>
+                    <select name="gangguan_indra[hasil_mata]" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white">
+                        <option>Normal</option><option>Ada Gangguan</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Hasil Pemeriksaan Telinga</label>
+                    <select name="gangguan_indra[hasil_telinga]" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white">
+                        <option>Normal</option><option>Ada Gangguan</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Keterangan Tambahan</label>
+                <textarea name="gangguan_indra[keterangan]" rows="2" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white"></textarea>
+            </div>
+        `);
+
+        // -- KESEHATAN JIWA (SRQ-20) --
+        let srqHTML = '<p class="text-xs text-gray-400 mb-2">Jawab 20 pertanyaan berikut (selama 30 hari terakhir):</p><div class="rounded-xl border border-gray-200 divide-y bg-white">';
+        const srqPertanyaan = [
+            "Sering menderita sakit kepala?", "Tidak nafsu makan?", "Sulit tidur?", "Mudah takut?",
+            "Merasa tegang, cemas, khawatir?", "Tangan gemetar?", "Pencernaan terganggu/buruk?",
+            "Sulit berpikir jernih?", "Merasa tidak bahagia?", "Menangis lebih sering?",
+            "Sulit menikmati kegiatan sehari-hari?", "Sulit mengambil keputusan?",
+            "Pekerjaan sehari-hari terganggu?", "Tidak mampu melakukan hal bermanfaat?",
+            "Kehilangan minat pada berbagai hal?", "Merasa tidak berharga?",
+            "Punya pikiran mengakhiri hidup?", "Merasa lelah sepanjang waktu?",
+            "Rasa tidak enak di perut?", "Mudah lelah?"
+        ];
+        srqPertanyaan.forEach((q, i) => {
+            const n = i + 1;
+            const highlight = n === 17 ? 'bg-red-50' : '';
+            srqHTML += '<div class="srq-row ' + highlight + '">' +
+                '<span class="text-xs text-gray-700 pr-3">' + n + '. ' + q + (n===17 ? ' ⚠️' : '') + '</span>' +
+                '<div class="toggle-yatidak flex gap-2 flex-shrink-0">' +
+                '<span><input type="radio" name="kesehatan_jiwa[j' + n + ']" value="false" id="srq-' + n + '-t" class="hidden" checked><label for="srq-' + n + '-t">Tidak</label></span>' +
+                '<span><input type="radio" name="kesehatan_jiwa[j' + n + ']" value="true" id="srq-' + n + '-y" class="hidden"><label for="srq-' + n + '-y">Ya</label></span>' +
+                '</div></div>';
+        });
+        srqHTML += '</div><p class="text-xs text-red-500 mt-2">⚠️ No.17 butuh perhatian khusus dari bidan/nakes, bukan sekadar dihitung skor.</p>';
+        detailWrapper('kesehatan_jiwa', '🧠 Detail Kesehatan Jiwa (SRQ-20)', srqHTML);
+    </script>
 
 <%- include('../partials/profil') %>
 
