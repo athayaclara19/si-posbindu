@@ -23,7 +23,7 @@ exports.renderInputSkrining = async (req, res) => {
 exports.handleInputSkrining = async (req, res) => {
     const {
         id_pasien, id_kegiatan, sistole, diastole,
-        berat_badan, tinggi_badan, gula_darah, kolesterol,
+        berat_badan, tinggi_badan, gula_darah,
         merokok, aktivitas_fisik, edukasi, dapat_obat, status_rujukan
     } = req.body;
 
@@ -33,17 +33,17 @@ exports.handleInputSkrining = async (req, res) => {
         const query = `
             INSERT INTO skrining 
             (id_pasien, id_kader, id_kegiatan, sistole, diastole, 
-            berat_badan, tinggi_badan, gula_darah, kolesterol, 
+            berat_badan, tinggi_badan, gula_darah, 
             merokok, aktivitas_fisik, edukasi, dapat_obat, status_rujukan, 
             tanggal_skrining, status_validasi)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,
             CURRENT_DATE, 'menunggu')
         `;
         const values = [
             id_pasien, id_kader, id_kegiatan,
             parseInt(sistole), parseInt(diastole),
             berat_badan||null, tinggi_badan||null,
-            gula_darah||null, kolesterol||null,
+            gula_darah||null,
             merokok==='true'||merokok===true||merokok==='on',
             aktivitas_fisik||null,
             edukasi||null,
@@ -269,19 +269,19 @@ exports.renderEditSkrining = async (req, res) => {
 // 6. Proses Simpan Edit Skrining (POST)
 exports.handleEditSkrining = async (req, res) => {
     const { id_skrining } = req.params;
-    const { sistole, diastole, berat_badan, tinggi_badan, gula_darah, kolesterol } = req.body;
+    const { sistole, diastole, berat_badan, tinggi_badan, gula_darah } = req.body;
     try {
         const query = `
             UPDATE skrining
             SET sistole=$1, diastole=$2, berat_badan=$3, tinggi_badan=$4,
-                gula_darah=$5, kolesterol=$6, status_validasi='menunggu',
+                gula_darah=$5, status_validasi='menunggu',
                 tanggal_validasi=NULL
-            WHERE id_skrining=$7
+            WHERE id_skrining=$6
         `;
         await pool.query(query, [
             parseInt(sistole), parseInt(diastole),
             berat_badan||null, tinggi_badan||null,
-            gula_darah||null, kolesterol||null,
+            gula_darah||null,
             id_skrining
         ]);
         res.redirect('/riwayat');

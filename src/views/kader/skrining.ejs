@@ -67,24 +67,6 @@
             background-color: #EFF6FF !important;
         }
 
-        /* ==== PTM CHECKLIST CARD ==== */
-        .ptm-card {
-            border: 2px solid #E5E7EB;
-            background: #fff;
-            transition: all .15s;
-            cursor: pointer;
-        }
-        .ptm-card.aktif { border-color: #2563EB; background: #EFF6FF; }
-        .ptm-card.aktif .ptm-check { background: #2563EB; border-color: #2563EB; }
-        .ptm-check {
-            width: 20px; height: 20px; border: 2px solid #D1D5DB; border-radius: 6px;
-            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        }
-        .ptm-check::after {
-            content: ''; width: 10px; height: 10px; border-radius: 2px;
-        }
-        .ptm-card.aktif .ptm-check::after { content: '✓'; color: #fff; font-size: 13px; line-height: 1; }
-
         .ptm-detail { display: none; }
         .ptm-detail.show { display: block; }
 
@@ -209,13 +191,11 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#2563EB]"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                             <h3 class="text-[#1F2937] font-poppins font-semibold">Step 2 — Pilih & Isi Jenis PTM</h3>
                         </div>
-                        <div class="px-6 py-5">
-                            <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Jenis PTM yang Diperiksa <span class="text-[#EF4444]">*</span></label>
-                            <p class="text-xs text-gray-400 mb-3">Centang semua yang diperiksa hari ini — boleh lebih dari satu</p>
-                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="ptm-checklist"></div>
+                        <div class="px-6 pt-5">
+                            <p class="text-xs text-gray-400">Isi hasil pemeriksaan untuk seluruh jenis PTM di bawah ini.</p>
                         </div>
 
-                        <div id="ptm-details" class="px-6 pb-2 space-y-4"></div>
+                        <div id="ptm-details" class="px-6 py-4 space-y-4"></div>
 
                         <div class="px-6 py-4 border-t border-gray-100 flex justify-between">
                             <button type="button" onclick="goToStep(1)" class="flex items-center gap-2 border border-gray-300 text-[#1F2937] px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all">← Kembali</button>
@@ -237,6 +217,7 @@
                                     <option value="true">Ya</option>
                                     <option value="false">Tidak</option>
                                 </select>
+                                <p id="merokok-auto-note" class="hidden text-xs text-blue-500 mt-1.5">🔒 Otomatis "Ya" — sudah ada data rokok di bagian PPOK</p>
                             </div>
                             <div>
                                 <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Aktivitas Fisik</label>
@@ -361,13 +342,6 @@
                     return;
                 }
             }
-            if (step === 3) {
-                const adaPTMDicentang = PTM_LIST.some(p => document.getElementById('card-' + p.id).classList.contains('aktif'));
-                if (!adaPTMDicentang) {
-                    Swal.fire({ icon: 'warning', title: 'Belum Ada PTM Dipilih!', text: 'Centang minimal 1 jenis PTM yang diperiksa sebelum lanjut.', confirmButtonColor: '#2563EB', customClass: { popup: 'rounded-2xl font-inter' } });
-                    return;
-                }
-            }
             showStep(step - 1);
         }
 
@@ -426,36 +400,21 @@
             { id: 'kesehatan_jiwa', label: 'Kesehatan Jiwa', icon: '🧠' },
         ];
 
-        const checklistEl = document.getElementById('ptm-checklist');
         const detailsEl = document.getElementById('ptm-details');
 
+        // Semua jenis PTM selalu diperiksa, jadi kirim semuanya sebagai hidden input
         PTM_LIST.forEach(ptm => {
-            const card = document.createElement('label');
-            card.className = 'ptm-card rounded-xl p-3 flex items-center gap-2';
-            card.id = 'card-' + ptm.id;
-            card.innerHTML =
-                '<input type="checkbox" name="jenis_ptm[]" value="' + ptm.id + '" class="hidden" onchange="togglePTM(\'' + ptm.id + '\', this.checked)">' +
-                '<span class="ptm-check"></span>' +
-                '<span class="text-sm font-medium">' + ptm.icon + ' ' + ptm.label + '</span>';
-            card.onclick = (e) => {
-                if (e.target.tagName !== 'INPUT') {
-                    const cb = card.querySelector('input');
-                    cb.checked = !cb.checked;
-                    togglePTM(ptm.id, cb.checked);
-                }
-            };
-            checklistEl.appendChild(card);
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = 'jenis_ptm[]';
+            hidden.value = ptm.id;
+            detailsEl.appendChild(hidden);
         });
-
-        function togglePTM(id, checked) {
-            document.getElementById('card-' + id).classList.toggle('aktif', checked);
-            document.getElementById('detail-' + id).classList.toggle('show', checked);
-        }
 
         function detailWrapper(id, title, innerHTML) {
             const div = document.createElement('div');
             div.id = 'detail-' + id;
-            div.className = 'ptm-detail bg-[#F9FAFB] rounded-2xl border border-gray-100 mt-2';
+            div.className = 'ptm-detail show bg-[#F9FAFB] rounded-2xl border border-gray-100 mt-2';
             div.innerHTML =
                 '<div class="px-5 py-3 border-b border-gray-100"><h4 class="text-[#1F2937] font-poppins font-semibold text-sm">' + title + '</h4></div>' +
                 '<div class="px-5 py-4 space-y-4">' + innerHTML + '</div>';
@@ -463,7 +422,7 @@
         }
 
         // -- HIPERTENSI --
-        detailWrapper('hipertensi', '❤️ Detail Hipertensi', `
+        detailWrapper('hipertensi', 'Detail Hipertensi', `
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Sistole (mmHg)</label>
@@ -474,25 +433,159 @@
                     <input type="number" id="ht-diastole" name="hipertensi[diastole]" placeholder="80" oninput="checkBP()" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white">
                 </div>
             </div>
+            <div id="ht-badge-mode" class="hidden mb-2"></div>
             <div id="ht-badge" class="hidden rounded-xl border-2 p-3 text-sm font-semibold"></div>
         `);
-        function checkBP() {
-            const sys = parseInt(document.getElementById('ht-sistole').value);
-            const dia = parseInt(document.getElementById('ht-diastole').value);
-            const badge = document.getElementById('ht-badge');
-            if (!sys || !dia) { badge.classList.add('hidden'); return; }
-            let kat, style;
-            if (sys >= 140 || dia >= 90) { kat = 'Hipertensi'; style = 'background:#FEF2F2;border-color:#FCA5A5;color:#991B1B'; }
-            else if (sys >= 130 || dia >= 85) { kat = 'Prehipertensi'; style = 'background:#FFFBEB;border-color:#FCD34D;color:#92400E'; }
-            else { kat = 'Normal'; style = 'background:#ECFDF5;border-color:#6EE7B7;color:#065F46'; }
-            badge.className = 'rounded-xl border-2 p-3 text-sm font-semibold';
-            badge.setAttribute('style', style);
-            badge.textContent = 'Kategori: ' + kat + ' (otomatis)';
-            badge.classList.remove('hidden');
+
+        // =====================================================================
+        // Fungsi klasifikasi tekanan darah sesuai Pedoman Kemenkes 2024
+        // Dewasa (≥18 th): 7 kategori (Tabel 2.1 ESC/ESH via Kemenkes)
+        // Anak (<18 th): 4 kategori (Tabel 2.2 AAP 2017 via Kemenkes)
+        // Diporting dari form skrining lama supaya pengkategoriannya konsisten.
+        // =====================================================================
+        function getUsiaFromPasien() {
+            const select = document.getElementById('input-pasien');
+            const selectedOption = select.options[select.selectedIndex];
+            if (!selectedOption || !selectedOption.value) return null;
+
+            const usia = parseInt(selectedOption.getAttribute('data-usia'));
+            if (!isNaN(usia) && usia > 0) return usia;
+
+            const tahunLahir = parseInt(selectedOption.getAttribute('data-tahun-lahir'));
+            if (!isNaN(tahunLahir) && tahunLahir > 0) {
+                return new Date().getFullYear() - tahunLahir;
+            }
+            return null; // tidak diketahui -> asumsikan dewasa
         }
 
+        // Peta ikon, warna badge, dan warna wrapper per kategori (persis dari form lama)
+        const KATEGORI_IKON = {
+            'Optimal': '&#128994;', 'Normal': '&#128309;',
+            'Prehipertensi (Normal Tinggi)': '&#128993;',
+            'Hipertensi Derajat 1': '&#128992;', 'Hipertensi Derajat 2': '&#128308;',
+            'Hipertensi Derajat 3': '&#128721;', 'Hipertensi Sistolik Terisolasi': '&#128310;',
+            'Tekanan Darah Normal': '&#128994;', 'Pre Hipertensi': '&#128993;',
+            'Hipertensi Tingkat 1': '&#128992;', 'Hipertensi Tingkat 2': '&#128308;',
+        };
+        const KATEGORI_WARNA = {
+            'Optimal':                        { bg:'#ECFDF5', color:'#065F46', border:'#6EE7B7' },
+            'Normal':                         { bg:'#EFF6FF', color:'#1E40AF', border:'#93C5FD' },
+            'Prehipertensi (Normal Tinggi)':  { bg:'#FFFBEB', color:'#92400E', border:'#FCD34D' },
+            'Hipertensi Derajat 1':           { bg:'#FFF7ED', color:'#9A3412', border:'#FDBA74' },
+            'Hipertensi Derajat 2':           { bg:'#FEF2F2', color:'#991B1B', border:'#FCA5A5' },
+            'Hipertensi Derajat 3':           { bg:'#FEE2E2', color:'#7F1D1D', border:'#F87171' },
+            'Hipertensi Sistolik Terisolasi': { bg:'#F5F3FF', color:'#5B21B6', border:'#C4B5FD' },
+            'Tekanan Darah Normal':           { bg:'#ECFDF5', color:'#065F46', border:'#6EE7B7' },
+            'Pre Hipertensi':                 { bg:'#FFFBEB', color:'#92400E', border:'#FCD34D' },
+            'Hipertensi Tingkat 1':           { bg:'#FFF7ED', color:'#9A3412', border:'#FDBA74' },
+            'Hipertensi Tingkat 2':           { bg:'#FEF2F2', color:'#991B1B', border:'#FCA5A5' },
+        };
+
+        function checkBP() {
+            const sysVal = document.getElementById('ht-sistole').value;
+            const diaVal = document.getElementById('ht-diastole').value;
+            const sys = parseInt(sysVal);
+            const dia = parseInt(diaVal);
+            const badge = document.getElementById('ht-badge');
+            const modeBadge = document.getElementById('ht-badge-mode');
+
+            if (!sysVal || !diaVal || isNaN(sys) || isNaN(dia)) {
+                badge.classList.add('hidden');
+                modeBadge.classList.add('hidden');
+                return;
+            }
+
+            const usia = getUsiaFromPasien();
+            const isAnak = (usia !== null && usia < 18);
+
+            let kategori = '', pesan = '';
+
+            if (isAnak) {
+                // -- ANAK (< 18 tahun) -- Tabel 2.2 Kemenkes 2024 (AAP 2017)
+                modeBadge.textContent = `Anak (${usia} th)`;
+                modeBadge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-600 border border-purple-200';
+
+                if (usia >= 13) {
+                    if (sys >= 140 || dia >= 90) {
+                        kategori = 'Hipertensi Tingkat 2';
+                        pesan = `Anak ≥13 th: Sistolik ≥140 atau Diastolik ≥90 mmHg. Rujuk ke FKRTL.`;
+                    } else if ((sys >= 130 && sys <= 139) || (dia >= 80 && dia <= 89)) {
+                        kategori = 'Hipertensi Tingkat 1';
+                        pesan = `Anak ≥13 th: Sistolik 130–138 atau Diastolik 80–89 mmHg. Perlu tatalaksana dan monitoring.`;
+                    } else if ((sys >= 120 && sys < 130) || (dia >= 80 && dia < 80)) {
+                        kategori = 'Pre Hipertensi';
+                        pesan = `Anak ≥13 th: Sistolik 120–129 / Diastolik <80 mmHg. Perlu edukasi perubahan gaya hidup.`;
+                    } else if (sys < 120 && dia < 80) {
+                        kategori = 'Tekanan Darah Normal';
+                        pesan = `Anak ≥13 th: Tekanan darah <120/80 mmHg. Pertahankan gaya hidup sehat.`;
+                    } else {
+                        kategori = 'Pre Hipertensi';
+                        pesan = `Anak ≥13 th: Perlu monitoring lebih lanjut.`;
+                    }
+                } else {
+                    if (sys >= 130 || dia >= 80) {
+                        kategori = 'Hipertensi Tingkat 2';
+                        pesan = `Anak 1–12 th: Sistolik/Diastolik ≥persentil 95+12 mmHg. Rujuk ke FKRTL segera.`;
+                    } else if (sys >= 120 || dia >= 70) {
+                        kategori = 'Hipertensi Tingkat 1';
+                        pesan = `Anak 1–12 th: Nilai antara persentil 95 dan 95+12 mmHg. Perlu pemeriksaan lebih lanjut.`;
+                    } else if (sys >= 100 || dia >= 65) {
+                        kategori = 'Pre Hipertensi';
+                        pesan = `Anak 1–12 th: Antara persentil 90 dan <persentil 95. Perlu edukasi dan monitoring.`;
+                    } else {
+                        kategori = 'Tekanan Darah Normal';
+                        pesan = `Anak 1–12 th: Sistolik dan Diastolik <persentil 90. Tekanan darah normal untuk usia ini.`;
+                    }
+                }
+            } else {
+                // -- DEWASA (>=18 tahun atau usia tidak diketahui) -- 7 kategori Kemenkes 2024
+                modeBadge.textContent = usia ? `Dewasa (${usia} th)` : 'Dewasa';
+                modeBadge.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200';
+
+                if (sys >= 180 || dia >= 110) {
+                    kategori = 'Hipertensi Derajat 3';
+                    pesan = `Sistolik ≥180 dan/atau Diastolik ≥110 mmHg. KRISIS — Segera rujuk ke FKRTL!`;
+                } else if ((sys >= 160 && sys <= 179) || (dia >= 100 && dia <= 109)) {
+                    kategori = 'Hipertensi Derajat 2';
+                    pesan = `Sistolik 160–179 dan/atau Diastolik 100–109 mmHg. Perlu pengobatan segera dan monitor ketat.`;
+                } else if ((sys >= 140 && sys <= 159) || (dia >= 90 && dia <= 99)) {
+                    kategori = 'Hipertensi Derajat 1';
+                    pesan = `Sistolik 140–159 dan/atau Diastolik 90–99 mmHg. Perlu tatalaksana farmakologi dan non-farmakologi.`;
+                } else if ((sys >= 130 && sys <= 139) || (dia >= 85 && dia <= 89)) {
+                    kategori = 'Prehipertensi (Normal Tinggi)';
+                    pesan = `Sistolik 130–139 dan/atau Diastolik 85–89 mmHg. Perlu pengawasan dan modifikasi gaya hidup.`;
+                } else if ((sys >= 120 && sys <= 129) && (dia >= 80 && dia <= 84)) {
+                    kategori = 'Normal';
+                    pesan = `Sistolik 120–129 dan Diastolik 80–84 mmHg. Pertahankan pola hidup sehat.`;
+                } else if (sys < 120 && dia < 80) {
+                    kategori = 'Optimal';
+                    pesan = `Sistolik <120 dan Diastolik <80 mmHg. Tekanan darah sangat baik!`;
+                } else if (sys >= 140 && dia < 90) {
+                    kategori = 'Hipertensi Sistolik Terisolasi';
+                    pesan = `Sistolik ≥140 dan Diastolik <90 mmHg. Perlu tatalaksana dan pemantauan.`;
+                } else {
+                    kategori = 'Prehipertensi (Normal Tinggi)';
+                    pesan = `Tekanan darah di batas atas normal. Perlu monitoring rutin.`;
+                }
+            }
+
+            const ikon = KATEGORI_IKON[kategori] || '&#9679;';
+            const warna = KATEGORI_WARNA[kategori] || { bg:'#F9FAFB', color:'#374151', border:'#E5E7EB' };
+
+            badge.className = 'rounded-xl border-2 p-3 text-sm font-semibold';
+            badge.style.backgroundColor = warna.bg;
+            badge.style.color = warna.color;
+            badge.style.borderColor = warna.border;
+            badge.innerHTML = '<span style="margin-right:6px">' + ikon + '</span>' + kategori + '<div class="text-xs font-normal mt-1 opacity-90">' + pesan + '</div>';
+            badge.classList.remove('hidden');
+            modeBadge.classList.remove('hidden');
+        }
+
+        // Hitung ulang kategori saat pasien diganti (usia bisa beda -> dewasa vs anak)
+        document.getElementById('input-pasien').addEventListener('change', checkBP);
+
         // -- DM --
-        detailWrapper('dm', '🩸 Detail Diabetes Melitus', `
+        detailWrapper('dm', 'Detail Diabetes Melitus', `
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Gula Darah (mg/dL)</label>
@@ -509,7 +602,7 @@
         `);
 
         // -- OBESITAS --
-        detailWrapper('obesitas', '⚖️ Detail Obesitas', `
+        detailWrapper('obesitas', 'Detail Obesitas', `
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Berat Badan (kg)</label>
@@ -527,9 +620,19 @@
             <div id="ob-imt" class="hidden text-sm font-semibold rounded-xl bg-blue-50 border border-blue-200 p-3 text-blue-700"></div>
         `);
         function checkIMTObesitas() {
-            const bb = parseFloat(document.getElementById('ob-bb').value);
-            const tb = parseFloat(document.getElementById('ob-tb').value);
+            const bbVal = document.getElementById('ob-bb').value;
+            const tbVal = document.getElementById('ob-tb').value;
+            const bb = parseFloat(bbVal);
+            const tb = parseFloat(tbVal);
             const box = document.getElementById('ob-imt');
+
+            // Sinkronkan ke field tersembunyi PPOK, supaya BB/TB nggak perlu diinput 2x
+            // tapi tetap tersimpan ke skrining_obesitas DAN skrining_ppok.
+            const ppokBBHidden = document.getElementById('ppok-bb-hidden');
+            const ppokTBHidden = document.getElementById('ppok-tb-hidden');
+            if (ppokBBHidden) ppokBBHidden.value = bbVal;
+            if (ppokTBHidden) ppokTBHidden.value = tbVal;
+
             if (!bb || !tb) { box.classList.add('hidden'); return; }
             const imt = (bb / Math.pow(tb/100, 2)).toFixed(1);
             const kat = imt < 18.5 ? 'Kurus' : imt < 25 ? 'Normal' : imt < 30 ? 'Berlebih' : 'Obesitas';
@@ -538,44 +641,153 @@
         }
 
         // -- PPOK (Form PUMA) --
-        detailWrapper('ppok', '🫁 Detail PPOK (mengikuti Form PUMA)', `
+        detailWrapper('ppok', 'Detail PPOK (mengikuti Form PUMA)', `
+            <div class="rounded-xl bg-blue-50 border border-blue-100 px-4 py-3 text-xs text-blue-600 flex items-center gap-2">
+                <span>ℹ️</span>
+                <span>Berat &amp; Tinggi Badan otomatis memakai data dari bagian <b>Obesitas</b> di atas — nggak perlu diisi ulang.</span>
+            </div>
+            <input type="hidden" id="ppok-bb-hidden" name="ppok[berat_badan]">
+            <input type="hidden" id="ppok-tb-hidden" name="ppok[tinggi_badan]">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Berat Badan (kg)</label>
-                    <input type="number" step="0.1" name="ppok[berat_badan]" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white">
-                </div>
-                <div>
-                    <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Tinggi Badan (cm)</label>
-                    <input type="number" name="ppok[tinggi_badan]" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white">
-                </div>
-                <div>
                     <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Rata-rata Rokok/hari (batang)</label>
-                    <input type="number" name="ppok[jumlah_batang_rokok_per_hari]" placeholder="0" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white">
+                    <input type="number" id="pk-rokok-hari" name="ppok[jumlah_batang_rokok_per_hari]" placeholder="0" oninput="syncMerokokFromPPOK()" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white">
                 </div>
                 <div>
                     <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Lama Merokok (tahun)</label>
-                    <input type="number" name="ppok[lama_tahun_merokok]" placeholder="0" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white">
+                    <input type="number" id="pk-lama-rokok" name="ppok[lama_tahun_merokok]" placeholder="0" oninput="syncMerokokFromPPOK()" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white">
                 </div>
             </div>
             <div class="flex items-center justify-between py-2 border-t border-gray-100">
                 <span class="text-sm font-medium text-gray-700">Sesak napas saat jalan cepat / menanjak?</span>
                 <div class="toggle-yatidak flex gap-2">
-                    <span><input type="radio" name="ppok[sesak_napas]" value="false" id="pk-sesak-tidak" class="hidden" checked><label for="pk-sesak-tidak">Tidak</label></span>
-                    <span><input type="radio" name="ppok[sesak_napas]" value="true" id="pk-sesak-ya" class="hidden"><label for="pk-sesak-ya">Ya</label></span>
+                    <span><input type="radio" name="ppok[sesak_napas]" value="false" id="pk-sesak-tidak" class="hidden" onchange="hitungSkorPUMA()"><label for="pk-sesak-tidak">Tidak</label></span>
+                    <span><input type="radio" name="ppok[sesak_napas]" value="true" id="pk-sesak-ya" class="hidden" onchange="hitungSkorPUMA()"><label for="pk-sesak-ya">Ya</label></span>
                 </div>
             </div>
             <div class="flex items-center justify-between py-2 border-t border-gray-100">
                 <span class="text-sm font-medium text-gray-700">Batuk berdahak kronis (≥3 bulan/tahun)?</span>
                 <div class="toggle-yatidak flex gap-2">
-                    <span><input type="radio" name="ppok[batuk_berdahak_kronis]" value="false" id="pk-batuk-tidak" class="hidden" checked><label for="pk-batuk-tidak">Tidak</label></span>
-                    <span><input type="radio" name="ppok[batuk_berdahak_kronis]" value="true" id="pk-batuk-ya" class="hidden"><label for="pk-batuk-ya">Ya</label></span>
+                    <span><input type="radio" name="ppok[batuk_berdahak_kronis]" value="false" id="pk-batuk-tidak" class="hidden" onchange="hitungSkorPUMA()"><label for="pk-batuk-tidak">Tidak</label></span>
+                    <span><input type="radio" name="ppok[batuk_berdahak_kronis]" value="true" id="pk-batuk-ya" class="hidden" onchange="hitungSkorPUMA()"><label for="pk-batuk-ya">Ya</label></span>
                 </div>
             </div>
-            <p class="text-xs text-gray-400">Skor total PUMA dihitung dari usia pasien + 4 poin di atas. Skor ≥6 → risiko tinggi, disarankan rujuk pemeriksaan spirometri.</p>
+            <div id="ppok-skor-box" class="hidden rounded-xl border-2 p-3 text-sm font-semibold mt-2"></div>
+            <input type="hidden" id="ppok-skor-hidden" name="ppok[skor_total]">
+            <input type="hidden" id="ppok-kategori-hidden" name="ppok[kategori_risiko]">
+            <input type="hidden" id="ppok-rujukan-hidden" name="ppok[rujukan_spirometri]">
+            <p class="text-xs text-gray-400">Skor total PUMA dihitung dari usia pasien + faktor merokok + gejala di atas. Skor ≥6 → risiko tinggi, disarankan rujuk pemeriksaan spirometri.</p>
         `);
 
+        // Kalau di PPOK ada data rokok/hari atau lama merokok terisi (>0),
+        // otomatis set "Merokok" di Step 3 = Ya dan kunci (nggak bisa diklik manual).
+        // Kalau data rokok di PPOK dikosongkan lagi, kembalikan jadi bisa dipilih manual.
+        function syncMerokokFromPPOK() {
+            const rokokHariEl = document.getElementById('pk-rokok-hari');
+            const lamaRokokEl = document.getElementById('pk-lama-rokok');
+            if (!rokokHariEl || !lamaRokokEl) return;
+
+            const rokokHari = parseFloat(rokokHariEl.value) || 0;
+            const lamaRokok = parseFloat(lamaRokokEl.value) || 0;
+            const merokokSelect = document.querySelector('select[name="merokok"]');
+            const note = document.getElementById('merokok-auto-note');
+            if (!merokokSelect) return;
+
+            if (rokokHari > 0 || lamaRokok > 0) {
+                merokokSelect.value = 'true';
+                merokokSelect.classList.add('pointer-events-none', 'opacity-60');
+                merokokSelect.setAttribute('data-auto-locked', 'true');
+                if (note) note.classList.remove('hidden');
+            } else if (merokokSelect.getAttribute('data-auto-locked') === 'true') {
+                merokokSelect.classList.remove('pointer-events-none', 'opacity-60');
+                merokokSelect.removeAttribute('data-auto-locked');
+                merokokSelect.value = '';
+                if (note) note.classList.add('hidden');
+            }
+
+            hitungSkorPUMA();
+        }
+
+        // =====================================================================
+        // Skor PUMA (Predictive Model for COPD in Primary Care) — mengikuti
+        // Kuesioner PUMA versi PDPI (pulmo.id/puma):
+        //   - Usia:        <40 th = 0, 40-60 th = 1, >60 th = 2
+        //   - Pack Years:  (lama merokok tahun x rata-rata rokok/hari) / 20
+        //                  <20 = 0, 20-30 = 1, >30 = 2
+        //   - Sesak napas: Ya = 1, Tidak = 0
+        //   - Batuk berdahak kronis: Ya = 1, Tidak = 0
+        //   Total maksimal = 6. Skor >= 6 -> Risiko Tinggi, disarankan spirometri.
+        // Catatan: kuesioner PUMA resmi juga memasukkan jenis kelamin sebagai
+        // salah satu faktor skor. Field itu belum ada di form/tabel skrining_ppok
+        // kamu sekarang, jadi belum dihitung -- gampang ditambah nanti kalau perlu.
+        // =====================================================================
+        function hitungSkorPUMA() {
+            const box = document.getElementById('ppok-skor-box');
+            const rokokHariEl = document.getElementById('pk-rokok-hari');
+            const lamaRokokEl = document.getElementById('pk-lama-rokok');
+            if (!box || !rokokHariEl || !lamaRokokEl) return;
+
+            const usia = getUsiaFromPasien();
+            const rokokHari = parseFloat(rokokHariEl.value) || 0;
+            const lamaRokok = parseFloat(lamaRokokEl.value) || 0;
+            const sesakEl = document.querySelector('input[name="ppok[sesak_napas]"]:checked');
+            const batukEl = document.querySelector('input[name="ppok[batuk_berdahak_kronis]"]:checked');
+
+            // Kalau belum ada input sama sekali, jangan tampilkan skor dulu
+            if (usia === null && !rokokHari && !lamaRokok && !sesakEl && !batukEl) {
+                box.classList.add('hidden');
+                return;
+            }
+
+            // -- Skor usia --
+            let skorUsia = 0;
+            if (usia !== null) {
+                if (usia > 60) skorUsia = 2;
+                else if (usia >= 40) skorUsia = 1;
+                else skorUsia = 0;
+            }
+
+            // -- Skor pack years --
+            const packYears = (lamaRokok * rokokHari) / 20;
+            let skorPack = 0;
+            if (packYears > 30) skorPack = 2;
+            else if (packYears >= 20) skorPack = 1;
+            else skorPack = 0;
+
+            // -- Skor gejala --
+            const skorSesak = (sesakEl && sesakEl.value === 'true') ? 1 : 0;
+            const skorBatuk = (batukEl && batukEl.value === 'true') ? 1 : 0;
+
+            const skorTotal = skorUsia + skorPack + skorSesak + skorBatuk;
+            const risikoTinggi = skorTotal >= 6;
+            const kategoriRisiko = risikoTinggi ? 'Tinggi' : 'Rendah';
+
+            // Simpan ke hidden input biar ikut kekirim pas submit
+            document.getElementById('ppok-skor-hidden').value = skorTotal;
+            document.getElementById('ppok-kategori-hidden').value = kategoriRisiko;
+            document.getElementById('ppok-rujukan-hidden').value = risikoTinggi ? 'true' : 'false';
+
+            box.classList.remove('hidden');
+            if (risikoTinggi) {
+                box.style.backgroundColor = '#FEF2F2';
+                box.style.borderColor = '#FCA5A5';
+                box.style.color = '#991B1B';
+                box.innerHTML = 'Skor PUMA: ' + skorTotal + ' — <b>Risiko Tinggi PPOK</b>' +
+                    '<div class="text-xs font-normal mt-1 opacity-90">Skor ≥6, disarankan rujuk pemeriksaan spirometri dengan tes bronkodilator.</div>';
+            } else {
+                box.style.backgroundColor = '#ECFDF5';
+                box.style.borderColor = '#6EE7B7';
+                box.style.color = '#065F46';
+                box.innerHTML = 'Skor PUMA: ' + skorTotal + ' — <b>Risiko Rendah PPOK</b>' +
+                    '<div class="text-xs font-normal mt-1 opacity-90">Evaluasi berkala pada kelompok berisiko.</div>';
+            }
+        }
+
+        // Hitung ulang skor PUMA saat pasien diganti (usia bisa beda)
+        document.getElementById('input-pasien').addEventListener('change', hitungSkorPUMA);
+
         // -- GANGGUAN INDRA --
-        detailWrapper('gangguan_indra', '👁️ Detail Gangguan Indra', `
+        detailWrapper('gangguan_indra', 'Detail Gangguan Indra', `
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="text-sm text-[#1F2937] mb-1.5 block font-medium">Hasil Pemeriksaan Mata</label>
@@ -614,12 +826,12 @@
             srqHTML += '<div class="srq-row ' + highlight + '">' +
                 '<span class="text-xs text-gray-700 pr-3">' + n + '. ' + q + (n===17 ? ' ⚠️' : '') + '</span>' +
                 '<div class="toggle-yatidak flex gap-2 flex-shrink-0">' +
-                '<span><input type="radio" name="kesehatan_jiwa[j' + n + ']" value="false" id="srq-' + n + '-t" class="hidden" checked><label for="srq-' + n + '-t">Tidak</label></span>' +
+                '<span><input type="radio" name="kesehatan_jiwa[j' + n + ']" value="false" id="srq-' + n + '-t" class="hidden"><label for="srq-' + n + '-t">Tidak</label></span>' +
                 '<span><input type="radio" name="kesehatan_jiwa[j' + n + ']" value="true" id="srq-' + n + '-y" class="hidden"><label for="srq-' + n + '-y">Ya</label></span>' +
                 '</div></div>';
         });
         srqHTML += '</div><p class="text-xs text-red-500 mt-2">⚠️ No.17 butuh perhatian khusus dari bidan/nakes, bukan sekadar dihitung skor.</p>';
-        detailWrapper('kesehatan_jiwa', '🧠 Detail Kesehatan Jiwa (SRQ-20)', srqHTML);
+        detailWrapper('kesehatan_jiwa', ' Detail Kesehatan Jiwa (SRQ-20)', srqHTML);
     </script>
 
 <%- include('../partials/profil') %>
