@@ -19,42 +19,163 @@ exports.renderInputSkrining = async (req, res) => {
     }
 };
 
-// 2. Proses Simpan Skrining (POST)
+// 2. Proses Simpan Skrining Multi-PTM (POST)
 exports.handleInputSkrining = async (req, res) => {
     const {
-        id_pasien, id_kegiatan, sistole, diastole,
-        berat_badan, tinggi_badan, gula_darah,
-        merokok, aktivitas_fisik, edukasi, dapat_obat, status_rujukan
+        id_pasien, id_kegiatan,
+        merokok, aktivitas_fisik, edukasi, dapat_obat, status_rujukan,
+        hipertensi = {}, dm = {}, obesitas = {}, ppok = {},
+        gangguan_indra = {}, kesehatan_jiwa = {}
     } = req.body;
 
     const id_kader = req.session.user.id_user;
 
+    const sistole  = parseInt(hipertensi.sistole);
+    const diastole = parseInt(hipertensi.diastole);
+    if (isNaN(sistole) || isNaN(diastole)) {
+        return res.status(400).send("Gagal menyimpan data skrining: sistole/diastole wajib diisi (tab Hipertensi).");
+    }
+
+    const merokokBool = merokok === 'true' || merokok === true || merokok === 'on';
+    const beratUmum  = obesitas.berat_badan || ppok.berat_badan || null;
+    const tinggiUmum = obesitas.tinggi_badan || ppok.tinggi_badan || null;
+
+    const client = await pool.connect();
     try {
-        const query = `
-            INSERT INTO skrining 
-            (id_pasien, id_kader, id_kegiatan, sistole, diastole, 
-            berat_badan, tinggi_badan, gula_darah, 
-            merokok, aktivitas_fisik, edukasi, dapat_obat, status_rujukan, 
-            tanggal_skrining, status_validasi)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,
-            CURRENT_DATE, 'menunggu')
-        `;
-        const values = [
-            id_pasien, id_kader, id_kegiatan,
-            parseInt(sistole), parseInt(diastole),
-            berat_badan||null, tinggi_badan||null,
-            gula_darah||null,
-            merokok==='true'||merokok===true||merokok==='on',
-            aktivitas_fisik||null,
-            edukasi||null,
-            dapat_obat||'tidak',
-            status_rujukan||'tidak'
-        ];
-        await pool.query(query, values);
+        await client.query('BEGIN');
+
+        const insertSkrining = async (idJenisPtm, overrides = {}) => {
+            const q = `
+                INSERT INTO skrining
+                (id_pasien, id_kader, id_kegiatan, sistole, diastole,
+                 berat_badan, tinggi_badan, gula_darah,
+                 merokok, aktivitas_fisik, edukasi, dapat_obat, status_rujukan,
+                 tanggal_skrining, status_validasi, id_jenis_ptm)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,
+                        CURRENT_DATE, 'menunggu', $14)
+                RETURNING id_skrining
+            `;
+            const vals = [
+                id_pasien, id_kader, id_kegiatan,
+                sistole, diastole,
+                overrides.berat_badan ?? beratUmum,
+                overrides.tinggi_badan ?? tinggiUmum,
+                overrides.gula_darah ?? (dm.gula_darah || null),
+                merokokBool,
+                aktivitas_fisik || null,
+                edukasi || null,
+                dapat_obat || 'tidak',
+                status_rujukan || 'tidak',
+                idJenisPtm
+            ];
+            const result = await client.query(q, vals);
+            return result.rows[0].id_skrining;
+        };
+
+        // 1. Hipertensi (selalu ada, karena tensi wajib diisi)
+        const idHipertensi = await insertSkrining('hipertensi');
+        await client.query(
+            `INSERT INTO skrining_hipertensi (id_skrining, sistole, diastole, status_tekanan)
+             VALUES ($1,$2,$3,$4)`,
+            [idHipertensi, sistole, diastole, null]
+        );
+
+        // 2. Diabetes Melitus
+        if (dm.gula_darah) {
+            const idDm = await insertSkrining('dm', { gula_darah: dm.gula_darah });
+            await client.query(
+                `INSERT INTO skrining_dm (id_skrining, gula_darah, jenis_pemeriksaan, kategori_hasil)
+                 VALUES ($1,$2,$3,$4)`,
+                [idDm, dm.gula_darah, dm.jenis_pemeriksaan || null, null]
+            );
+        }
+
+        // 3. Obesitas
+        if (obesitas.berat_badan && obesitas.tinggi_badan) {
+            const idObesitas = await insertSkrining('obesitas', {
+                berat_badan: obesitas.berat_badan, tinggi_badan: obesitas.tinggi_badan
+            });
+            const tbM = obesitas.tinggi_badan / 100;
+            const imt = tbM > 0 ? (obesitas.berat_badan / (tbM * tbM)) : null;
+            await client.query(
+                `INSERT INTO skrining_obesitas (id_skrining, berat_badan, tinggi_badan, imt, lingkar_perut, kategori_obesitas)
+                 VALUES ($1,$2,$3,$4,$5,$6)`,
+                [idObesitas, obesitas.berat_badan, obesitas.tinggi_badan, imt, obesitas.lingkar_perut || null, null]
+            );
+        }
+
+        // 4. PPOK
+        if (ppok.jumlah_batang_rokok_per_hari || ppok.sesak_napas || ppok.batuk_berdahak_kronis) {
+            const idPpok = await insertSkrining('ppok', {
+                berat_badan: ppok.berat_badan, tinggi_badan: ppok.tinggi_badan
+            });
+            let imtPpok = null;
+            if (ppok.berat_badan && ppok.tinggi_badan) {
+                const tbM = ppok.tinggi_badan / 100;
+                imtPpok = tbM > 0 ? (ppok.berat_badan / (tbM * tbM)) : null;
+            }
+            await client.query(
+                `INSERT INTO skrining_ppok
+                 (id_skrining, berat_badan, tinggi_badan, imt, jumlah_batang_rokok_per_hari,
+                  lama_tahun_merokok, sesak_napas, batuk_berdahak_kronis, skor_total,
+                  kategori_risiko, rujukan_spirometri)
+                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+                [
+                    idPpok, ppok.berat_badan || null, ppok.tinggi_badan || null, imtPpok,
+                    ppok.jumlah_batang_rokok_per_hari || 0, ppok.lama_tahun_merokok || 0,
+                    ppok.sesak_napas === 'true' || ppok.sesak_napas === true,
+                    ppok.batuk_berdahak_kronis === 'true' || ppok.batuk_berdahak_kronis === true,
+                    ppok.skor_total || null, ppok.kategori_risiko || null,
+                    ppok.rujukan_spirometri === 'true' || ppok.rujukan_spirometri === true
+                ]
+            );
+        }
+
+        // 5. Gangguan Indra
+        if (gangguan_indra.hasil_mata || gangguan_indra.hasil_telinga || gangguan_indra.keterangan) {
+            const idIndra = await insertSkrining('gangguan_indra');
+            await client.query(
+                `INSERT INTO skrining_gangguan_indra
+                 (id_skrining, hasil_pemeriksaan_mata, tajam_penglihatan,
+                  hasil_pemeriksaan_telinga, tes_pendengaran, keterangan, rujukan_lanjutan)
+                 VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+                [
+                    idIndra, gangguan_indra.hasil_mata || null, null,
+                    gangguan_indra.hasil_telinga || null, null,
+                    gangguan_indra.keterangan || null, false
+                ]
+            );
+        }
+
+        // 6. Kesehatan Jiwa (SRQ-20)
+        const adaJawabanJiwa = Object.keys(kesehatan_jiwa).length > 0;
+        if (adaJawabanJiwa) {
+            const jawabanJiwa = [];
+            for (let i = 1; i <= 20; i++) {
+                const val = kesehatan_jiwa['j' + i];
+                jawabanJiwa.push(val === 'true' || val === true);
+            }
+            const skorTotal = jawabanJiwa.filter(Boolean).length;
+            const idJiwa = await insertSkrining('kesehatan_jiwa');
+            await client.query(
+                `INSERT INTO skrining_kesehatan_jiwa
+                 (id_skrining, j1,j2,j3,j4,j5,j6,j7,j8,j9,j10,
+                  j11,j12,j13,j14,j15,j16,j17,j18,j19,j20,
+                  skor_total, kategori_hasil)
+                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,
+                         $12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)`,
+                [idJiwa, ...jawabanJiwa, skorTotal, null]
+            );
+        }
+
+        await client.query('COMMIT');
         res.redirect('/riwayat');
     } catch (err) {
+        await client.query('ROLLBACK');
         console.error(err);
         res.status(500).send("Gagal menyimpan data skrining: " + err.message);
+    } finally {
+        client.release();
     }
 };
 
