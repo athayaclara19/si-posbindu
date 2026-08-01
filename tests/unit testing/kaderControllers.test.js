@@ -1,6 +1,22 @@
 const { mockReqRes } = require('./helpers/httpMocks');
 
-jest.mock('../../src/config/db', () => ({ query: jest.fn() }));
+jest.mock('../../src/config/db', () => {
+    const mockPool = {
+        query: jest.fn((sql, params) => {
+            if (sql && sql.includes('SELECT id_skrining FROM skrining')) {
+                return Promise.resolve({ rows: [], rowCount: 0 });
+            }
+            if (sql && sql.includes('SELECT id_jenis_ptm FROM skrining')) {
+                return Promise.resolve({ rows: [{ id_jenis_ptm: 'hipertensi' }], rowCount: 1 });
+            }
+            return Promise.resolve({ rows: [{ id_skrining: 1 }], rowCount: 1 });
+        }),
+        connect: jest.fn(),
+        release: jest.fn()
+    };
+    mockPool.connect.mockResolvedValue(mockPool);
+    return mockPool;
+});
 
 const pool = require('../../src/config/db');
 const kaderController = require('../../src/controllers/kaderControllers');
@@ -72,11 +88,12 @@ describe('kaderControllers.handleInputSkrining()', () => {
 
         await kaderController.handleInputSkrining(req, res);
 
-        const values = pool.query.mock.calls[0][1];
+        const insertCall = pool.query.mock.calls.find(call => call[0] && call[0].includes('INSERT INTO skrining') && call[0].includes('id_pasien'));
+        const values = insertCall ? insertCall[1] : [];
         expect(values[3]).toBe(150); // sistole diparse jadi int
         expect(values[4]).toBe(95);  // diastole diparse jadi int
-        expect(values[9]).toBe(true); // merokok === 'true' → true
-        expect(values[12]).toBe('tidak'); // default dapat_obat
+        expect(values[8]).toBe(true); // merokok === 'true' → true (index 8)
+        expect(values[11]).toBe('tidak'); // default dapat_obat (index 11)
         expect(res.redirect).toHaveBeenCalledWith('/riwayat');
     });
 
@@ -89,8 +106,9 @@ describe('kaderControllers.handleInputSkrining()', () => {
 
         await kaderController.handleInputSkrining(req, res);
 
-        const values = pool.query.mock.calls[0][1];
-        expect(values[9]).toBe(true);
+        const insertCall = pool.query.mock.calls.find(call => call[0] && call[0].includes('INSERT INTO skrining') && call[0].includes('id_pasien'));
+        const values = insertCall ? insertCall[1] : [];
+        expect(values[8]).toBe(true);
     });
 
     test('query gagal → status 500 dengan pesan error', async () => {
@@ -282,8 +300,9 @@ describe('kaderControllers.handleEditSkrining()', () => {
 
         await kaderController.handleEditSkrining(req, res);
 
-        const values = pool.query.mock.calls[0][1];
-        expect(values).toEqual([135, 85, '60', null, null, null, 1]);
+        const updateCall = pool.query.mock.calls.find(call => call[0] && call[0].includes('UPDATE skrining'));
+        const values = updateCall ? updateCall[1] : [];
+        expect(values).toEqual([135, 85, 1]);
         expect(res.redirect).toHaveBeenCalledWith('/riwayat');
     });
 

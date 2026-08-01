@@ -51,51 +51,206 @@
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
                 <form action="/skrining/edit/<%= skrining.id_skrining %>" method="POST" class="space-y-6">
                     
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Hasil Pemeriksaan Tensi</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Tekanan Sistole <span class="text-red-500">*</span></label>
-                                <div class="flex items-center rounded-xl border border-gray-200 bg-gray-50 overflow-hidden focus-within:border-[#2563EB] focus-within:bg-white transition-all">
-                                    <input type="number" name="sistole" value="<%= skrining.sistole %>" class="w-full px-4 py-2.5 bg-transparent text-sm outline-none" required>
-                                    <span class="px-4 py-2.5 bg-gray-100 border-l border-gray-200 text-gray-500 text-sm whitespace-nowrap">mmHg</span>
+                    <% if (skrining.id_jenis_ptm === 'hipertensi') { %>
+                        <!-- Seksi Hipertensi -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Hasil Pemeriksaan Tensi</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Tekanan Sistole <span class="text-red-500">*</span></label>
+                                    <div class="flex items-center rounded-xl border border-gray-200 bg-gray-50 overflow-hidden focus-within:border-[#2563EB] focus-within:bg-white transition-all">
+                                        <input type="number" name="sistole" value="<%= skrining.sistole %>" class="w-full px-4 py-2.5 bg-transparent text-sm outline-none" required>
+                                        <span class="px-4 py-2.5 bg-gray-100 border-l border-gray-200 text-gray-500 text-sm whitespace-nowrap">mmHg</span>
+                                    </div>
                                 </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Tekanan Diastole <span class="text-red-500">*</span></label>
-                                <div class="flex items-center rounded-xl border border-gray-200 bg-gray-50 overflow-hidden focus-within:border-[#2563EB] focus-within:bg-white transition-all">
-                                    <input type="number" name="diastole" value="<%= skrining.diastole %>" class="w-full px-4 py-2.5 bg-transparent text-sm outline-none" required>
-                                    <span class="px-4 py-2.5 bg-gray-100 border-l border-gray-200 text-gray-500 text-sm whitespace-nowrap">mmHg</span>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Tekanan Diastole <span class="text-red-500">*</span></label>
+                                    <div class="flex items-center rounded-xl border border-gray-200 bg-gray-50 overflow-hidden focus-within:border-[#2563EB] focus-within:bg-white transition-all">
+                                        <input type="number" name="diastole" value="<%= skrining.diastole %>" class="w-full px-4 py-2.5 bg-transparent text-sm outline-none" required>
+                                        <span class="px-4 py-2.5 bg-gray-100 border-l border-gray-200 text-gray-500 text-sm whitespace-nowrap">mmHg</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    <% } else if (skrining.id_jenis_ptm === 'dm') { %>
+                        <!-- Seksi Diabetes Melitus -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Hasil Pemeriksaan Diabetes Melitus</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Gula Darah <span class="text-red-500">*</span></label>
+                                    <div class="flex items-center rounded-xl border border-gray-200 bg-gray-50 overflow-hidden focus-within:border-[#2563EB] focus-within:bg-white transition-all">
+                                        <input type="number" name="dm_gula_darah" value="<%= skrining.dm_gula_darah || skrining.gula_darah %>" class="w-full px-4 py-2.5 bg-transparent text-sm outline-none" required>
+                                        <span class="px-4 py-2.5 bg-gray-100 border-l border-gray-200 text-gray-500 text-sm whitespace-nowrap">mg/dL</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Jenis Pemeriksaan</label>
+                                    <select name="dm_jenis_pemeriksaan" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all">
+                                        <option value="sewaktu" <%= skrining.dm_jenis_pemeriksaan === 'sewaktu' ? 'selected' : '' %>>Gula Darah Sewaktu (GDS)</option>
+                                        <option value="puasa" <%= skrining.dm_jenis_pemeriksaan === 'puasa' ? 'selected' : '' %>>Gula Darah Puasa (GDP)</option>
+                                        <option value="post_prandial" <%= skrining.dm_jenis_pemeriksaan === 'post_prandial' ? 'selected' : '' %>>Gula Darah 2 Jam Post Prandial (GD2PP)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    <% } else if (skrining.id_jenis_ptm === 'obesitas') { %>
+                        <!-- Seksi Obesitas -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Hasil Pemeriksaan Obesitas</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Berat Badan <span class="text-red-500">*</span></label>
+                                    <div class="flex items-center rounded-xl border border-gray-200 bg-gray-50 overflow-hidden focus-within:border-[#2563EB] focus-within:bg-white transition-all">
+                                        <input type="number" step="0.1" name="ob_berat_badan" value="<%= skrining.ob_berat_badan || skrining.berat_badan %>" class="w-full px-4 py-2.5 bg-transparent text-sm outline-none" required>
+                                        <span class="px-4 py-2.5 bg-gray-100 border-l border-gray-200 text-gray-500 text-sm whitespace-nowrap">kg</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Tinggi Badan <span class="text-red-500">*</span></label>
+                                    <div class="flex items-center rounded-xl border border-gray-200 bg-gray-50 overflow-hidden focus-within:border-[#2563EB] focus-within:bg-white transition-all">
+                                        <input type="number" name="ob_tinggi_badan" value="<%= skrining.ob_tinggi_badan || skrining.tinggi_badan %>" class="w-full px-4 py-2.5 bg-transparent text-sm outline-none" required>
+                                        <span class="px-4 py-2.5 bg-gray-100 border-l border-gray-200 text-gray-500 text-sm whitespace-nowrap">cm</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Lingkar Perut</label>
+                                    <div class="flex items-center rounded-xl border border-gray-200 bg-gray-50 overflow-hidden focus-within:border-[#2563EB] focus-within:bg-white transition-all">
+                                        <input type="number" step="0.1" name="ob_lingkar_perut" value="<%= skrining.ob_lingkar_perut %>" class="w-full px-4 py-2.5 bg-transparent text-sm outline-none">
+                                        <span class="px-4 py-2.5 bg-gray-100 border-l border-gray-200 text-gray-500 text-sm whitespace-nowrap">cm</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% } else if (skrining.id_jenis_ptm === 'ppok') { %>
+                        <!-- Seksi PPOK -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Hasil Pemeriksaan PPOK</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Jumlah Batang Rokok / Hari</label>
+                                    <input type="number" name="pp_rokok_per_hari" value="<%= skrining.pp_rokok_per_hari || 0 %>" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Lama Tahun Merokok</label>
+                                    <input type="number" name="pp_lama_merokok" value="<%= skrining.pp_lama_merokok || 0 %>" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all">
+                                </div>
+                            </div>
+                            <div class="space-y-3 mb-4">
+                                <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                    <input type="checkbox" name="pp_sesak_napas" value="true" <%= skrining.pp_sesak_napas ? 'checked' : '' %> class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span>Sesak napas saat berjalan cepat atau mendaki sedikit</span>
+                                </label>
+                                <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                    <input type="checkbox" name="pp_batuk_kronis" value="true" <%= skrining.pp_batuk_kronis ? 'checked' : '' %> class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span>Mengalami batuk berdahak secara kronis</span>
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Skor Total PUMA</label>
+                                    <input type="number" name="pp_skor_total" value="<%= skrining.pp_skor_total || 0 %>" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Kategori Risiko</label>
+                                    <select name="pp_kategori_risiko" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all">
+                                        <option value="Rendah" <%= skrining.pp_kategori_risiko === 'Rendah' ? 'selected' : '' %>>Rendah</option>
+                                        <option value="Tinggi" <%= skrining.pp_kategori_risiko === 'Tinggi' ? 'selected' : '' %>>Tinggi (Rujuk Spirometri)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    <% } else if (skrining.id_jenis_ptm === 'gangguan_indra') { %>
+                        <!-- Seksi Gangguan Indra -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Hasil Pemeriksaan Gangguan Indra</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Pemeriksaan Mata (Tajam Penglihatan)</label>
+                                    <select name="gi_mata" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all">
+                                        <option value="Normal" <%= skrining.gi_mata === 'Normal' ? 'selected' : '' %>>Normal</option>
+                                        <option value="Gangguan" <%= skrining.gi_mata === 'Gangguan' ? 'selected' : '' %>>Ada Gangguan</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Pemeriksaan Telinga (Tajam Pendengaran)</label>
+                                    <select name="gi_telinga" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all">
+                                        <option value="Normal" <%= skrining.gi_telinga === 'Normal' ? 'selected' : '' %>>Normal</option>
+                                        <option value="Gangguan" <%= skrining.gi_telinga === 'Gangguan' ? 'selected' : '' %>>Ada Gangguan</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Keterangan Tambahan</label>
+                                <textarea name="gi_keterangan" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all h-20 resize-none"><%= skrining.gi_keterangan %></textarea>
+                            </div>
+                        </div>
+                    <% } else if (skrining.id_jenis_ptm === 'kesehatan_jiwa') { %>
+                        <!-- Seksi Kesehatan Jiwa -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Hasil Pemeriksaan Kesehatan Jiwa (SRQ-20)</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Skor SRQ-20 (0 - 20)</label>
+                                    <input type="number" min="0" max="20" name="kj_skor_total" value="<%= skrining.kj_skor_total || 0 %>" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Kategori Hasil</label>
+                                    <select name="kj_kategori_hasil" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all">
+                                        <option value="Normal" <%= skrining.kj_kategori_hasil === 'Normal' ? 'selected' : '' %>>Normal</option>
+                                        <option value="Depresi / Cemas" <%= skrining.kj_kategori_hasil === 'Depresi / Cemas' ? 'selected' : '' %>>Indikasi Gangguan Mental Emosional</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Risiko Bunuh Diri</label>
+                                    <select name="kj_risiko_bunuh_diri" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all">
+                                        <option value="Tidak" <%= !skrining.kj_risiko_bunuh_diri ? 'selected' : '' %>>Tidak Ada</option>
+                                        <option value="Ya" <%= skrining.kj_risiko_bunuh_diri ? 'selected' : '' %>>Ada Risiko</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
 
+                    <!-- Seksi Data Umum (Gaya Hidup & Tindak Lanjut) -->
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Pemeriksaan Lainnya (Opsional)</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Informasi Umum Gaya Hidup & Tindak Lanjut</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Berat Badan</label>
-                                <div class="flex items-center rounded-xl border border-gray-200 bg-gray-50 overflow-hidden focus-within:border-[#2563EB] focus-within:bg-white transition-all">
-                                    <input type="number" step="0.1" name="berat_badan" value="<%= skrining.berat_badan %>" class="w-full px-4 py-2.5 bg-transparent text-sm outline-none">
-                                    <span class="px-4 py-2.5 bg-gray-100 border-l border-gray-200 text-gray-500 text-sm whitespace-nowrap">kg</span>
-                                </div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Apakah Merokok?</label>
+                                <select name="merokok" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all">
+                                    <option value="Tidak" <%= !skrining.merokok ? 'selected' : '' %>>Tidak</option>
+                                    <option value="Ya" <%= skrining.merokok ? 'selected' : '' %>>Ya</option>
+                                </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Tinggi Badan</label>
-                                <div class="flex items-center rounded-xl border border-gray-200 bg-gray-50 overflow-hidden focus-within:border-[#2563EB] focus-within:bg-white transition-all">
-                                    <input type="number" name="tinggi_badan" value="<%= skrining.tinggi_badan %>" class="w-full px-4 py-2.5 bg-transparent text-sm outline-none">
-                                    <span class="px-4 py-2.5 bg-gray-100 border-l border-gray-200 text-gray-500 text-sm whitespace-nowrap">cm</span>
-                                </div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Aktivitas Fisik</label>
+                                <select name="aktivitas_fisik" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all">
+                                    <option value="aktif" <%= skrining.aktivitas_fisik === 'aktif' || skrining.aktivitas_fisik === 'Aktif' ? 'selected' : '' %>>Aktif (≥ 30 menit/hari)</option>
+                                    <option value="tidak_aktif" <%= skrining.aktivitas_fisik === 'tidak_aktif' || skrining.aktivitas_fisik === 'Tidak Aktif' ? 'selected' : '' %>>Tidak Aktif</option>
+                                </select>
                             </div>
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Gula Darah</label>
-                                <div class="flex items-center rounded-xl border border-gray-200 bg-gray-50 overflow-hidden focus-within:border-[#2563EB] focus-within:bg-white transition-all">
-                                    <input type="number" name="gula_darah" value="<%= skrining.gula_darah %>" class="w-full px-4 py-2.5 bg-transparent text-sm outline-none">
-                                    <span class="px-4 py-2.5 bg-gray-100 border-l border-gray-200 text-gray-500 text-sm whitespace-nowrap">mg/dL</span>
-                                </div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Edukasi Diberikan</label>
+                                <input type="text" name="edukasi" value="<%= skrining.edukasi %>" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all" placeholder="Edukasi diet, olahraga dll...">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Mendapat Obat</label>
+                                <select name="dapat_obat" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all">
+                                    <option value="tidak" <%= skrining.dapat_obat === 'tidak' ? 'selected' : '' %>>Tidak</option>
+                                    <option value="beli_sendiri" <%= skrining.dapat_obat === 'beli_sendiri' ? 'selected' : '' %>>Beli Sendiri</option>
+                                    <option value="dari_puskesmas" <%= skrining.dapat_obat === 'dari_puskesmas' ? 'selected' : '' %>>Dari Puskesmas</option>
+                                    <option value="dari_rumah_sakit" <%= skrining.dapat_obat === 'dari_rumah_sakit' ? 'selected' : '' %>>Dari Rumah Sakit</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Dirujuk ke FKTl/RS</label>
+                                <select name="status_rujukan" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-white transition-all">
+                                    <option value="tidak" <%= skrining.status_rujukan === 'tidak' ? 'selected' : '' %>>Tidak</option>
+                                    <option value="iya" <%= skrining.status_rujukan === 'iya' ? 'selected' : '' %>>Ya</option>
+                                </select>
                             </div>
                         </div>
                     </div>

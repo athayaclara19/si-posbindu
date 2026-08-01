@@ -18,6 +18,18 @@ const PERIODE_TAHUN = 2024;
 beforeAll(async () => {
   const hash = await bcrypt.hash('Password123!', 10);
 
+  // Bersihkan data sampah dari uji coba sebelumnya yang mungkin gagal pertengahan jalan
+  await pool.query(`DELETE FROM skrining_hipertensi WHERE id_skrining IN (SELECT id_skrining FROM skrining WHERE id_pasien = '9999999999')`);
+  await pool.query(`DELETE FROM skrining_dm WHERE id_skrining IN (SELECT id_skrining FROM skrining WHERE id_pasien = '9999999999')`);
+  await pool.query(`DELETE FROM skrining_obesitas WHERE id_skrining IN (SELECT id_skrining FROM skrining WHERE id_pasien = '9999999999')`);
+  await pool.query(`DELETE FROM skrining_ppok WHERE id_skrining IN (SELECT id_skrining FROM skrining WHERE id_pasien = '9999999999')`);
+  await pool.query(`DELETE FROM skrining_gangguan_indra WHERE id_skrining IN (SELECT id_skrining FROM skrining WHERE id_pasien = '9999999999')`);
+  await pool.query(`DELETE FROM skrining_kesehatan_jiwa WHERE id_skrining IN (SELECT id_skrining FROM skrining WHERE id_pasien = '9999999999')`);
+  await pool.query(`DELETE FROM skrining WHERE id_pasien = '9999999999'`);
+  await pool.query(`DELETE FROM pasien WHERE id_pasien = '9999999999'`);
+  await pool.query(`DELETE FROM kegiatan WHERE lokasi = 'Lokasi Test IT'`);
+  await pool.query(`DELETE FROM "user" WHERE username IN ('it_kader', 'it_bidan', 'it_ptm', 'it_kepala')`);
+
   // 1. Master data nagari & jorong
   await pool.query(`
     INSERT INTO nagari (id_nagari, nama_nagari, is_active)
@@ -84,9 +96,13 @@ afterAll(async () => {
     await pool.query(`DELETE FROM persetujuan_laporan WHERE id_laporan = $1`, [idLaporan]);
     await pool.query(`DELETE FROM laporan WHERE id_laporan = $1`, [idLaporan]);
   }
-  if (idSkrining) {
-    await pool.query(`DELETE FROM skrining WHERE id_skrining = $1`, [idSkrining]);
-  }
+  await pool.query(`DELETE FROM skrining_hipertensi WHERE id_skrining IN (SELECT id_skrining FROM skrining WHERE id_pasien = '9999999999')`);
+  await pool.query(`DELETE FROM skrining_dm WHERE id_skrining IN (SELECT id_skrining FROM skrining WHERE id_pasien = '9999999999')`);
+  await pool.query(`DELETE FROM skrining_obesitas WHERE id_skrining IN (SELECT id_skrining FROM skrining WHERE id_pasien = '9999999999')`);
+  await pool.query(`DELETE FROM skrining_ppok WHERE id_skrining IN (SELECT id_skrining FROM skrining WHERE id_pasien = '9999999999')`);
+  await pool.query(`DELETE FROM skrining_gangguan_indra WHERE id_skrining IN (SELECT id_skrining FROM skrining WHERE id_pasien = '9999999999')`);
+  await pool.query(`DELETE FROM skrining_kesehatan_jiwa WHERE id_skrining IN (SELECT id_skrining FROM skrining WHERE id_pasien = '9999999999')`);
+  await pool.query(`DELETE FROM skrining WHERE id_pasien = '9999999999'`);
   await pool.query(`DELETE FROM pasien WHERE id_pasien = '9999999999'`);
   await pool.query(`DELETE FROM kegiatan WHERE lokasi = 'Lokasi Test IT'`);
   await pool.query(`

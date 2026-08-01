@@ -30,15 +30,30 @@ exports.handleInputSkrining = async (req, res) => {
 
     const id_kader = req.session.user.id_user;
 
-    const sistole  = parseInt(hipertensi.sistole);
-    const diastole = parseInt(hipertensi.diastole);
+    const sistole  = parseInt(hipertensi.sistole || req.body.sistole);
+    const diastole = parseInt(hipertensi.diastole || req.body.diastole);
     if (isNaN(sistole) || isNaN(diastole)) {
         return res.status(400).send("Gagal menyimpan data skrining: sistole/diastole wajib diisi (tab Hipertensi).");
     }
 
     const merokokBool = merokok === 'true' || merokok === true || merokok === 'on';
-    const beratUmum  = obesitas.berat_badan || ppok.berat_badan || null;
-    const tinggiUmum = obesitas.tinggi_badan || ppok.tinggi_badan || null;
+    const beratUmum  = obesitas.berat_badan || ppok.berat_badan || req.body.berat_badan || null;
+    const tinggiUmum = obesitas.tinggi_badan || ppok.tinggi_badan || req.body.tinggi_badan || null;
+
+    // Cek apakah pasien sudah pernah diskrining pada kegiatan ini
+    try {
+        const dupCheck = await pool.query(
+            `SELECT id_skrining FROM skrining 
+             WHERE id_pasien = $1 AND id_kegiatan = $2 LIMIT 1`,
+            [id_pasien, id_kegiatan]
+        );
+        if (dupCheck && dupCheck.rows && dupCheck.rows.length > 0) {
+            return res.status(400).send("Gagal menyimpan: Pasien ini sudah terdaftar mengikuti kegiatan skrining ini. Satu pasien hanya boleh diskrining sekali per kegiatan.");
+        }
+    } catch (err) {
+        console.error("Error checking duplicate screening:", err);
+        return res.status(500).send("Gagal memproses validasi data skrining: " + err.message);
+    }
 
     const client = await pool.connect();
     try {
@@ -60,7 +75,7 @@ exports.handleInputSkrining = async (req, res) => {
                 sistole, diastole,
                 overrides.berat_badan ?? beratUmum,
                 overrides.tinggi_badan ?? tinggiUmum,
-                overrides.gula_darah ?? (dm.gula_darah || null),
+                overrides.gula_darah ?? (dm.gula_darah || req.body.gula_darah || null),
                 merokokBool,
                 aktivitas_fisik || null,
                 edukasi || null,
@@ -81,26 +96,29 @@ exports.handleInputSkrining = async (req, res) => {
         );
 
         // 2. Diabetes Melitus
-        if (dm.gula_darah) {
-            const idDm = await insertSkrining('dm', { gula_darah: dm.gula_darah });
+        const gd = dm.gula_darah || req.body.gula_darah;
+        if (gd) {
+            const idDm = await insertSkrining('dm', { gula_darah: gd });
             await client.query(
                 `INSERT INTO skrining_dm (id_skrining, gula_darah, jenis_pemeriksaan, kategori_hasil)
                  VALUES ($1,$2,$3,$4)`,
-                [idDm, dm.gula_darah, dm.jenis_pemeriksaan || null, null]
+                [idDm, gd, dm.jenis_pemeriksaan || null, null]
             );
         }
 
         // 3. Obesitas
-        if (obesitas.berat_badan && obesitas.tinggi_badan) {
+        const bb = obesitas.berat_badan || req.body.berat_badan;
+        const tb = obesitas.tinggi_badan || req.body.tinggi_badan;
+        if (bb && tb) {
             const idObesitas = await insertSkrining('obesitas', {
-                berat_badan: obesitas.berat_badan, tinggi_badan: obesitas.tinggi_badan
+                berat_badan: bb, tinggi_badan: tb
             });
-            const tbM = obesitas.tinggi_badan / 100;
-            const imt = tbM > 0 ? (obesitas.berat_badan / (tbM * tbM)) : null;
+            const tbM = tb / 100;
+            const imt = tbM > 0 ? (bb / (tbM * tbM)) : null;
             await client.query(
                 `INSERT INTO skrining_obesitas (id_skrining, berat_badan, tinggi_badan, imt, lingkar_perut, kategori_obesitas)
                  VALUES ($1,$2,$3,$4,$5,$6)`,
-                [idObesitas, obesitas.berat_badan, obesitas.tinggi_badan, imt, obesitas.lingkar_perut || null, null]
+                [idObesitas, bb, tb, imt, obesitas.lingkar_perut || null, null]
             );
         }
 
@@ -290,6 +308,7 @@ exports.renderRiwayat = async (req, res) => {
     try {
         const search     = (req.query.search || '').trim();
         const statusQ    = req.query.status  || '';
+        const ptm        = req.query.ptm     || 'Semua';
         const page       = Math.max(1, parseInt(req.query.page) || 1);
         const limit      = 20;
         const offset     = (page - 1) * limit;
@@ -318,26 +337,85 @@ exports.renderRiwayat = async (req, res) => {
                 pi++;
             }
         }
+        if (ptm !== '' && ptm !== 'Semua') {
+            conditions.push(`s.id_jenis_ptm = $${pi}`);
+            params.push(ptm);
+            pi++;
+        }
 
         const whereClause = 'WHERE ' + conditions.join(' AND ');
 
         // Hitung total untuk pagination
         const countResult = await pool.query(
-            `SELECT COUNT(*) FROM skrining s
-             JOIN pasien p ON s.id_pasien = p.id_pasien
-             ${whereClause}`, params);
+            `SELECT COUNT(*) FROM (
+                SELECT 1 FROM skrining s
+                JOIN pasien p ON s.id_pasien = p.id_pasien
+                ${whereClause}
+                GROUP BY s.id_pasien, s.id_kegiatan, s.sistole, s.diastole, s.berat_badan, s.tinggi_badan, s.gula_darah, s.merokok, s.aktivitas_fisik, s.edukasi, s.dapat_obat, s.status_rujukan
+             ) AS sub`, params);
         const totalData  = parseInt(countResult.rows[0].count);
         const totalPages = Math.ceil(totalData / limit);
 
         // Ambil data dengan LIMIT & OFFSET
         const dataParams = [...params, limit, offset];
         const query = `
-            SELECT s.*, p.nama_pasien, p.nik, k.tanggal_kegiatan, j.nama_jorong
+            SELECT s.id_pasien, s.id_kegiatan, k.tanggal_kegiatan, p.nama_pasien, p.nik, j.nama_jorong,
+                   s.sistole, s.diastole, s.berat_badan, s.tinggi_badan, s.gula_darah, s.merokok, s.aktivitas_fisik, s.edukasi, s.dapat_obat, s.status_rujukan,
+                   json_agg(json_build_object(
+                       'id_skrining', s.id_skrining,
+                       'id_jenis_ptm', s.id_jenis_ptm,
+                       'nama_ptm', jp.nama_ptm,
+                       'status_validasi', s.status_validasi,
+                       'catatan_bidan', s.catatan_bidan,
+                       'sistole', s.sistole,
+                       'diastole', s.diastole,
+                       'berat_badan', s.berat_badan,
+                       'tinggi_badan', s.tinggi_badan,
+                       'gula_darah', s.gula_darah,
+                       'merokok', s.merokok,
+                       'aktivitas_fisik', s.aktivitas_fisik,
+                       'edukasi', s.edukasi,
+                       'dapat_obat', s.dapat_obat,
+                       'status_rujukan', s.status_rujukan,
+                       'tanggal_validasi', s.tanggal_validasi,
+                       'status_tekanan', s.status_tekanan,
+                       'ht_status_tekanan', hp.status_tekanan,
+                       'dm_gula_darah', dmt.gula_darah,
+                       'dm_jenis_pemeriksaan', dmt.jenis_pemeriksaan,
+                       'dm_kategori_hasil', dmt.kategori_hasil,
+                       'ob_berat_badan', obt.berat_badan,
+                       'ob_tinggi_badan', obt.tinggi_badan,
+                       'ob_imt', obt.imt,
+                       'ob_lingkar_perut', obt.lingkar_perut,
+                       'ob_kategori_obesitas', obt.kategori_obesitas,
+                       'pp_rokok_per_hari', ppt.jumlah_batang_rokok_per_hari,
+                       'pp_lama_merokok', ppt.lama_tahun_merokok,
+                       'pp_sesak_napas', ppt.sesak_napas,
+                       'pp_batuk_kronis', ppt.batuk_berdahak_kronis,
+                       'pp_skor_total', ppt.skor_total,
+                       'pp_kategori_risiko', ppt.kategori_risiko,
+                       'pp_rujukan_spirometri', ppt.rujukan_spirometri,
+                       'gi_mata', git.hasil_pemeriksaan_mata,
+                       'gi_telinga', git.hasil_pemeriksaan_telinga,
+                       'gi_keterangan', git.keterangan,
+                       'kj_skor_total', kjt.skor_total,
+                       'kj_kategori_hasil', kjt.kategori_hasil,
+                       'kj_risiko_bunuh_diri', kjt.indikasi_risiko_bunuh_diri
+                   )) AS pemeriksaan
             FROM skrining s
             JOIN pasien   p ON s.id_pasien   = p.id_pasien
             JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
             JOIN jorong   j ON p.id_jorong   = j.id_jorong
+            LEFT JOIN jenis_ptm jp ON s.id_jenis_ptm = jp.id_jenis_ptm
+            LEFT JOIN skrining_hipertensi hp   ON hp.id_skrining  = s.id_skrining
+            LEFT JOIN skrining_dm dmt          ON dmt.id_skrining = s.id_skrining
+            LEFT JOIN skrining_obesitas obt    ON obt.id_skrining = s.id_skrining
+            LEFT JOIN skrining_ppok ppt        ON ppt.id_skrining = s.id_skrining
+            LEFT JOIN skrining_gangguan_indra git ON git.id_skrining = s.id_skrining
+            LEFT JOIN skrining_kesehatan_jiwa kjt ON kjt.id_skrining = s.id_skrining
             ${whereClause}
+            GROUP BY s.id_pasien, s.id_kegiatan, k.tanggal_kegiatan, p.nama_pasien, p.nik, j.nama_jorong,
+                     s.sistole, s.diastole, s.berat_badan, s.tinggi_badan, s.gula_darah, s.merokok, s.aktivitas_fisik, s.edukasi, s.dapat_obat, s.status_rujukan
             ORDER BY k.tanggal_kegiatan DESC
             LIMIT $${pi} OFFSET $${pi + 1}
         `;
@@ -351,6 +429,7 @@ exports.renderRiwayat = async (req, res) => {
             role: req.session.user ? req.session.user.role : 'kader',
             search,
             statusQ,
+            ptm,
             page,
             totalPages,
             totalData,
@@ -366,8 +445,37 @@ exports.renderEditSkrining = async (req, res) => {
     const { id_skrining } = req.params;
     try {
         const query = `
-            SELECT s.*, p.nama_pasien, p.nik 
-            FROM skrining s JOIN pasien p ON s.id_pasien = p.id_pasien
+            SELECT s.*, p.nama_pasien, p.nik,
+                   hp.status_tekanan   AS ht_status_tekanan,
+                   dmt.gula_darah      AS dm_gula_darah,
+                   dmt.jenis_pemeriksaan AS dm_jenis_pemeriksaan,
+                   dmt.kategori_hasil  AS dm_kategori_hasil,
+                   obt.berat_badan     AS ob_berat_badan,
+                   obt.tinggi_badan    AS ob_tinggi_badan,
+                   obt.imt             AS ob_imt,
+                   obt.lingkar_perut   AS ob_lingkar_perut,
+                   obt.kategori_obesitas AS ob_kategori_obesitas,
+                   ppt.jumlah_batang_rokok_per_hari AS pp_rokok_per_hari,
+                   ppt.lama_tahun_merokok AS pp_lama_merokok,
+                   ppt.sesak_napas     AS pp_sesak_napas,
+                   ppt.batuk_berdahak_kronis AS pp_batuk_kronis,
+                   ppt.skor_total      AS pp_skor_total,
+                   ppt.kategori_risiko AS pp_kategori_risiko,
+                   ppt.rujukan_spirometri AS pp_rujukan_spirometri,
+                   git.hasil_pemeriksaan_mata AS gi_mata,
+                   git.hasil_pemeriksaan_telinga AS gi_telinga,
+                   git.keterangan      AS gi_keterangan,
+                   kjt.skor_total      AS kj_skor_total,
+                   kjt.kategori_hasil  AS kj_kategori_hasil,
+                   kjt.indikasi_risiko_bunuh_diri AS kj_risiko_bunuh_diri
+            FROM skrining s 
+            JOIN pasien p ON s.id_pasien = p.id_pasien
+            LEFT JOIN skrining_hipertensi hp   ON hp.id_skrining  = s.id_skrining
+            LEFT JOIN skrining_dm dmt          ON dmt.id_skrining = s.id_skrining
+            LEFT JOIN skrining_obesitas obt    ON obt.id_skrining = s.id_skrining
+            LEFT JOIN skrining_ppok ppt        ON ppt.id_skrining = s.id_skrining
+            LEFT JOIN skrining_gangguan_indra git ON git.id_skrining = s.id_skrining
+            LEFT JOIN skrining_kesehatan_jiwa kjt ON kjt.id_skrining = s.id_skrining
             WHERE s.id_skrining = $1 AND s.status_validasi = 'revisi'
         `;
         const result = await pool.query(query, [id_skrining]);
@@ -390,24 +498,168 @@ exports.renderEditSkrining = async (req, res) => {
 // 6. Proses Simpan Edit Skrining (POST)
 exports.handleEditSkrining = async (req, res) => {
     const { id_skrining } = req.params;
-    const { sistole, diastole, berat_badan, tinggi_badan, gula_darah } = req.body;
+    
+    const client = await pool.connect();
     try {
-        const query = `
-            UPDATE skrining
-            SET sistole=$1, diastole=$2, berat_badan=$3, tinggi_badan=$4,
-                gula_darah=$5, status_validasi='menunggu',
-                tanggal_validasi=NULL
-            WHERE id_skrining=$6
-        `;
-        await pool.query(query, [
-            parseInt(sistole), parseInt(diastole),
-            berat_badan||null, tinggi_badan||null,
-            gula_darah||null,
-            id_skrining
-        ]);
+        await client.query('BEGIN');
+        
+        // 1. Dapatkan id_jenis_ptm untuk data skrining ini
+        const checkRes = await client.query('SELECT id_jenis_ptm FROM skrining WHERE id_skrining = $1', [id_skrining]);
+        if (checkRes.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).send("Data tidak ditemukan.");
+        }
+        const { id_jenis_ptm } = checkRes.rows[0];
+        
+        // 2. Lakukan update spesifik berdasarkan PTM
+        if (id_jenis_ptm === 'hipertensi') {
+            const sistole = parseInt(req.body.sistole);
+            const diastole = parseInt(req.body.diastole);
+            
+            await client.query(
+                `UPDATE skrining 
+                 SET sistole = $1, diastole = $2, status_validasi = 'menunggu', tanggal_validasi = NULL, catatan_bidan = NULL
+                 WHERE id_skrining = $3`,
+                [sistole, diastole, id_skrining]
+            );
+            
+            await client.query(
+                `UPDATE skrining_hipertensi 
+                 SET sistole = $1, diastole = $2
+                 WHERE id_skrining = $3`,
+                [sistole, diastole, id_skrining]
+            );
+        } else if (id_jenis_ptm === 'dm') {
+            const gd = parseInt(req.body.dm_gula_darah);
+            const jenisPemeriksaan = req.body.dm_jenis_pemeriksaan || null;
+            
+            await client.query(
+                `UPDATE skrining 
+                 SET gula_darah = $1, status_validasi = 'menunggu', tanggal_validasi = NULL, catatan_bidan = NULL
+                 WHERE id_skrining = $2`,
+                [gd, id_skrining]
+            );
+            
+            await client.query(
+                `UPDATE skrining_dm 
+                 SET gula_darah = $1, jenis_pemeriksaan = $2
+                 WHERE id_skrining = $3`,
+                [gd, jenisPemeriksaan, id_skrining]
+            );
+        } else if (id_jenis_ptm === 'obesitas') {
+            const bb = parseFloat(req.body.ob_berat_badan);
+            const tb = parseInt(req.body.ob_tinggi_badan);
+            const lp = parseFloat(req.body.ob_lingkar_perut);
+            const tbM = tb / 100;
+            const imt = tbM > 0 ? (bb / (tbM * tbM)) : null;
+            
+            await client.query(
+                `UPDATE skrining 
+                 SET berat_badan = $1, tinggi_badan = $2, status_validasi = 'menunggu', tanggal_validasi = NULL, catatan_bidan = NULL
+                 WHERE id_skrining = $3`,
+                [bb, tb, id_skrining]
+            );
+            
+            await client.query(
+                `UPDATE skrining_obesitas 
+                 SET berat_badan = $1, tinggi_badan = $2, imt = $3, lingkar_perut = $4
+                 WHERE id_skrining = $5`,
+                [bb, tb, imt, lp, id_skrining]
+            );
+        } else if (id_jenis_ptm === 'ppok') {
+            const bb = parseFloat(req.body.pp_berat_badan) || null;
+            const tb = parseInt(req.body.pp_tinggi_badan) || null;
+            const rokok = parseInt(req.body.pp_rokok_per_hari) || 0;
+            const lama = parseInt(req.body.pp_lama_merokok) || 0;
+            const sesak = req.body.pp_sesak_napas === 'true' || req.body.pp_sesak_napas === true || req.body.pp_sesak_napas === 'on' || req.body.pp_sesak_napas === 'Ya';
+            const batuk = req.body.pp_batuk_kronis === 'true' || req.body.pp_batuk_kronis === true || req.body.pp_batuk_kronis === 'on' || req.body.pp_batuk_kronis === 'Ya';
+            const skor = parseInt(req.body.pp_skor_total) || 0;
+            const kategori = req.body.pp_kategori_risiko || 'Rendah';
+            const spirometri = req.body.pp_rujukan_spirometri === 'true' || req.body.pp_rujukan_spirometri === true || req.body.pp_rujukan_spirometri === 'on' || req.body.pp_rujukan_spirometri === 'Ya';
+            
+            let imt = null;
+            if (bb && tb) {
+                const tbM = tb / 100;
+                imt = tbM > 0 ? (bb / (tbM * tbM)) : null;
+            }
+            
+            await client.query(
+                `UPDATE skrining 
+                 SET berat_badan = $1, tinggi_badan = $2, status_validasi = 'menunggu', tanggal_validasi = NULL, catatan_bidan = NULL
+                 WHERE id_skrining = $3`,
+                [bb, tb, id_skrining]
+            );
+            
+            await client.query(
+                `UPDATE skrining_ppok 
+                 SET berat_badan = $1, tinggi_badan = $2, imt = $3, jumlah_batang_rokok_per_hari = $4,
+                     lama_tahun_merokok = $5, sesak_napas = $6, batuk_berdahak_kronis = $7, skor_total = $8,
+                     kategori_risiko = $9, rujukan_spirometri = $10
+                 WHERE id_skrining = $11`,
+                [bb, tb, imt, rokok, lama, sesak, batuk, skor, kategori, spirometri, id_skrining]
+            );
+        } else if (id_jenis_ptm === 'gangguan_indra') {
+            const mata = req.body.gi_mata || 'Normal';
+            const telinga = req.body.gi_telinga || 'Normal';
+            const ket = req.body.gi_keterangan || null;
+            
+            await client.query(
+                `UPDATE skrining 
+                 SET status_validasi = 'menunggu', tanggal_validasi = NULL, catatan_bidan = NULL
+                 WHERE id_skrining = $1`,
+                [id_skrining]
+            );
+            
+            await client.query(
+                `UPDATE skrining_gangguan_indra 
+                 SET hasil_pemeriksaan_mata = $1, hasil_pemeriksaan_telinga = $2, keterangan = $3
+                 WHERE id_skrining = $4`,
+                [mata, telinga, ket, id_skrining]
+            );
+        } else if (id_jenis_ptm === 'kesehatan_jiwa') {
+            const skor = parseInt(req.body.kj_skor_total) || 0;
+            const hasil = req.body.kj_kategori_hasil || 'Normal';
+            const bunuhDiri = req.body.kj_risiko_bunuh_diri === 'Ya' || req.body.kj_risiko_bunuh_diri === 'true' || req.body.kj_risiko_bunuh_diri === true || req.body.kj_risiko_bunuh_diri === 'on';
+            
+            await client.query(
+                `UPDATE skrining 
+                 SET status_validasi = 'menunggu', tanggal_validasi = NULL, catatan_bidan = NULL
+                 WHERE id_skrining = $1`,
+                [id_skrining]
+            );
+            
+            await client.query(
+                `UPDATE skrining_kesehatan_jiwa 
+                 SET skor_total = $1, kategori_hasil = $2, indikasi_risiko_bunuh_diri = $3
+                 WHERE id_skrining = $4`,
+                [skor, hasil, bunuhDiri, id_skrining]
+            );
+        }
+        
+        // 3. Update parameter umum gaya hidup & rujukan jika dikirim
+        if (req.body.merokok || req.body.aktivitas_fisik || req.body.edukasi || req.body.dapat_obat || req.body.status_rujukan) {
+            await client.query(
+                `UPDATE skrining 
+                 SET merokok = $1, aktivitas_fisik = $2, edukasi = $3, dapat_obat = $4, status_rujukan = $5
+                 WHERE id_skrining = $6`,
+                [
+                    req.body.merokok === 'true' || req.body.merokok === true || req.body.merokok === 'on' || req.body.merokok === 'Ya',
+                    req.body.aktivitas_fisik || null,
+                    req.body.edukasi || null,
+                    req.body.dapat_obat || 'tidak',
+                    req.body.status_rujukan || 'tidak',
+                    id_skrining
+                ]
+            );
+        }
+        
+        await client.query('COMMIT');
         res.redirect('/riwayat');
     } catch (err) {
+        await client.query('ROLLBACK');
         console.error(err);
         res.status(500).send("Gagal menyimpan perubahan: " + err.message);
+    } finally {
+        client.release();
     }
 };

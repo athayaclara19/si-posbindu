@@ -59,7 +59,8 @@
                                     <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Nama Pasien</th>
                                     <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Kader</th>
                                     <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Periode</th>
-                                    <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">TD</th>
+                                    <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Jenis PTM</th>
+                                    <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Hasil</th>
                                     <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Status</th>
                                     <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Aksi</th>
                                 </tr>
@@ -92,17 +93,21 @@
                                 <div class="flex justify-between text-sm"><span class="text-[#6B7280]">Tanggal Skrining</span><span id="det-tanggal" class="text-[#1F2937] font-medium">-</span></div>
                             </div>
                         </div>
+ 
+                        <!-- Tab Bar Penyakit (PTM) -->
+                        <div class="px-5 py-3.5 border-b border-gray-100 bg-white">
+                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Pilih Pemeriksaan</p>
+                            <div id="det-ptm-tabbar" class="flex flex-wrap gap-1.5">
+                                <!-- Diisi dinamis oleh JS -->
+                            </div>
+                        </div>
 
                         <div class="px-5 py-4 border-b border-gray-100 bg-[#F8FAFC]">
-                            <p class="text-[#2563EB] text-[11px] font-bold uppercase tracking-wider mb-3">Hasil Pengukuran</p>
-                            <div class="space-y-2.5">
-                                <div class="flex justify-between text-sm"><span class="text-[#6B7280]">Sistole / Diastole</span><span id="det-td" class="text-[#1F2937] font-semibold">-</span></div>
-                                <div class="flex justify-between text-sm items-center"><span class="text-[#6B7280]">Kategori TD</span><span id="det-kat" class="text-sm font-semibold">-</span></div>
-                                <div class="flex justify-between text-sm"><span class="text-[#6B7280]">Berat / Tinggi</span><span id="det-bbtb" class="text-[#1F2937] font-medium">-</span></div>
-                                <div class="flex justify-between text-sm"><span class="text-[#6B7280]">IMT</span><span id="det-imt" class="text-[#1F2937] font-medium">-</span></div>
-                                <div class="flex justify-between text-sm"><span class="text-[#6B7280]">Gula Darah</span><span id="det-gula" class="text-[#1F2937] font-medium">-</span></div>
-                                <div class="flex justify-between text-sm"><span class="text-[#6B7280]">Kolesterol</span><span id="det-kolesterol" class="text-[#1F2937] font-medium">-</span></div>
-                            </div>
+                            <p class="text-[#2563EB] text-[11px] font-bold uppercase tracking-wider mb-3">
+                                Hasil Pengukuran &mdash; <span id="det-jenis-ptm">-</span>
+                            </p>
+                            <div id="det-hasil-dinamis" class="space-y-2.5">
+                                </div>
                         </div>
 
                         <div class="px-5 py-5 bg-gray-50 rounded-b-2xl">
@@ -151,11 +156,17 @@
         // 1. Ambil data asli dari PostgreSQL via EJS
         const rawData = <%- JSON.stringify(typeof menungguValidasi !== 'undefined' ? menungguValidasi : []) %>;
         
-        // 2. Format data agar sesuai dengan struktur Javascript sebelumnya
-        let skriningData = rawData.map(d => {
+        const PTM_LABEL = {
+            hipertensi: 'Hipertensi', dm: 'Diabetes Melitus', obesitas: 'Obesitas',
+            ppok: 'PPOK', gangguan_indra: 'Gangguan Indra', kesehatan_jiwa: 'Kesehatan Jiwa'
+        };
+
+        let skriningData = rawData.map((d, index) => {
             const tgl = new Date(d.tanggal_kegiatan);
             return {
-                id: d.id_skrining,
+                id: index,
+                id_pasien: d.id_pasien,
+                id_kegiatan: d.id_kegiatan,
                 nama: d.nama_pasien,
                 nik: d.nik,
                 alamat: d.alamat || '-',
@@ -163,20 +174,52 @@
                 periode: tgl.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }),
                 kader: d.nama_kader || 'Kader Posbindu',
                 tanggal: tgl.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
-                sistole: d.sistole,
-                diastole: d.diastole,
-                beratBadan: d.berat_badan || '-',
-                tinggiBadan: d.tinggi_badan || '-',
-                gulaDarah: d.gula_darah || '-',
-                kolesterol: d.kolesterol || '-',
-                kategori: d.status_tekanan || 'Normal',
-                status: 'Menunggu Validasi'
+                pemeriksaan: (d.pemeriksaan || []).map(p => {
+                    return {
+                        id_skrining: p.id_skrining,
+                        id_jenis_ptm: p.id_jenis_ptm,
+                        jenisPtmLabel: p.nama_ptm || PTM_LABEL[p.id_jenis_ptm] || p.id_jenis_ptm,
+                        sistole: p.sistole,
+                        diastole: p.diastole,
+                        beratBadan: p.ob_berat_badan || p.berat_badan || '-',
+                        tinggiBadan: p.ob_tinggi_badan || p.tinggi_badan || '-',
+                        gulaDarah: p.dm_gula_darah || p.gula_darah || '-',
+                        jenisPemeriksaanDm: p.dm_jenis_pemeriksaan || '-',
+                        lingkarPerut: p.ob_lingkar_perut || '-',
+                        imtObesitas: p.ob_imt || '-',
+                        rokokPerHari: p.pp_rokok_per_hari,
+                        lamaMerokok: p.pp_lama_merokok,
+                        sesakNapas: p.pp_sesak_napas,
+                        batukKronis: p.pp_batuk_kronis,
+                        hasilMata: p.gi_mata || '-',
+                        hasilTelinga: p.gi_telinga || '-',
+                        ketIndra: p.gi_keterangan || '-',
+                        skorJiwa: p.kj_skor_total,
+                        risikoBunuhDiri: p.kj_risiko_bunuh_diri,
+                        kategori: p.ht_status_tekanan || p.kategori || 'Normal',
+                        status: 'Menunggu Validasi'
+                    };
+                })
             };
         });
 
-        let currentSelectedId = null;
+        function hasilRingkas(p) {
+            switch (p.id_jenis_ptm) {
+                case 'hipertensi':     return `Tensi: ${p.sistole}/${p.diastole} mmHg`;
+                case 'dm':             return `GD: ${p.gulaDarah} mg/dL`;
+                case 'obesitas':       return `IMT: ${p.imtObesitas}`;
+                case 'ppok':           return `Rokok: ${p.rokokPerHari ?? '-'} btg/hr`;
+                case 'gangguan_indra': return `Mata: ${p.hasilMata}`;
+                case 'kesehatan_jiwa': return `Skor SRQ: ${p.skorJiwa ?? '-'}`;
+                default:               return '-';
+            }
+        }
 
-        // Ekstrak Periode & Jorong unik untuk mengisi dropdown filter secara otomatis
+        let currentSelectedSessionIndex = null;
+        let currentSelectedId = null; 
+        let activeExamIndex = 0;
+        let activeSession = null;
+
         function populateFilters() {
             const periodeSet = new Set(skriningData.map(d => d.periode));
             const jorongSet = new Set(skriningData.map(d => d.jorong));
@@ -188,7 +231,6 @@
             jorongSet.forEach(j => jFilter.innerHTML += `<option value="${j}">${j}</option>`);
         }
 
-        // Render Tabel Utama
         function renderTable() {
             const tbody = document.getElementById('tableBody');
             const search = document.getElementById('searchInput').value.toLowerCase();
@@ -205,13 +247,19 @@
 
                 count++;
                 
-                const isSelected = currentSelectedId === d.id;
+                const isSelected = currentSelectedSessionIndex === d.id;
                 const rowClass = isSelected ? "bg-[#DBEAFE]/40 border-l-2 border-[#2563EB]" : "hover:bg-slate-50";
 
                 const tr = document.createElement('tr');
                 tr.className = `cursor-pointer transition-colors border-b border-gray-50 last:border-0 ${rowClass}`;
                 tr.onclick = () => openDetail(d.id);
                 
+                const badges = d.pemeriksaan.map(p => {
+                    return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#DBEAFE] text-[#1D4ED8] text-[10px] font-semibold">${p.jenisPtmLabel}</span>`;
+                }).join(' ');
+
+                const results = d.pemeriksaan.map(p => hasilRingkas(p)).join(', ');
+
                 tr.innerHTML = `
                     <td class="px-5 py-3.5">
                         <p class="text-[#1F2937] text-sm font-semibold">${d.nama}</p>
@@ -220,8 +268,10 @@
                     <td class="px-5 py-3.5 text-sm text-[#6B7280] font-medium">${d.kader}</td>
                     <td class="px-5 py-3.5 text-sm text-[#6B7280]">${d.periode}</td>
                     <td class="px-5 py-3.5">
-                        <span class="text-[#1F2937] text-sm font-semibold">${d.sistole}/${d.diastole}</span>
-                        <span class="text-[#6B7280] text-xs ml-0.5">mmHg</span>
+                        <div class="flex flex-wrap gap-1">${badges}</div>
+                    </td>
+                    <td class="px-5 py-3.5">
+                        <span class="text-[#1F2937] text-xs font-semibold max-w-[200px] inline-block truncate" title="${results}">${results}</span>
                     </td>
                     <td class="px-5 py-3.5">
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FEF3C7] text-[#D97706] text-[11px] font-semibold border border-[#FDE68A]"><span class="w-1.5 h-1.5 rounded-full bg-[#F59E0B]"></span>Menunggu</span>
@@ -234,69 +284,138 @@
             });
 
             if (count === 0) {
-                tbody.innerHTML = `<tr><td colSpan="6" class="px-5 py-10 text-center text-[#6B7280] text-sm">Tidak ada antrean validasi saat ini.</td></tr>`;
+                tbody.innerHTML = `<tr><td colSpan="7" class="px-6 py-10 text-center text-[#6B7280] text-sm">Tidak ada antrean validasi saat ini.</td></tr>`;
             }
             document.getElementById('countText').innerText = `${count} data menunggu validasi`;
         }
 
-        // Buka Panel Detail Sebelah Kanan
         function openDetail(id) {
-            currentSelectedId = id;
+            console.log("openDetail called with id:", id, typeof id);
+            currentSelectedSessionIndex = id;
             renderTable(); 
 
-            const data = skriningData.find(d => d.id === id);
-            
-            document.getElementById('tableContainer').classList.remove('lg:col-span-5');
-            document.getElementById('tableContainer').classList.add('lg:col-span-3');
-            document.getElementById('detailPanel').classList.remove('hidden-el');
+            try {
+                const session = skriningData.find(s => Number(s.id) === Number(id));
+                console.log("Found session:", session);
+                if (!session) {
+                    console.error("Session not found for id:", id);
+                    return;
+                }
+                activeSession = session;
+                
+                document.getElementById('tableContainer').classList.remove('lg:col-span-5');
+                document.getElementById('tableContainer').classList.add('lg:col-span-3');
+                document.getElementById('detailPanel').classList.remove('hidden-el');
 
-            document.getElementById('det-nama').innerText = data.nama;
-            document.getElementById('det-nik').innerText = data.nik;
-            document.getElementById('det-alamat').innerText = data.alamat;
-            document.getElementById('det-jorong').innerText = data.jorong;
-            document.getElementById('det-tanggal').innerText = data.tanggal;
+                document.getElementById('det-nama').innerText = session.nama || '-';
+                document.getElementById('det-nik').innerText = session.nik || '-';
+                document.getElementById('det-alamat').innerText = session.alamat || '-';
+                document.getElementById('det-jorong').innerText = session.jorong || '-';
+                document.getElementById('det-tanggal').innerText = session.tanggal || '-';
 
-            document.getElementById('det-td').innerText = `${data.sistole}/${data.diastole} mmHg`;
-            document.getElementById('det-bbtb').innerText = `${data.beratBadan}kg / ${data.tinggiBadan}cm`;
-            document.getElementById('det-gula').innerText = `${data.gulaDarah} mg/dL`;
-            document.getElementById('det-kolesterol').innerText = `${data.kolesterol} mg/dL`;
-            
-            let imt = '-';
-            if(data.beratBadan !== '-' && data.tinggiBadan !== '-') {
-                imt = (data.beratBadan / Math.pow(data.tinggiBadan / 100, 2)).toFixed(1);
+                const tabbar = document.getElementById('det-ptm-tabbar');
+                if (!tabbar) {
+                    console.error("Element det-ptm-tabbar not found!");
+                    return;
+                }
+                tabbar.innerHTML = '';
+
+                if (session.pemeriksaan && session.pemeriksaan.length > 0) {
+                    session.pemeriksaan.forEach((p, idx) => {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all';
+                        btn.innerText = p.jenisPtmLabel || 'Pemeriksaan';
+                        btn.onclick = () => selectPtmTab(idx);
+                        tabbar.appendChild(btn);
+                    });
+                    selectPtmTab(0);
+                } else {
+                    console.warn("No pemeriksaan array for session:", session);
+                }
+            } catch (err) {
+                console.error("Error inside openDetail:", err);
             }
-            document.getElementById('det-imt').innerText = imt !== '-' ? `${imt} kg/m²` : '-';
-
-            const katEl = document.getElementById('det-kat');
-            katEl.innerText = data.kategori;
-            katEl.className = "text-sm font-semibold ";
-            if(data.kategori === 'Normal') katEl.className += "text-[#059669]";
-            else if(data.kategori === 'Prehipertensi') katEl.className += "text-[#D97706]";
-            else if(data.kategori === 'Hipertensi Tahap 1') katEl.className += "text-[#EA580C]";
-            else katEl.className += "text-[#DC2626]";
         }
 
-        // Tutup Detail
+        function selectPtmTab(idx) {
+            console.log("selectPtmTab called with idx:", idx);
+            if (!activeSession || !activeSession.pemeriksaan || !activeSession.pemeriksaan[idx]) {
+                console.error("No activeSession or examination found for idx:", idx);
+                return;
+            }
+            activeExamIndex = idx;
+            const p = activeSession.pemeriksaan[idx];
+            console.log("Selected exam:", p);
+            currentSelectedId = p.id_skrining;
+
+            const buttons = document.querySelectorAll('#det-ptm-tabbar button');
+            buttons.forEach((btn, i) => {
+                if (i === idx) {
+                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold border border-blue-500 bg-blue-50 text-blue-700 transition-all';
+                } else {
+                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-all';
+                }
+            });
+
+            const detJenis = document.getElementById('det-jenis-ptm');
+            if (detJenis) detJenis.innerText = p.jenisPtmLabel || 'Pemeriksaan';
+
+            const baris = (label, value) =>
+                `<div class="flex justify-between text-sm"><span class="text-[#6B7280]">${label}</span><span class="text-[#1F2937] font-medium">${value}</span></div>`;
+
+            let html = '';
+            if (p.id_jenis_ptm === 'hipertensi') {
+                let kat = p.kategori, katColor = 'text-[#059669]';
+                if (kat === 'Prehipertensi') katColor = 'text-[#D97706]';
+                else if (kat === 'Hipertensi Tahap 1') katColor = 'text-[#EA580C]';
+                else if (kat && kat !== 'Normal') katColor = 'text-[#DC2626]';
+                html += baris('Sistole / Diastole', `${p.sistole}/${p.diastole} mmHg`);
+                html += `<div class="flex justify-between text-sm items-center"><span class="text-[#6B7280]">Kategori TD</span><span class="text-sm font-semibold ${katColor}">${kat || '-'}</span></div>`;
+            } else if (p.id_jenis_ptm === 'dm') {
+                html += baris('Gula Darah', `${p.gulaDarah} mg/dL`);
+                html += baris('Jenis Pemeriksaan', p.jenisPemeriksaanDm);
+            } else if (p.id_jenis_ptm === 'obesitas') {
+                html += baris('Berat / Tinggi', `${p.beratBadan}kg / ${p.tinggiBadan}cm`);
+                html += baris('IMT', p.imtObesitas !== '-' ? `${parseFloat(p.imtObesitas).toFixed(1)} kg/m²` : '-');
+                html += baris('Lingkar Perut', p.lingkarPerut !== '-' ? `${p.lingkarPerut} cm` : '-');
+            } else if (p.id_jenis_ptm === 'ppok') {
+                html += baris('Rokok / Hari', `${p.rokokPerHari ?? '-'} batang`);
+                html += baris('Lama Merokok', `${p.lamaMerokok ?? '-'} tahun`);
+                html += baris('Sesak Napas', p.sesakNapas ? 'Ya' : 'Tidak');
+                html += baris('Batuk Berdahak Kronis', p.batukKronis ? 'Ya' : 'Tidak');
+            } else if (p.id_jenis_ptm === 'gangguan_indra') {
+                html += baris('Hasil Pemeriksaan Mata', p.hasilMata);
+                html += baris('Hasil Pemeriksaan Telinga', p.hasilTelinga);
+                html += baris('Keterangan', p.ketIndra);
+            } else if (p.id_jenis_ptm === 'kesehatan_jiwa') {
+                html += baris('Skor SRQ-20', p.skorJiwa ?? '-');
+                html += baris('Indikasi Risiko Bunuh Diri', p.risikoBunuhDiri ? 'Ya (perlu perhatian khusus)' : 'Tidak');
+            } else {
+                html += baris('Data', '-');
+            }
+            document.getElementById('det-hasil-dinamis').innerHTML = html;
+        }
+
         function closeDetail() {
+            currentSelectedSessionIndex = null;
             currentSelectedId = null;
+            activeSession = null;
             document.getElementById('tableContainer').classList.remove('lg:col-span-3');
             document.getElementById('tableContainer').classList.add('lg:col-span-5');
             document.getElementById('detailPanel').classList.add('hidden-el');
             renderTable();
         }
 
-        // Aksi Verifikasi (Kirim ke Node.js Backend)
         function handleVerifikasi() {
             if(!currentSelectedId) return;
             if(!confirm('Yakin ingin memverifikasi dan menerima data skrining ini?')) return;
-            // Kirim status 'terverifikasi' sesuai nilai enum database
             document.getElementById('formValidasiReal').action = '/bidan/validasi/' + currentSelectedId;
             document.getElementById('inputStatusVal').value = 'terverifikasi';
             document.getElementById('inputCatatanVal').value = 'Telah diverifikasi oleh Bidan.';
             document.getElementById('formValidasiReal').submit();
         }
 
-        // Aksi Revisi / Tolak
         function openRevisiModal() {
             document.getElementById('revisiModal').classList.remove('hidden-el');
             document.getElementById('revisiModal').classList.add('flex');
@@ -317,14 +436,12 @@
             }
             if(currentSelectedId) {
                 document.getElementById('formValidasiReal').action = '/bidan/validasi/' + currentSelectedId;
-                // Gunakan 'ditolak' sesuai nilai enum database (bukan 'revisi')
                 document.getElementById('inputStatusVal').value = 'ditolak';
                 document.getElementById('inputCatatanVal').value = text;
                 document.getElementById('formValidasiReal').submit();
             }
         }
 
-        // Inisialisasi
         populateFilters();
         document.getElementById('searchInput').addEventListener('input', renderTable);
         document.getElementById('periodeFilter').addEventListener('change', renderTable);

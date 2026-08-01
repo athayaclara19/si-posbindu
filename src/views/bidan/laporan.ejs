@@ -77,16 +77,44 @@
                             <tr class="bg-[#F8FAFC] border-b border-gray-100">
                                 <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Pasien / NIK</th>
                                 <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Tanggal / Jorong</th>
-                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Hasil Tensi</th>
-                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Status Validasi</th>
+                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Penyakit (PTM)</th>
+                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Ringkasan Hasil</th>
+                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50">
                             <% if (typeof laporanData !== 'undefined' && laporanData.length > 0) { %>
                                 <% laporanData.forEach(r => { %>
+                                <%
+                                    const PTM_LABELS = {
+                                        hipertensi: 'Hipertensi', dm: 'Diabetes Melitus', obesitas: 'Obesitas',
+                                        ppok: 'PPOK', gangguan_indra: 'Gangguan Indra', kesehatan_jiwa: 'Kesehatan Jiwa'
+                                    };
+                                    let badges = '';
+                                    let summaryParts = [];
+                                    r.pemeriksaan.forEach(p => {
+                                        const lbl = p.nama_ptm || PTM_LABELS[p.id_jenis_ptm] || p.id_jenis_ptm;
+                                        badges += `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#DBEAFE] text-[#1D4ED8] text-[10px] font-semibold mr-1 mb-1">${lbl}</span>`;
+                                        
+                                        if (p.id_jenis_ptm === 'hipertensi') {
+                                            summaryParts.push(`Tensi: ${p.sistole}/${p.diastole}`);
+                                        } else if (p.id_jenis_ptm === 'dm') {
+                                            summaryParts.push(`GD: ${p.dm_gula_darah || p.gula_darah}`);
+                                        } else if (p.id_jenis_ptm === 'obesitas') {
+                                            summaryParts.push(`IMT: ${p.ob_imt ? parseFloat(p.ob_imt).toFixed(1) : '-'}`);
+                                        } else if (p.id_jenis_ptm === 'ppok') {
+                                            summaryParts.push(`P Puma: ${p.pp_skor_total}`);
+                                        } else if (p.id_jenis_ptm === 'gangguan_indra') {
+                                            summaryParts.push(`Indra: ${p.gi_mata || '-'}`);
+                                        } else if (p.id_jenis_ptm === 'kesehatan_jiwa') {
+                                            summaryParts.push(`SRQ: ${p.kj_skor_total}`);
+                                        }
+                                    });
+                                    const summaryText = summaryParts.join(', ');
+                                %>
                                 <tr class="hover:bg-slate-50 transition-colors">
                                     <td class="px-5 py-4">
-                                        <p class="text-[#1F2937] text-sm font-medium"><%= r.nama_pasien %></p>
+                                        <p class="text-[#1F2937] text-sm font-semibold"><%= r.nama_pasien %></p>
                                         <p class="text-[#6B7280] text-xs font-mono"><%= r.nik %></p>
                                     </td>
                                     <td class="px-5 py-4">
@@ -94,19 +122,21 @@
                                         <p class="text-[#6B7280] text-xs"><%= r.nama_jorong %></p>
                                     </td>
                                     <td class="px-5 py-4">
-                                        <p class="text-[#1F2937] text-sm font-medium"><%= r.sistole %>/<%= r.diastole %> mmHg</p>
-                                        <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-gray-100 text-gray-700 mt-1 inline-block"><%= r.status_tekanan %></span>
+                                        <div class="flex flex-wrap"><%- badges %></div>
                                     </td>
                                     <td class="px-5 py-4">
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D1FAE5] text-[#059669] text-[11px] font-semibold border border-[#A7F3D0]">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>Valid
-                                        </span>
+                                        <p class="text-[#1F2937] text-xs font-medium max-w-[200px] truncate" title="<%= summaryText %>"><%= summaryText %></p>
+                                    </td>
+                                    <td class="px-5 py-4">
+                                        <button type="button" data-skrining='<%- JSON.stringify(r).replace(/'/g, "&apos;") %>' onclick="showDetailLaporan(this)" class="px-3.5 py-1.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold rounded-lg transition-all shadow-sm">
+                                            Lihat Detail
+                                        </button>
                                     </td>
                                 </tr>
                                 <% }) %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="4" class="px-5 py-12 text-center text-sm text-gray-500">
+                                    <td colspan="5" class="px-5 py-12 text-center text-sm text-gray-500">
                                         Belum ada data skrining yang tervalidasi.
                                     </td>
                                 </tr>
@@ -205,7 +235,165 @@
                 navigateWithFilters({ status: filterStatus.value, page: 1 });
             });
         });
+
+        const PTM_LABELS = {
+            hipertensi: 'Hipertensi', dm: 'Diabetes Melitus', obesitas: 'Obesitas',
+            ppok: 'PPOK', gangguan_indra: 'Gangguan Indra', kesehatan_jiwa: 'Kesehatan Jiwa'
+        };
+
+        function showDetailLaporan(btn) {
+            const r = JSON.parse(btn.getAttribute('data-skrining'));
+            const modal = document.getElementById('detailModalLaporan');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            document.getElementById('modal-subtitle').innerText = `Tanggal Kegiatan: ${new Date(r.tanggal_kegiatan).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+            document.getElementById('modal-pasien-nama').innerText = r.nama_pasien;
+            document.getElementById('modal-pasien-nik').innerText = r.nik;
+            document.getElementById('modal-pasien-jorong').innerText = r.nama_jorong;
+            document.getElementById('modal-pasien-tanggal').innerText = new Date(r.tanggal_kegiatan).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+            const tabbar = document.getElementById('modal-tab-bar');
+            tabbar.innerHTML = '';
+            r.pemeriksaan.forEach((p, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all';
+                btn.innerText = p.nama_ptm || PTM_LABELS[p.id_jenis_ptm] || p.id_jenis_ptm;
+                btn.onclick = () => selectLaporanTab(r, idx);
+                tabbar.appendChild(btn);
+            });
+
+            selectLaporanTab(r, 0);
+        }
+
+        function selectLaporanTab(r, idx) {
+            const p = r.pemeriksaan[idx];
+            const buttons = document.querySelectorAll('#modal-tab-bar button');
+            buttons.forEach((btn, i) => {
+                if (i === idx) {
+                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold border border-blue-500 bg-blue-50 text-blue-700 transition-all';
+                } else {
+                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-all';
+                }
+            });
+
+            document.getElementById('modal-ptm-label').innerText = p.nama_ptm || PTM_LABELS[p.id_jenis_ptm] || p.id_jenis_ptm;
+
+            const baris = (label, value) =>
+                `<div class="flex justify-between text-sm py-1.5 border-b border-slate-100 last:border-0"><span class="text-[#6B7280]">${label}</span><span class="text-[#1F2937] font-medium">${value}</span></div>`;
+
+            let html = '';
+            if (p.id_jenis_ptm === 'hipertensi') {
+                let kat = p.ht_status_tekanan || p.status_tekanan, katColor = 'text-[#059669]';
+                if (kat === 'Prehipertensi') katColor = 'text-[#D97706]';
+                else if (kat === 'Hipertensi Tahap 1') katColor = 'text-[#EA580C]';
+                else if (kat && kat !== 'Normal' && kat !== 'Terkendali') katColor = 'text-[#DC2626]';
+                html += baris('Sistole / Diastole', `${p.sistole}/${p.diastole} mmHg`);
+                html += `<div class="flex justify-between text-sm py-1.5 items-center border-b border-slate-100"><span class="text-[#6B7280]">Kategori TD</span><span class="text-sm font-semibold ${katColor}">${kat || 'Normal'}</span></div>`;
+            } else if (p.id_jenis_ptm === 'dm') {
+                html += baris('Gula Darah', `${p.dm_gula_darah || '-'} mg/dL`);
+                html += baris('Jenis Pemeriksaan', p.dm_jenis_pemeriksaan || '-');
+                html += baris('Kategori Hasil', p.dm_kategori_hasil || '-');
+            } else if (p.id_jenis_ptm === 'obesitas') {
+                html += baris('Berat / Tinggi', `${p.ob_berat_badan || p.berat_badan || '-'} kg / ${p.ob_tinggi_badan || p.tinggi_badan || '-'} cm`);
+                html += baris('IMT', p.ob_imt ? `${parseFloat(p.ob_imt).toFixed(1)} kg/m²` : '-');
+                html += baris('Lingkar Perut', p.ob_lingkar_perut ? `${p.ob_lingkar_perut} cm` : '-');
+                html += baris('Kategori Obesitas', p.ob_kategori_obesitas || '-');
+            } else if (p.id_jenis_ptm === 'ppok') {
+                html += baris('Rokok / Hari', `${p.pp_rokok_per_hari || '0'} batang`);
+                html += baris('Lama Merokok', `${p.pp_lama_merokok || '0'} tahun`);
+                html += baris('Sesak Napas', p.pp_sesak_napas ? 'Ya' : 'Tidak');
+                html += baris('Batuk Berdahak Kronis', p.pp_batuk_kronis ? 'Ya' : 'Tidak');
+                html += baris('Skor Total PUMA', p.pp_skor_total || '0');
+                html += baris('Kategori Risiko', p.pp_kategori_risiko || 'Rendah');
+            } else if (p.id_jenis_ptm === 'gangguan_indra') {
+                html += baris('Hasil Pemeriksaan Mata', p.gi_mata || 'Normal');
+                html += baris('Hasil Pemeriksaan Telinga', p.gi_telinga || 'Normal');
+                html += baris('Keterangan', p.gi_keterangan || '-');
+            } else if (p.id_jenis_ptm === 'kesehatan_jiwa') {
+                html += baris('Skor SRQ-20', `${p.kj_skor_total || '0'}/20`);
+                html += baris('Kategori Hasil', p.kj_kategori_hasil || '-');
+                html += baris('Indikasi Risiko Bunuh Diri', p.kj_risiko_bunuh_diri ? 'Ya' : 'Tidak');
+            } else {
+                html += baris('Data', '-');
+            }
+
+            // General physical stats and lifestyle
+            html += `<div class="mt-4 pt-3 border-t border-gray-200">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Data Umum & Gaya Hidup</p>
+                    </div>`;
+            html += baris('Berat Badan', p.berat_badan && p.berat_badan !== 'null' ? `${p.berat_badan} kg` : '-');
+            html += baris('Tinggi Badan', p.tinggi_badan && p.tinggi_badan !== 'null' ? `${p.tinggi_badan} cm` : '-');
+            html += baris('Gula Darah (Umum)', p.gula_darah && p.gula_darah !== 'null' ? `${p.gula_darah} mg/dL` : '-');
+            html += baris('Merokok', p.merokok ? 'Ya' : 'Tidak');
+            html += baris('Aktivitas Fisik', p.aktivitas_fisik || '-');
+            html += baris('Edukasi', p.edukasi || '-');
+            html += baris('Dapat Obat', p.dapat_obat || 'Tidak');
+            html += baris('Status Rujukan', p.status_rujukan === 'iya' ? 'Ya (Dirujuk)' : 'Tidak');
+
+            document.getElementById('modal-ptm-details').innerHTML = html;
+        }
+
+        function closeDetailLaporan() {
+            const modal = document.getElementById('detailModalLaporan');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
     </script>
+
+    <!-- Modal Detail Laporan (Grouped Tabbed UI) -->
+    <div id="detailModalLaporan" class="fixed inset-0 z-50 hidden items-center justify-center">
+        <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onclick="closeDetailLaporan()"></div>
+
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl z-10 overflow-hidden transform transition-all m-4 max-h-[90vh] flex flex-col">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white">
+                <div>
+                    <h3 class="text-base font-poppins font-semibold text-[#1F2937]">Detail Hasil Skrining</h3>
+                    <p class="text-xs text-[#6B7280] mt-0.5" id="modal-subtitle">-</p>
+                </div>
+                <button type="button" onclick="closeDetailLaporan()" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-50 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+
+            <!-- Tab Bar -->
+            <div class="px-6 py-3 border-b border-gray-100 bg-[#F8FAFC]">
+                <div id="modal-tab-bar" class="flex flex-wrap gap-2">
+                    <!-- Tabs rendered dynamically -->
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="px-6 py-5 overflow-y-auto flex-1 space-y-4 text-[#1F2937] text-sm">
+                <!-- Patient info & dynamic measurements -->
+                <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50 space-y-2">
+                    <p class="text-xs font-semibold text-blue-600 uppercase tracking-wider">Identitas Pasien</p>
+                    <div class="grid grid-cols-2 gap-y-1.5 text-xs text-slate-600">
+                        <span>Nama Pasien:</span><span id="modal-pasien-nama" class="font-semibold text-slate-800">-</span>
+                        <span>NIK:</span><span id="modal-pasien-nik" class="font-mono text-slate-800">-</span>
+                        <span>Jorong:</span><span id="modal-pasien-jorong" class="font-semibold text-slate-800">-</span>
+                        <span>Tanggal Skrining:</span><span id="modal-pasien-tanggal" class="font-semibold text-slate-800">-</span>
+                    </div>
+                </div>
+
+                <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <p class="text-xs font-semibold text-[#2563EB] uppercase tracking-wider mb-2">Hasil Pemeriksaan: <span id="modal-ptm-label" class="normal-case text-slate-800 font-medium">-</span></p>
+                    <div id="modal-ptm-details" class="space-y-2">
+                        <!-- Dynamic details -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 border-t border-gray-100 bg-white flex justify-end">
+                <button type="button" onclick="closeDetailLaporan()" class="px-5 py-2 border border-gray-200 hover:bg-gray-50 text-gray-600 text-sm font-semibold rounded-xl transition-all">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
 
 <%- include('../partials/profil') %>
 
