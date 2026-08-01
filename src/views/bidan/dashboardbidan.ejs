@@ -93,42 +93,72 @@
                 </div>
 
                 <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col h-fit">
-                    <h3 class="text-[#1F2937] font-poppins font-semibold mb-5">Status Tekanan Darah</h3>
+                    <h3 class="text-[#1F2937] font-poppins font-semibold mb-5">Sebaran Pemeriksaan PTM</h3>
                     
                     <% 
                         // Kalkulasi persentase
-                        let totalTensi = parseInt(tensiStats.total) || 1; // Cegah divide by zero
-                        let persenNormal = Math.round((parseInt(tensiStats.normal) || 0) / totalTensi * 100);
-                        let persenTerkendali = Math.round((parseInt(tensiStats.terkendali) || 0) / totalTensi * 100);
-                        let persenHipertensi = Math.round((parseInt(tensiStats.hipertensi) || 0) / totalTensi * 100);
+                        let totalPtm = parseInt(ptmStats.total) || 1;
+                        let persenHipertensi = Math.round((parseInt(ptmStats.hipertensi) || 0) / totalPtm * 100);
+                        let persenDm = Math.round((parseInt(ptmStats.dm) || 0) / totalPtm * 100);
+                        let persenObesitas = Math.round((parseInt(ptmStats.obesitas) || 0) / totalPtm * 100);
+                        let persenPpok = Math.round((parseInt(ptmStats.ppok) || 0) / totalPtm * 100);
+                        let persenIndra = Math.round((parseInt(ptmStats.gangguan_indra) || 0) / totalPtm * 100);
+                        let persenJiwa = Math.round((parseInt(ptmStats.kesehatan_jiwa) || 0) / totalPtm * 100);
                     %>
 
-                    <div class="space-y-5">
+                    <div class="space-y-4">
                         <div>
-                            <div class="flex justify-between text-sm mb-1.5">
-                                <span class="text-[#6B7280] font-medium">Pra-Hipertensi / Terkendali</span>
-                                <span class="text-[#1F2937] font-semibold"><%= persenTerkendali %>%</span>
-                            </div>
-                            <div class="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                                <div class="h-full bg-[#10B981] rounded-full" style="width: <%= persenTerkendali %>%;"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-sm mb-1.5">
+                            <div class="flex justify-between text-xs mb-1">
                                 <span class="text-[#6B7280] font-medium">Hipertensi</span>
-                                <span class="text-[#1F2937] font-semibold"><%= persenHipertensi %>%</span>
+                                <span class="text-[#1F2937] font-semibold"><%= ptmStats.hipertensi %> (<%= persenHipertensi %>%)</span>
                             </div>
-                            <div class="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                                <div class="h-full bg-[#EF4444] rounded-full" style="width: <%= persenHipertensi %>%;"></div>
+                            <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-blue-500 rounded-full" style="width: <%= persenHipertensi %>%;"></div>
                             </div>
                         </div>
                         <div>
-                            <div class="flex justify-between text-sm mb-1.5">
-                                <span class="text-[#6B7280] font-medium">Normal</span>
-                                <span class="text-[#1F2937] font-semibold"><%= persenNormal %>%</span>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-[#6B7280] font-medium">Diabetes Melitus</span>
+                                <span class="text-[#1F2937] font-semibold"><%= ptmStats.dm %> (<%= persenDm %>%)</span>
                             </div>
-                            <div class="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                                <div class="h-full bg-[#2563EB] rounded-full" style="width: <%= persenNormal %>%;"></div>
+                            <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-emerald-500 rounded-full" style="width: <%= persenDm %>%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-[#6B7280] font-medium">Obesitas</span>
+                                <span class="text-[#1F2937] font-semibold"><%= ptmStats.obesitas %> (<%= persenObesitas %>%)</span>
+                            </div>
+                            <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-amber-500 rounded-full" style="width: <%= persenObesitas %>%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-[#6B7280] font-medium">PPOK</span>
+                                <span class="text-[#1F2937] font-semibold"><%= ptmStats.ppok %> (<%= persenPpok %>%)</span>
+                            </div>
+                            <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-purple-500 rounded-full" style="width: <%= persenPpok %>%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-[#6B7280] font-medium">Gangguan Indra</span>
+                                <span class="text-[#1F2937] font-semibold"><%= ptmStats.gangguan_indra %> (<%= persenIndra %>%)</span>
+                            </div>
+                            <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-pink-500 rounded-full" style="width: <%= persenIndra %>%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-[#6B7280] font-medium">Kesehatan Jiwa</span>
+                                <span class="text-[#1F2937] font-semibold"><%= ptmStats.kesehatan_jiwa %> (<%= persenJiwa %>%)</span>
+                            </div>
+                            <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-teal-500 rounded-full" style="width: <%= persenJiwa %>%;"></div>
                             </div>
                         </div>
                     </div>

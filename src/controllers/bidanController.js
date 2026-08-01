@@ -43,16 +43,18 @@ exports.renderDashboard = async (req, res) => {
         `;
         const jorongStats = await pool.query(queryJorong);
 
-        const queryTensi = `
+        const queryPtmStats = `
             SELECT 
-                COUNT(CASE WHEN sistole < 120 THEN 1 END) as normal,
-                COUNT(CASE WHEN sistole >= 120 AND sistole < 140 THEN 1 END) as terkendali,
-                COUNT(CASE WHEN sistole >= 140 THEN 1 END) as hipertensi,
-                COUNT(id_skrining) as total
+                COUNT(CASE WHEN id_jenis_ptm = 'hipertensi' THEN 1 END) AS hipertensi,
+                COUNT(CASE WHEN id_jenis_ptm = 'dm' THEN 1 END) AS dm,
+                COUNT(CASE WHEN id_jenis_ptm = 'obesitas' THEN 1 END) AS obesitas,
+                COUNT(CASE WHEN id_jenis_ptm = 'ppok' THEN 1 END) AS ppok,
+                COUNT(CASE WHEN id_jenis_ptm = 'gangguan_indra' THEN 1 END) AS gangguan_indra,
+                COUNT(CASE WHEN id_jenis_ptm = 'kesehatan_jiwa' THEN 1 END) AS kesehatan_jiwa,
+                COUNT(id_skrining) AS total
             FROM skrining
-            WHERE sistole IS NOT NULL
         `;
-        const tensiStats = await pool.query(queryTensi);
+        const ptmStats = await pool.query(queryPtmStats);
 
         // FIX: tambahkan currentUser dan role agar header tidak error
         res.render('bidan/dashboardbidan', {
@@ -65,7 +67,7 @@ exports.renderDashboard = async (req, res) => {
             jumlahDitolak,
             antreanValidasi: antreanResult.rows,
             jorongStats: jorongStats.rows,
-            tensiStats: tensiStats.rows[0],
+            ptmStats: ptmStats.rows[0],
             successMessage: req.session.successMessage || null,
             errorMessage:   req.session.errorMessage   || null,
         });

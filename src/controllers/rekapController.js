@@ -8,8 +8,8 @@ exports.renderRekapBidan = async (req, res) => {
         const queryCards = `
             SELECT 
                 COUNT(s.id_skrining) AS total_pasien,
-                COUNT(CASE WHEN s.sistole >= 140 THEN 1 END) AS hipertensi,
-                COUNT(CASE WHEN s.sistole < 140 THEN 1 END) AS terkendali
+                COUNT(CASE WHEN s.status_rujukan = 'ya' THEN 1 END) AS hipertensi,
+                COUNT(CASE WHEN s.status_rujukan = 'tidak' OR s.status_rujukan IS NULL THEN 1 END) AS terkendali
             FROM skrining s
             JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
             WHERE s.status_validasi = 'terverifikasi'
@@ -24,8 +24,8 @@ exports.renderRekapBidan = async (req, res) => {
             SELECT 
                 j.nama_jorong,
                 COUNT(s.id_skrining) AS total,
-                COUNT(CASE WHEN s.sistole >= 140 THEN 1 END) AS hipertensi,
-                COUNT(CASE WHEN s.sistole < 140 THEN 1 END) AS terkendali
+                COUNT(CASE WHEN s.status_rujukan = 'ya' THEN 1 END) AS hipertensi,
+                COUNT(CASE WHEN s.status_rujukan = 'tidak' OR s.status_rujukan IS NULL THEN 1 END) AS terkendali
             FROM jorong j
             LEFT JOIN pasien p ON j.id_jorong = p.id_jorong
             LEFT JOIN skrining s ON p.id_pasien = s.id_pasien AND s.status_validasi = 'terverifikasi'
@@ -41,8 +41,8 @@ exports.renderRekapBidan = async (req, res) => {
                 EXTRACT(MONTH FROM k.tanggal_kegiatan) as bulan_angka,
                 EXTRACT(YEAR FROM k.tanggal_kegiatan) as tahun_angka,
                 COUNT(s.id_skrining) AS total,
-                COUNT(CASE WHEN s.sistole >= 140 THEN 1 END) AS hipertensi,
-                COUNT(CASE WHEN s.sistole < 140 THEN 1 END) AS terkendali
+                COUNT(CASE WHEN s.status_rujukan = 'ya' THEN 1 END) AS hipertensi,
+                COUNT(CASE WHEN s.status_rujukan = 'tidak' OR s.status_rujukan IS NULL THEN 1 END) AS terkendali
             FROM skrining s
             JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
             WHERE s.status_validasi = 'terverifikasi'

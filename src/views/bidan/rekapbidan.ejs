@@ -59,7 +59,7 @@
                     </div>
                     <div>
                         <p class="text-3xl font-poppins font-bold text-gray-800"><%= hipCards %></p>
-                        <p class="text-gray-500 text-xs font-medium mt-1">Kasus Hipertensi <span class="text-gray-400 font-normal ml-1"><%= persenHip %>% dari total</span></p>
+                        <p class="text-gray-500 text-xs font-medium mt-1">Kasus Dirujuk <span class="text-gray-400 font-normal ml-1"><%= persenHip %>% dari total</span></p>
                     </div>
                 </div>
 
@@ -71,13 +71,13 @@
                     </div>
                     <div>
                         <p class="text-3xl font-poppins font-bold text-gray-800"><%= persenTer %>%</p>
-                        <p class="text-gray-500 text-xs font-medium mt-1">Tekanan Terkendali</p>
+                        <p class="text-gray-500 text-xs font-medium mt-1">Pasien Mandiri (Tidak Dirujuk)</p>
                     </div>
                 </div>
             </div>
 
             <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <h3 class="text-[#1F2937] font-poppins font-semibold mb-6">Tren Kunjungan (6 Bulan Terakhir)</h3>
+                <h3 class="text-[#1F2937] font-poppins font-semibold mb-6">Tren Kunjungan & Rujukan (6 Bulan Terakhir)</h3>
                 <div class="w-full h-[280px]">
                     <canvas id="trendChart"></canvas>
                 </div>
@@ -86,7 +86,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                 
                 <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm h-fit">
-                    <h3 class="text-[#1F2937] font-poppins font-semibold mb-6">Capaian per Jorong</h3>
+                    <h3 class="text-[#1F2937] font-poppins font-semibold mb-6">Rujukan per Jorong</h3>
                     <div class="w-full overflow-x-auto pb-4">
                         <div id="rekapChartContainer" style="height: 350px;">
                             <canvas id="jorongBarChart"></canvas>
@@ -104,8 +104,8 @@
                                 <tr class="border-b border-gray-100">
                                     <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Jorong</th>
                                     <th class="text-center px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Total</th>
-                                    <th class="text-center px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Hipertensi</th>
-                                    <th class="text-center px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Terkendali</th>
+                                    <th class="text-center px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Dirujuk</th>
+                                    <th class="text-center px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Tingkat Mandiri (%)</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-50">
@@ -132,7 +132,7 @@
                             </tbody>
                         </table>
                     </div>
-                </div>
+                </div>>
             </div>
         </main>
     </div>
@@ -161,8 +161,8 @@
                     labels: trendLabels,
                     datasets: [
                         { label: 'Total Pasien', data: trendTotal, borderColor: '#2563EB', backgroundColor: '#2563EB', borderWidth: 2, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#fff', pointBorderWidth: 2 },
-                        { label: 'Terkendali', data: trendTerkendali, borderColor: '#10B981', backgroundColor: '#10B981', borderWidth: 2, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#fff', pointBorderWidth: 2 },
-                        { label: 'Hipertensi', data: trendHipertensi, borderColor: '#EF4444', backgroundColor: '#EF4444', borderWidth: 2, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#fff', pointBorderWidth: 2 }
+                        { label: 'Mandiri (Tidak Dirujuk)', data: trendTerkendali, borderColor: '#10B981', backgroundColor: '#10B981', borderWidth: 2, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#fff', pointBorderWidth: 2 },
+                        { label: 'Dirujuk', data: trendHipertensi, borderColor: '#EF4444', backgroundColor: '#EF4444', borderWidth: 2, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#fff', pointBorderWidth: 2 }
                     ]
                 },
                 options: {
@@ -191,7 +191,7 @@
                     labels: jorongLabels,
                     datasets: [
                         { label: 'Total', data: jorongTotal, backgroundColor: '#2563EB', borderRadius: { topLeft: 4, topRight: 4 }, barPercentage: 0.6, categoryPercentage: 0.8 },
-                        { label: 'Hipertensi', data: jorongHipertensi, backgroundColor: '#EF4444', borderRadius: { topLeft: 4, topRight: 4 }, barPercentage: 0.6, categoryPercentage: 0.8 }
+                        { label: 'Dirujuk', data: jorongHipertensi, backgroundColor: '#EF4444', borderRadius: { topLeft: 4, topRight: 4 }, barPercentage: 0.6, categoryPercentage: 0.8 }
                     ]
                 },
                 options: {
