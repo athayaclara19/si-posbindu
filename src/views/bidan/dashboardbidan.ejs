@@ -170,7 +170,11 @@
                                     </div>
                                     <div>
                                         <p class="text-[#1F2937] text-sm font-semibold"><%= item.nama_pasien %></p>
-                                        <p class="text-[#6B7280] text-xs mt-0.5"><%= item.nama_jorong %> • <%= new Date(item.tanggal_kegiatan).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) %></p>
+                                        <p class="text-[#6B7280] text-xs mt-0.5">
+                                            <%= item.nama_jorong %> • 
+                                            <%= new Date(item.tanggal_kegiatan).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) %> • 
+                                            <span class="text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded-md"><%= item.ptm_list %></span>
+                                        </p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-4 justify-between sm:justify-end w-full sm:w-auto pl-12 sm:pl-0">

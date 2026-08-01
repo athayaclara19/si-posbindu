@@ -15,12 +15,15 @@ exports.renderDashboard = async (req, res) => {
         const totalData           = jumlahMenunggu + jumlahTerverifikasi + jumlahDitolak;
 
         const queryAntrean = `
-            SELECT s.*, p.nama_pasien, p.nik, k.tanggal_kegiatan, j.nama_jorong
+            SELECT p.nama_pasien, k.tanggal_kegiatan, j.nama_jorong,
+                   string_agg(jp.nama_ptm, ', ') AS ptm_list
             FROM skrining s
             JOIN pasien  p ON s.id_pasien   = p.id_pasien
             JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
             JOIN jorong  j ON p.id_jorong   = j.id_jorong
+            LEFT JOIN jenis_ptm jp ON s.id_jenis_ptm = jp.id_jenis_ptm
             WHERE s.status_validasi = 'menunggu'
+            GROUP BY p.id_pasien, p.nama_pasien, k.tanggal_kegiatan, j.nama_jorong
             ORDER BY k.tanggal_kegiatan ASC
             LIMIT 3
         `;
