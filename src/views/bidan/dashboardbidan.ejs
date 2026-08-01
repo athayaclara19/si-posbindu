@@ -84,7 +84,18 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                 <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-100 shadow-sm h-fit">
-                    <h3 class="text-[#1F2937] font-poppins font-semibold mb-6">Capaian per Jorong (Bulan Ini)</h3>
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                        <h3 class="text-[#1F2937] font-poppins font-semibold">Capaian per Jorong (Bulan Ini)</h3>
+                        <div class="flex flex-wrap gap-1" id="ptm-chart-filters">
+                            <button type="button" onclick="updateDashboardChart('all')" class="chart-filter-btn px-2 py-1 rounded-lg text-xs font-semibold border transition-all bg-blue-600 text-white border-blue-600">Semua</button>
+                            <button type="button" onclick="updateDashboardChart('hipertensi')" class="chart-filter-btn px-2 py-1 rounded-lg text-xs font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">Hipertensi</button>
+                            <button type="button" onclick="updateDashboardChart('dm')" class="chart-filter-btn px-2 py-1 rounded-lg text-xs font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">Diabetes</button>
+                            <button type="button" onclick="updateDashboardChart('obesitas')" class="chart-filter-btn px-2 py-1 rounded-lg text-xs font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">Obesitas</button>
+                            <button type="button" onclick="updateDashboardChart('ppok')" class="chart-filter-btn px-2 py-1 rounded-lg text-xs font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">PPOK</button>
+                            <button type="button" onclick="updateDashboardChart('gangguan_indra')" class="chart-filter-btn px-2 py-1 rounded-lg text-xs font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">Indra</button>
+                            <button type="button" onclick="updateDashboardChart('kesehatan_jiwa')" class="chart-filter-btn px-2 py-1 rounded-lg text-xs font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">Jiwa</button>
+                        </div>
+                    </div>
                     <div class="w-full overflow-x-auto pb-4">
                         <div id="chartContainer" style="height: 350px;">
                             <canvas id="jorongChart"></canvas>
@@ -226,43 +237,27 @@
     </div>
 
     <script>
+        let myChart;
+
         document.addEventListener('DOMContentLoaded', function() {
             // Data dikirim langsung dari variabel EJS
             const jorongData = <%- JSON.stringify(jorongStats) %>;
             
             // Map data untuk kebutuhan chart
             const labels = jorongData.map(j => j.nama_jorong);
-            const dataTotal = jorongData.map(j => j.total_pasien);
-            const dataHipertensi = jorongData.map(j => j.hipertensi);
-
+            const dataTotal = jorongData.map(j => parseInt(j.total_pasien) || 0);
+            
             const hitungLebar = Math.max(800, labels.length * 80);
             document.getElementById('chartContainer').style.minWidth = hitungLebar + 'px';
 
             const ctx = document.getElementById('jorongChart').getContext('2d');
-            const colors = ["#2563EB", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#14B8A6"];
             
-            new Chart(ctx, {
+            // Initialize chart with all data stacked
+            myChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [
-                        {
-                            label: 'Total Pasien',
-                            data: dataTotal,
-                            backgroundColor: colors, // Bisa dibikin 1 warna juga kalau mau seragam
-                            borderRadius: { topLeft: 4, topRight: 4 },
-                            barPercentage: 0.5,
-                            categoryPercentage: 0.8
-                        },
-                        {
-                            label: 'Hipertensi',
-                            data: dataHipertensi,
-                            backgroundColor: '#EF4444',
-                            borderRadius: { topLeft: 4, topRight: 4 },
-                            barPercentage: 0.5,
-                            categoryPercentage: 0.8
-                        }
-                    ]
+                    datasets: getDatasetsForPTM('all', jorongData)
                 },
                 options: {
                     responsive: true,
@@ -306,6 +301,127 @@
                     interaction: { mode: 'index', intersect: false }
                 }
             });
+
+            // Expose the update function globally
+            window.updateDashboardChart = function(ptmType) {
+                // Update button styles
+                const buttons = document.querySelectorAll('.chart-filter-btn');
+                buttons.forEach(btn => {
+                    if (btn.getAttribute('onclick').includes(`'${ptmType}'`)) {
+                        btn.className = 'chart-filter-btn px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all bg-blue-600 text-white border-blue-600';
+                    } else {
+                        btn.className = 'chart-filter-btn px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50';
+                    }
+                });
+
+                // Update chart datasets
+                myChart.data.datasets = getDatasetsForPTM(ptmType, jorongData);
+                myChart.update();
+            };
+
+            function getDatasetsForPTM(ptmType, data) {
+                const colors = {
+                    total: '#3B82F6', // Blue-500
+                    hipertensi: '#EF4444', // Red-500
+                    dm: '#10B981', // Emerald-500
+                    obesitas: '#F59E0B', // Amber-500
+                    ppok: '#8B5CF6', // Purple-500
+                    gangguan_indra: '#EC4899', // Pink-500
+                    kesehatan_jiwa: '#0D9488' // Teal-600
+                };
+
+                const labels = {
+                    total: 'Total Pasien',
+                    hipertensi: 'Hipertensi',
+                    dm: 'Diabetes Melitus',
+                    obesitas: 'Obesitas',
+                    ppok: 'PPOK',
+                    gangguan_indra: 'Gangguan Indra',
+                    kesehatan_jiwa: 'Kesehatan Jiwa'
+                };
+
+                if (ptmType === 'all') {
+                    // Return all datasets
+                    return [
+                        {
+                            label: labels.total,
+                            data: data.map(d => parseInt(d.total_pasien) || 0),
+                            backgroundColor: colors.total,
+                            borderRadius: { topLeft: 4, topRight: 4 },
+                            barPercentage: 0.5,
+                            categoryPercentage: 0.8
+                        },
+                        {
+                            label: labels.hipertensi,
+                            data: data.map(d => parseInt(d.hipertensi) || 0),
+                            backgroundColor: colors.hipertensi,
+                            borderRadius: { topLeft: 4, topRight: 4 },
+                            barPercentage: 0.5,
+                            categoryPercentage: 0.8
+                        },
+                        {
+                            label: labels.dm,
+                            data: data.map(d => parseInt(d.dm) || 0),
+                            backgroundColor: colors.dm,
+                            borderRadius: { topLeft: 4, topRight: 4 },
+                            barPercentage: 0.5,
+                            categoryPercentage: 0.8
+                        },
+                        {
+                            label: labels.obesitas,
+                            data: data.map(d => parseInt(d.obesitas) || 0),
+                            backgroundColor: colors.obesitas,
+                            borderRadius: { topLeft: 4, topRight: 4 },
+                            barPercentage: 0.5,
+                            categoryPercentage: 0.8
+                        },
+                        {
+                            label: labels.ppok,
+                            data: data.map(d => parseInt(d.ppok) || 0),
+                            backgroundColor: colors.ppok,
+                            borderRadius: { topLeft: 4, topRight: 4 },
+                            barPercentage: 0.5,
+                            categoryPercentage: 0.8
+                        },
+                        {
+                            label: labels.gangguan_indra,
+                            data: data.map(d => parseInt(d.gangguan_indra) || 0),
+                            backgroundColor: colors.gangguan_indra,
+                            borderRadius: { topLeft: 4, topRight: 4 },
+                            barPercentage: 0.5,
+                            categoryPercentage: 0.8
+                        },
+                        {
+                            label: labels.kesehatan_jiwa,
+                            data: data.map(d => parseInt(d.kesehatan_jiwa) || 0),
+                            backgroundColor: colors.kesehatan_jiwa,
+                            borderRadius: { topLeft: 4, topRight: 4 },
+                            barPercentage: 0.5,
+                            categoryPercentage: 0.8
+                        }
+                    ];
+                } else {
+                    // Return total patient + the specific PTM case count
+                    return [
+                        {
+                            label: labels.total,
+                            data: data.map(d => parseInt(d.total_pasien) || 0),
+                            backgroundColor: colors.total,
+                            borderRadius: { topLeft: 4, topRight: 4 },
+                            barPercentage: 0.5,
+                            categoryPercentage: 0.8
+                        },
+                        {
+                            label: labels[ptmType],
+                            data: data.map(d => parseInt(d[ptmType]) || 0),
+                            backgroundColor: colors[ptmType],
+                            borderRadius: { topLeft: 4, topRight: 4 },
+                            barPercentage: 0.5,
+                            categoryPercentage: 0.8
+                        }
+                    ];
+                }
+            }
         });
     </script>
 

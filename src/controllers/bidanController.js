@@ -32,12 +32,23 @@ exports.renderDashboard = async (req, res) => {
         const queryJorong = `
             SELECT 
                 j.nama_jorong, 
-                COUNT(s.id_skrining) as total_pasien,
-                COUNT(CASE WHEN s.sistole >= 140 THEN 1 END) as hipertensi,
-                COUNT(CASE WHEN s.status_validasi = 'menunggu' THEN 1 END) as menunggu
+                COUNT(s.id_skrining) AS total_pasien,
+                COUNT(CASE WHEN s.status_validasi = 'menunggu' THEN 1 END) AS menunggu,
+                COUNT(CASE WHEN s.id_jenis_ptm = 'hipertensi' AND (hp.status_tekanan <> 'Normal' OR s.sistole >= 140 OR s.diastole >= 90) THEN 1 END) AS hipertensi,
+                COUNT(CASE WHEN s.id_jenis_ptm = 'dm' AND (dmt.kategori_hasil IN ('Diabetes Melitus', 'Prediabetes') OR dmt.gula_darah >= 140) THEN 1 END) AS dm,
+                COUNT(CASE WHEN s.id_jenis_ptm = 'obesitas' AND (obt.kategori_obesitas IN ('Obesitas', 'Overweight') OR obt.imt >= 25) THEN 1 END) AS obesitas,
+                COUNT(CASE WHEN s.id_jenis_ptm = 'ppok' AND (ppt.kategori_risiko = 'Tinggi' OR ppt.skor_total >= 4) THEN 1 END) AS ppok,
+                COUNT(CASE WHEN s.id_jenis_ptm = 'gangguan_indra' AND (git.hasil_pemeriksaan_mata <> 'Normal' OR git.hasil_pemeriksaan_telinga <> 'Normal') THEN 1 END) AS gangguan_indra,
+                COUNT(CASE WHEN s.id_jenis_ptm = 'kesehatan_jiwa' AND (kjt.kategori_hasil <> 'Normal' OR kjt.skor_total >= 6) THEN 1 END) AS kesehatan_jiwa
             FROM jorong j
             LEFT JOIN pasien p ON j.id_jorong = p.id_jorong
             LEFT JOIN skrining s ON p.id_pasien = s.id_pasien
+            LEFT JOIN skrining_hipertensi hp ON s.id_skrining = hp.id_skrining
+            LEFT JOIN skrining_dm dmt ON s.id_skrining = dmt.id_skrining
+            LEFT JOIN skrining_obesitas obt ON s.id_skrining = obt.id_skrining
+            LEFT JOIN skrining_ppok ppt ON s.id_skrining = ppt.id_skrining
+            LEFT JOIN skrining_gangguan_indra git ON s.id_skrining = git.id_skrining
+            LEFT JOIN skrining_kesehatan_jiwa kjt ON s.id_skrining = kjt.id_skrining
             GROUP BY j.nama_jorong
             ORDER BY j.nama_jorong
         `;
