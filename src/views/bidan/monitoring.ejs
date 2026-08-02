@@ -39,23 +39,23 @@
 
             <!-- Tab switcher PTM -->
             <div class="flex flex-wrap gap-2 border-b border-gray-200 pb-3" id="ptm-tab-bar">
-                <button type="button" onclick="pilihTabPTM('hipertensi')" class="ptm-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-blue-600 text-white border-blue-600">
-                    <span class="w-2 h-2 rounded-full" style="background-color: #ef4444;"></span> Hipertensi
+                <button type="button" onclick="pilihTabPTM('hipertensi')" class="ptm-tab-btn px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-blue-600 text-white border-blue-600">
+                    Hipertensi
                 </button>
-                <button type="button" onclick="pilihTabPTM('dm')" class="ptm-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">
-                    <span class="w-2 h-2 rounded-full" style="background-color: #10b981;"></span> Diabetes Melitus
+                <button type="button" onclick="pilihTabPTM('dm')" class="ptm-tab-btn px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">
+                    Diabetes Melitus
                 </button>
-                <button type="button" onclick="pilihTabPTM('obesitas')" class="ptm-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">
-                    <span class="w-2 h-2 rounded-full" style="background-color: #f59e0b;"></span> Obesitas
+                <button type="button" onclick="pilihTabPTM('obesitas')" class="ptm-tab-btn px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">
+                    Obesitas
                 </button>
-                <button type="button" onclick="pilihTabPTM('ppok')" class="ptm-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">
-                    <span class="w-2 h-2 rounded-full" style="background-color: #8b5cf6;"></span> PPOK
+                <button type="button" onclick="pilihTabPTM('ppok')" class="ptm-tab-btn px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">
+                    PPOK
                 </button>
-                <button type="button" onclick="pilihTabPTM('gangguan_indra')" class="ptm-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">
-                    <span class="w-2 h-2 rounded-full" style="background-color: #ec4899;"></span> Gangguan Indra
+                <button type="button" onclick="pilihTabPTM('gangguan_indra')" class="ptm-tab-btn px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">
+                    Gangguan Indra
                 </button>
-                <button type="button" onclick="pilihTabPTM('kesehatan_jiwa')" class="ptm-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">
-                    <span class="w-2 h-2 rounded-full" style="background-color: #0d9488;"></span> Kesehatan Jiwa
+                <button type="button" onclick="pilihTabPTM('kesehatan_jiwa')" class="ptm-tab-btn px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">
+                    Kesehatan Jiwa
                 </button>
             </div>
 
@@ -155,9 +155,9 @@
             const buttons = document.querySelectorAll('.ptm-tab-btn');
             buttons.forEach(btn => {
                 if (btn.getAttribute('onclick').includes(`'${ptmType}'`)) {
-                    btn.className = 'ptm-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-blue-600 text-white border-blue-600';
+                    btn.className = 'ptm-tab-btn px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-blue-600 text-white border-blue-600';
                 } else {
-                    btn.className = 'ptm-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50';
+                    btn.className = 'ptm-tab-btn px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50';
                 }
             });
 
