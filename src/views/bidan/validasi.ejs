@@ -94,20 +94,13 @@
                             </div>
                         </div>
  
-                        <!-- Tab Bar Penyakit (PTM) -->
-                        <div class="px-5 py-3.5 border-b border-gray-100 bg-white">
-                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Pilih Pemeriksaan</p>
-                            <div id="det-ptm-tabbar" class="flex flex-wrap gap-1.5">
-                                <!-- Diisi dinamis oleh JS -->
-                            </div>
-                        </div>
-
-                        <div class="px-5 py-4 border-b border-gray-100 bg-[#F8FAFC]">
+                        <div class="px-5 py-4 bg-[#F8FAFC]">
                             <p class="text-[#2563EB] text-[11px] font-bold uppercase tracking-wider mb-3">
-                                Hasil Pengukuran &mdash; <span id="det-jenis-ptm">-</span>
+                                Hasil Pengukuran PTM
                             </p>
-                            <div id="det-hasil-dinamis" class="space-y-2.5">
-                                </div>
+                            <div id="det-hasil-kontainer" class="space-y-4">
+                                <!-- Kartu-kartu pemeriksaan akan di-render di sini secara dinamis -->
+                            </div>
                         </div>
 
                         <div class="px-5 py-5 bg-gray-50 rounded-b-2xl">
@@ -313,88 +306,103 @@
                 document.getElementById('det-jorong').innerText = session.jorong || '-';
                 document.getElementById('det-tanggal').innerText = session.tanggal || '-';
 
-                const tabbar = document.getElementById('det-ptm-tabbar');
-                if (!tabbar) {
-                    console.error("Element det-ptm-tabbar not found!");
+                const container = document.getElementById('det-hasil-kontainer');
+                if (!container) {
+                    console.error("Element det-hasil-kontainer not found!");
                     return;
                 }
-                tabbar.innerHTML = '';
+                container.innerHTML = '';
 
                 if (session.pemeriksaan && session.pemeriksaan.length > 0) {
+                    currentSelectedId = session.pemeriksaan[0].id_skrining;
+
+                    let html = '';
                     session.pemeriksaan.forEach((p, idx) => {
-                        const btn = document.createElement('button');
-                        btn.type = 'button';
-                        btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all';
-                        btn.innerText = p.jenisPtmLabel || 'Pemeriksaan';
-                        btn.onclick = () => selectPtmTab(idx);
-                        tabbar.appendChild(btn);
+                        let ptmClass = '';
+                        let borderClass = '';
+                        
+                        switch (p.id_jenis_ptm) {
+                            case 'hipertensi':
+                                ptmClass = 'bg-red-50/40 border-red-100';
+                                borderClass = 'border-red-500';
+                                break;
+                            case 'dm':
+                                ptmClass = 'bg-emerald-50/40 border-emerald-100';
+                                borderClass = 'border-emerald-500';
+                                break;
+                            case 'obesitas':
+                                ptmClass = 'bg-amber-50/40 border-amber-100';
+                                borderClass = 'border-amber-500';
+                                break;
+                            case 'ppok':
+                                ptmClass = 'bg-purple-50/40 border-purple-100';
+                                borderClass = 'border-purple-500';
+                                break;
+                            case 'gangguan_indra':
+                                ptmClass = 'bg-pink-50/40 border-pink-100';
+                                borderClass = 'border-pink-500';
+                                break;
+                            case 'kesehatan_jiwa':
+                                ptmClass = 'bg-teal-50/40 border-teal-100';
+                                borderClass = 'border-teal-500';
+                                break;
+                            default:
+                                ptmClass = 'bg-slate-50/40 border-slate-100';
+                                borderClass = 'border-slate-500';
+                        }
+
+                        html += `
+                            <div class="p-4 rounded-xl border ${ptmClass} border-l-4 ${borderClass} space-y-2">
+                                <div class="flex justify-between items-center mb-1">
+                                    <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">${p.jenisPtmLabel}</h4>
+                                </div>
+                                <div class="space-y-1.5">
+                        `;
+
+                        const baris = (label, value) =>
+                            `<div class="flex justify-between text-xs py-0.5"><span class="text-[#6B7280]">${label}</span><span class="text-[#1F2937] font-semibold">${value}</span></div>`;
+
+                        if (p.id_jenis_ptm === 'hipertensi') {
+                            let kat = p.kategori, katColor = 'text-[#059669]';
+                            if (kat === 'Prehipertensi') katColor = 'text-[#D97706]';
+                            else if (kat === 'Hipertensi Tahap 1') katColor = 'text-[#EA580C]';
+                            else if (kat && kat !== 'Normal') katColor = 'text-[#DC2626]';
+                            html += baris('Sistole / Diastole', `${p.sistole}/${p.diastole} mmHg`);
+                            html += `<div class="flex justify-between text-xs py-0.5 items-center"><span class="text-[#6B7280]">Kategori TD</span><span class="text-xs font-bold ${katColor}">${kat || '-'}</span></div>`;
+                        } else if (p.id_jenis_ptm === 'dm') {
+                            html += baris('Gula Darah', `${p.gulaDarah} mg/dL`);
+                            html += baris('Jenis Pemeriksaan', p.jenisPemeriksaanDm);
+                        } else if (p.id_jenis_ptm === 'obesitas') {
+                            html += baris('Berat / Tinggi', `${p.beratBadan} kg / ${p.tinggiBadan} cm`);
+                            html += baris('IMT', p.imtObesitas !== '-' ? `${parseFloat(p.imtObesitas).toFixed(1)} kg/m²` : '-');
+                            html += baris('Lingkar Perut', p.lingkarPerut !== '-' ? `${p.lingkarPerut} cm` : '-');
+                        } else if (p.id_jenis_ptm === 'ppok') {
+                            html += baris('Rokok / Hari', `${p.rokokPerHari ?? '-'} batang`);
+                            html += baris('Lama Merokok', `${p.lamaMerokok ?? '-'} tahun`);
+                            html += baris('Sesak Napas', p.sesakNapas ? 'Ya' : 'Tidak');
+                            html += baris('Batuk Berdahak Kronis', p.batukKronis ? 'Ya' : 'Tidak');
+                        } else if (p.id_jenis_ptm === 'gangguan_indra') {
+                            html += baris('Pemeriksaan Mata', p.hasilMata);
+                            html += baris('Pemeriksaan Telinga', p.hasilTelinga);
+                            html += baris('Keterangan', p.ketIndra);
+                        } else if (p.id_jenis_ptm === 'kesehatan_jiwa') {
+                            html += baris('Skor SRQ-20', p.skorJiwa ?? '-');
+                            html += baris('Risiko Bunuh Diri', p.risikoBunuhDiri ? 'Ya' : 'Tidak');
+                        }
+                        
+                        html += `
+                                </div>
+                            </div>
+                        `;
                     });
-                    selectPtmTab(0);
+                    container.innerHTML = html;
                 } else {
                     console.warn("No pemeriksaan array for session:", session);
+                    container.innerHTML = `<p class="text-xs text-gray-500">Tidak ada data pemeriksaan PTM.</p>`;
                 }
             } catch (err) {
                 console.error("Error inside openDetail:", err);
             }
-        }
-
-        function selectPtmTab(idx) {
-            console.log("selectPtmTab called with idx:", idx);
-            if (!activeSession || !activeSession.pemeriksaan || !activeSession.pemeriksaan[idx]) {
-                console.error("No activeSession or examination found for idx:", idx);
-                return;
-            }
-            activeExamIndex = idx;
-            const p = activeSession.pemeriksaan[idx];
-            console.log("Selected exam:", p);
-            currentSelectedId = p.id_skrining;
-
-            const buttons = document.querySelectorAll('#det-ptm-tabbar button');
-            buttons.forEach((btn, i) => {
-                if (i === idx) {
-                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold border border-blue-500 bg-blue-50 text-blue-700 transition-all';
-                } else {
-                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-all';
-                }
-            });
-
-            const detJenis = document.getElementById('det-jenis-ptm');
-            if (detJenis) detJenis.innerText = p.jenisPtmLabel || 'Pemeriksaan';
-
-            const baris = (label, value) =>
-                `<div class="flex justify-between text-sm"><span class="text-[#6B7280]">${label}</span><span class="text-[#1F2937] font-medium">${value}</span></div>`;
-
-            let html = '';
-            if (p.id_jenis_ptm === 'hipertensi') {
-                let kat = p.kategori, katColor = 'text-[#059669]';
-                if (kat === 'Prehipertensi') katColor = 'text-[#D97706]';
-                else if (kat === 'Hipertensi Tahap 1') katColor = 'text-[#EA580C]';
-                else if (kat && kat !== 'Normal') katColor = 'text-[#DC2626]';
-                html += baris('Sistole / Diastole', `${p.sistole}/${p.diastole} mmHg`);
-                html += `<div class="flex justify-between text-sm items-center"><span class="text-[#6B7280]">Kategori TD</span><span class="text-sm font-semibold ${katColor}">${kat || '-'}</span></div>`;
-            } else if (p.id_jenis_ptm === 'dm') {
-                html += baris('Gula Darah', `${p.gulaDarah} mg/dL`);
-                html += baris('Jenis Pemeriksaan', p.jenisPemeriksaanDm);
-            } else if (p.id_jenis_ptm === 'obesitas') {
-                html += baris('Berat / Tinggi', `${p.beratBadan}kg / ${p.tinggiBadan}cm`);
-                html += baris('IMT', p.imtObesitas !== '-' ? `${parseFloat(p.imtObesitas).toFixed(1)} kg/m²` : '-');
-                html += baris('Lingkar Perut', p.lingkarPerut !== '-' ? `${p.lingkarPerut} cm` : '-');
-            } else if (p.id_jenis_ptm === 'ppok') {
-                html += baris('Rokok / Hari', `${p.rokokPerHari ?? '-'} batang`);
-                html += baris('Lama Merokok', `${p.lamaMerokok ?? '-'} tahun`);
-                html += baris('Sesak Napas', p.sesakNapas ? 'Ya' : 'Tidak');
-                html += baris('Batuk Berdahak Kronis', p.batukKronis ? 'Ya' : 'Tidak');
-            } else if (p.id_jenis_ptm === 'gangguan_indra') {
-                html += baris('Hasil Pemeriksaan Mata', p.hasilMata);
-                html += baris('Hasil Pemeriksaan Telinga', p.hasilTelinga);
-                html += baris('Keterangan', p.ketIndra);
-            } else if (p.id_jenis_ptm === 'kesehatan_jiwa') {
-                html += baris('Skor SRQ-20', p.skorJiwa ?? '-');
-                html += baris('Indikasi Risiko Bunuh Diri', p.risikoBunuhDiri ? 'Ya (perlu perhatian khusus)' : 'Tidak');
-            } else {
-                html += baris('Data', '-');
-            }
-            document.getElementById('det-hasil-dinamis').innerHTML = html;
         }
 
         function closeDetail() {
@@ -409,7 +417,7 @@
 
         function handleVerifikasi() {
             if(!currentSelectedId) return;
-            if(!confirm('Yakin ingin memverifikasi dan menerima data skrining ini?')) return;
+            if(!confirm('Yakin ingin memverifikasi dan menerima seluruh data skrining dalam sesi ini?')) return;
             document.getElementById('formValidasiReal').action = '/bidan/validasi/' + currentSelectedId;
             document.getElementById('inputStatusVal').value = 'terverifikasi';
             document.getElementById('inputCatatanVal').value = 'Telah diverifikasi oleh Bidan.';

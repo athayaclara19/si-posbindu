@@ -188,7 +188,9 @@ exports.handleActionValidasi = async (req, res) => {
             UPDATE skrining
             SET status_validasi=$1, catatan_bidan=$2,
                 id_validator=$3, tanggal_validasi=NOW()
-            WHERE id_skrining=$4
+            WHERE id_pasien = (SELECT id_pasien FROM skrining WHERE id_skrining = $4)
+              AND id_kegiatan = (SELECT id_kegiatan FROM skrining WHERE id_skrining = $4)
+              AND status_validasi = 'menunggu'
         `;
         
         await pool.query(query, [finalStatus, catatan_bidan || null, id_validator, id_skrining]);
