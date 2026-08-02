@@ -224,13 +224,26 @@ exports.handleDeletePasien = async (req, res) => {
 exports.renderDashboardPTM = async (req, res) => {
     try {
         const tahunIni = new Date().getFullYear();
+        const jenisPtmTerpilih = req.query.jenis_ptm || 'hipertensi';
 
-        // ── Ambil target dari DB (fallback 2000 jika belum diset) ──
-        const resTarget = await pool.query(
-            'SELECT target_total FROM target_tahunan WHERE tahun = $1',
-            [tahunIni]
+        // Ambil daftar jenis PTM
+        const resJenisPtm = await pool.query(
+            'SELECT id_jenis_ptm, nama_ptm FROM jenis_ptm ORDER BY nama_ptm'
         );
-        const TARGET_TAHUNAN = resTarget.rows.length > 0
+        
+        // Ambil nama PTM terpilih
+        const resActivePtm = await pool.query(
+            'SELECT nama_ptm FROM jenis_ptm WHERE id_jenis_ptm = $1',
+            [jenisPtmTerpilih]
+        );
+        const namaPtmTerpilih = resActivePtm.rows.length > 0 ? resActivePtm.rows[0].nama_ptm : 'Hipertensi';
+
+        // ── Ambil target dari DB (SUM dari target nagari, fallback 2000 jika belum diset) ──
+        const resTarget = await pool.query(
+            'SELECT SUM(target_total) as target_total FROM target_tahunan WHERE tahun = $1 AND id_jenis_ptm = $2',
+            [tahunIni, jenisPtmTerpilih]
+        );
+        const TARGET_TAHUNAN = resTarget.rows[0] && resTarget.rows[0].target_total
             ? parseInt(resTarget.rows[0].target_total)
             : 2000;
 
@@ -241,39 +254,68 @@ exports.renderDashboardPTM = async (req, res) => {
             JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
             WHERE s.status_validasi = 'terverifikasi'
               AND EXTRACT(YEAR FROM k.tanggal_kegiatan) = $1
+              AND s.id_jenis_ptm = $2
         `;
-        const resCapaian  = await pool.query(qCapaian, [tahunIni]);
+        const resCapaian  = await pool.query(qCapaian, [tahunIni, jenisPtmTerpilih]);
         const totalTercapai = parseInt(resCapaian.rows[0].total_tercapai) || 0;
         const sisaTarget    = Math.max(0, TARGET_TAHUNAN - totalTercapai);
         const persenTarget  = TARGET_TAHUNAN > 0
             ? Math.round((totalTercapai / TARGET_TAHUNAN) * 100)
             : 0;
 
-        // ── 2. Metrik Hipertensi & Terkendali (Tahun Ini) ──
+        // ── 2. Metrik Abnormal & Normal/Terkendali (Tahun Ini) ──
+        let filterAbnormal = 's.sistole >= 140 OR s.diastole >= 90';
+        let filterNormal = 's.sistole < 140 AND s.diastole < 90';
+
+        if (jenisPtmTerpilih === 'dm') {
+            filterAbnormal = `dmt.kategori_hasil IN ('Diabetes Melitus', 'Prediabetes') OR s.gula_darah >= 140`;
+            filterNormal = `s.gula_darah < 140 AND dmt.kategori_hasil = 'Normal'`;
+        } else if (jenisPtmTerpilih === 'obesitas') {
+            filterAbnormal = `obt.kategori_obesitas IN ('Obesitas', 'Overweight') OR obt.imt >= 25`;
+            filterNormal = `obt.kategori_obesitas = 'Normal' OR (obt.imt < 25 AND obt.imt > 0)`;
+        } else if (jenisPtmTerpilih === 'ppok') {
+            filterAbnormal = `ppt.kategori_risiko = 'Tinggi' OR ppt.skor_total >= 4`;
+            filterNormal = `ppt.kategori_risiko = 'Rendah' OR (ppt.skor_total < 4 AND ppt.skor_total >= 0)`;
+        } else if (jenisPtmTerpilih === 'gangguan_indra') {
+            filterAbnormal = `git.hasil_pemeriksaan_mata <> 'Normal' OR git.hasil_pemeriksaan_telinga <> 'Normal'`;
+            filterNormal = `git.hasil_pemeriksaan_mata = 'Normal' AND git.hasil_pemeriksaan_telinga = 'Normal'`;
+        } else if (jenisPtmTerpilih === 'kesehatan_jiwa') {
+            filterAbnormal = `kjt.kategori_hasil <> 'Normal' OR kjt.skor_total >= 6`;
+            filterNormal = `kjt.kategori_hasil = 'Normal' OR (kjt.skor_total < 6 AND kjt.skor_total >= 0)`;
+        }
+
         const qMetrik = `
             SELECT 
-                COUNT(DISTINCT CASE WHEN s.sistole >= 140 OR s.diastole >= 90 THEN s.id_pasien END) as hipertensi,
-                COUNT(DISTINCT CASE WHEN s.sistole < 140 AND s.diastole < 90 THEN s.id_pasien END) as terkendali
+                COUNT(DISTINCT CASE WHEN ${filterAbnormal} THEN s.id_pasien END) as abnormal_cases,
+                COUNT(DISTINCT CASE WHEN ${filterNormal} THEN s.id_pasien END) as normal_cases
             FROM skrining s
             JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
+            LEFT JOIN skrining_hipertensi hp ON s.id_skrining = hp.id_skrining
+            LEFT JOIN skrining_dm dmt ON s.id_skrining = dmt.id_skrining
+            LEFT JOIN skrining_obesitas obt ON s.id_skrining = obt.id_skrining
+            LEFT JOIN skrining_ppok ppt ON s.id_skrining = ppt.id_skrining
+            LEFT JOIN skrining_gangguan_indra git ON s.id_skrining = git.id_skrining
+            LEFT JOIN skrining_kesehatan_jiwa kjt ON s.id_skrining = kjt.id_skrining
             WHERE s.status_validasi = 'terverifikasi'
               AND EXTRACT(YEAR FROM k.tanggal_kegiatan) = $1
+              AND s.id_jenis_ptm = $2
         `;
-        const resMetrik       = await pool.query(qMetrik, [tahunIni]);
-        const totalHipertensi = parseInt(resMetrik.rows[0].hipertensi)  || 0;
-        const totalTerkendali = parseInt(resMetrik.rows[0].terkendali)  || 0;
+        const resMetrik       = await pool.query(qMetrik, [tahunIni, jenisPtmTerpilih]);
+        const totalHipertensi = parseInt(resMetrik.rows[0].abnormal_cases)  || 0;
+        const totalTerkendali = parseInt(resMetrik.rows[0].normal_cases)  || 0;
         const persenHipertensi = totalTercapai > 0
             ? ((totalHipertensi / totalTercapai) * 100).toFixed(1) : 0;
         const persenTerkendali = totalTercapai > 0
             ? ((totalTerkendali / totalTercapai) * 100).toFixed(1) : 0;
 
         // ── 3. Capaian per Nagari ──
-        // FIX: filter tahun sebelumnya nempel di kondisi JOIN kegiatan (LEFT JOIN),
-        // sehingga tidak benar2 membatasi COUNT — capaian kebablasan menghitung
-        // skrining dari semua tahun. Sekarang dipisah jadi CTE dengan INNER JOIN
-        // supaya filter tahun & status_validasi benar2 berlaku.
         const qNagari = `
-            WITH capaian_per_nagari AS (
+            WITH target_per_nagari AS (
+                SELECT id_nagari, target_total 
+                FROM target_tahunan 
+                WHERE tahun = $1 AND id_jenis_ptm = $2
+            ),
+            capaian_per_nagari AS (
                 SELECT n.id_nagari, COUNT(DISTINCT s.id_pasien) AS capaian
                 FROM skrining s
                 JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
@@ -282,37 +324,25 @@ exports.renderDashboardPTM = async (req, res) => {
                 JOIN nagari   n ON j.id_nagari   = n.id_nagari
                 WHERE s.status_validasi = 'terverifikasi'
                   AND EXTRACT(YEAR FROM k.tanggal_kegiatan) = $1
-                GROUP BY n.id_nagari
-            ),
-            pasien_per_nagari AS (
-                SELECT n.id_nagari, COUNT(DISTINCT p.id_pasien) AS total_pasien
-                FROM pasien p
-                JOIN jorong j ON p.id_jorong = j.id_jorong
-                JOIN nagari n ON j.id_nagari = n.id_nagari
+                  AND s.id_jenis_ptm = $2
                 GROUP BY n.id_nagari
             )
             SELECT
                 n.nama_nagari,
                 COALESCE(c.capaian, 0)       AS capaian,
-                COALESCE(t.total_pasien, 0)  AS total_pasien
+                COALESCE(tn.target_total, 0) AS target_total
             FROM nagari n
             LEFT JOIN capaian_per_nagari c ON n.id_nagari = c.id_nagari
-            LEFT JOIN pasien_per_nagari  t ON n.id_nagari = t.id_nagari
+            LEFT JOIN target_per_nagari  tn ON n.id_nagari = tn.id_nagari
+            WHERE n.is_active = true
             ORDER BY capaian DESC
         `;
-        const resNagari = await pool.query(qNagari, [tahunIni]);
+        const resNagari = await pool.query(qNagari, [tahunIni, jenisPtmTerpilih]);
 
-        // Distribusi target per nagari PROPORSIONAL terhadap jumlah pasien
-        // terdaftar di nagari itu (bukan disamaratakan) — nagari dengan lebih
-        // banyak warga terdaftar otomatis mendapat porsi target lebih besar
-        // dari TARGET_TAHUNAN, supaya persentase capaian masuk akal.
-        const totalPasienSemuaNagari = resNagari.rows.reduce((sum, row) => sum + (parseInt(row.total_pasien) || 0), 0);
         const dataNagari = resNagari.rows.map(row => {
-            const capaian      = parseInt(row.capaian) || 0;
-            const totalPasien  = parseInt(row.total_pasien) || 0;
-            const target = totalPasienSemuaNagari > 0
-                ? Math.max(1, Math.round((totalPasien / totalPasienSemuaNagari) * TARGET_TAHUNAN))
-                : 0;
+            const capaian = parseInt(row.capaian) || 0;
+            const target_total = parseInt(row.target_total) || 0;
+            const target = target_total > 0 ? target_total : Math.max(1, Math.round(TARGET_TAHUNAN / 7));
             return {
                 nama_nagari: row.nama_nagari,
                 capaian,
@@ -320,6 +350,23 @@ exports.renderDashboardPTM = async (req, res) => {
                 persentase: target > 0 ? Math.round((capaian / target) * 100) : 0,
             };
         });
+
+        // ── 4. Sebaran Pemeriksaan PTM (Tahun Ini) ──
+        const queryPtmStats = `
+            SELECT 
+                COUNT(CASE WHEN s.id_jenis_ptm = 'hipertensi' THEN 1 END) AS hipertensi,
+                COUNT(CASE WHEN s.id_jenis_ptm = 'dm' THEN 1 END) AS dm,
+                COUNT(CASE WHEN s.id_jenis_ptm = 'obesitas' THEN 1 END) AS obesitas,
+                COUNT(CASE WHEN s.id_jenis_ptm = 'ppok' THEN 1 END) AS ppok,
+                COUNT(CASE WHEN s.id_jenis_ptm = 'gangguan_indra' THEN 1 END) AS gangguan_indra,
+                COUNT(CASE WHEN s.id_jenis_ptm = 'kesehatan_jiwa' THEN 1 END) AS kesehatan_jiwa,
+                COUNT(s.id_skrining) AS total
+            FROM skrining s
+            JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
+            WHERE s.status_validasi = 'terverifikasi'
+              AND EXTRACT(YEAR FROM k.tanggal_kegiatan) = $1
+        `;
+        const resPtmStats = await pool.query(queryPtmStats, [tahunIni]);
 
         res.render('ptm/dashboardptm', {
             active: 'dashboard',
@@ -334,6 +381,10 @@ exports.renderDashboardPTM = async (req, res) => {
             persenHipertensi,
             persenTerkendali,
             dataNagari,
+            jenisPtmList:     resJenisPtm.rows,
+            jenisPtmTerpilih,
+            namaPtmTerpilih,
+            ptmStats: resPtmStats.rows[0],
             successMessage: req.session.successMessage || null,
             errorMessage:   req.session.errorMessage   || null,
         });

@@ -171,10 +171,13 @@ describe('ptmController.renderDashboardPTM()', () => {
 
     function setupHappyPath({ target = 2000 } = {}) {
         pool.query
-            .mockResolvedValueOnce({ rows: target !== null ? [{ target_total: target }] : [] }) // target tahunan
+            .mockResolvedValueOnce({ rows: [{ id_jenis_ptm: 'hipertensi', nama_ptm: 'Hipertensi' }] }) // list PTM
+            .mockResolvedValueOnce({ rows: [{ nama_ptm: 'Hipertensi' }] }) // active PTM
+            .mockResolvedValueOnce({ rows: target !== null ? [{ target_total: target }] : [] }) // target tahunan sum
             .mockResolvedValueOnce({ rows: [{ total_tercapai: '500' }] }) // capaian
-            .mockResolvedValueOnce({ rows: [{ hipertensi: '200', terkendali: '300' }] }) // metrik
-            .mockResolvedValueOnce({ rows: [{ nama_nagari: 'Koto Tuo', capaian: '100', total_pasien: '50' }] }); // per nagari
+            .mockResolvedValueOnce({ rows: [{ abnormal_cases: '200', normal_cases: '300' }] }) // metrik
+            .mockResolvedValueOnce({ rows: [{ nama_nagari: 'Koto Tuo', capaian: '100', target_total: '50' }] }) // per nagari
+            .mockResolvedValueOnce({ rows: [{ total: 10, hipertensi: 2, dm: 2, obesitas: 2, ppok: 2, gangguan_indra: 1, kesehatan_jiwa: 1 }] }); // ptmStats
     }
 
     test('happy path → persentase target & hipertensi dihitung dengan benar', async () => {
@@ -204,30 +207,35 @@ describe('ptmController.renderDashboardPTM()', () => {
 
     test('distribusi target per nagari proporsional terhadap jumlah pasien', async () => {
         pool.query
+            .mockResolvedValueOnce({ rows: [{ id_jenis_ptm: 'hipertensi', nama_ptm: 'Hipertensi' }] }) // list PTM
+            .mockResolvedValueOnce({ rows: [{ nama_ptm: 'Hipertensi' }] }) // active PTM
             .mockResolvedValueOnce({ rows: [{ target_total: 1000 }] })
             .mockResolvedValueOnce({ rows: [{ total_tercapai: '0' }] })
-            .mockResolvedValueOnce({ rows: [{ hipertensi: '0', terkendali: '0' }] })
+            .mockResolvedValueOnce({ rows: [{ abnormal_cases: '0', normal_cases: '0' }] })
             .mockResolvedValueOnce({ rows: [
-                { nama_nagari: 'A', capaian: '0', total_pasien: '80' },
-                { nama_nagari: 'B', capaian: '0', total_pasien: '20' },
-            ] });
+                { nama_nagari: 'A', capaian: '0', target_total: '800' },
+                { nama_nagari: 'B', capaian: '0', target_total: '200' },
+            ] })
+            .mockResolvedValueOnce({ rows: [{ total: 10, hipertensi: 2, dm: 2, obesitas: 2, ppok: 2, gangguan_indra: 1, kesehatan_jiwa: 1 }] });
 
         const { req, res } = mockReqRes({ session: {} });
 
         await ptmController.renderDashboardPTM(req, res);
 
         const data = res.render.mock.calls[0][1];
-        // total pasien 100 → A dapat 80% dari 1000 = 800, B dapat 20% = 200
         expect(data.dataNagari[0].target).toBe(800);
         expect(data.dataNagari[1].target).toBe(200);
     });
 
     test('totalTercapai 0 → persenHipertensi/persenTerkendali 0 (bukan NaN)', async () => {
         pool.query
+            .mockResolvedValueOnce({ rows: [{ id_jenis_ptm: 'hipertensi', nama_ptm: 'Hipertensi' }] }) // list PTM
+            .mockResolvedValueOnce({ rows: [{ nama_ptm: 'Hipertensi' }] }) // active PTM
             .mockResolvedValueOnce({ rows: [{ target_total: 2000 }] })
             .mockResolvedValueOnce({ rows: [{ total_tercapai: '0' }] })
-            .mockResolvedValueOnce({ rows: [{ hipertensi: '0', terkendali: '0' }] })
-            .mockResolvedValueOnce({ rows: [] });
+            .mockResolvedValueOnce({ rows: [{ abnormal_cases: '0', normal_cases: '0' }] })
+            .mockResolvedValueOnce({ rows: [] })
+            .mockResolvedValueOnce({ rows: [{ total: 0, hipertensi: 0, dm: 0, obesitas: 0, ppok: 0, gangguan_indra: 0, kesehatan_jiwa: 0 }] });
 
         const { req, res } = mockReqRes({ session: {} });
 

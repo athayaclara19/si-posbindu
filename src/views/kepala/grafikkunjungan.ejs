@@ -21,9 +21,21 @@
         <%- include('../partials/header', { pageTitle: 'Grafik & Rekap Capaian', role: 'kepala' }) %>
 
         <main class="p-4 md:p-6 lg:p-8 space-y-6 w-full">
-            <div>
-                <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Grafik Kunjungan & Capaian Program PTM</h2>
-                <p class="text-[#6B7280] text-sm mt-1">Rekap tingkat eksekutif — semua data dari pasien terverifikasi</p>
+            <% const activePtmName = jenisPtmOptions.find(p => p.id_jenis_ptm === activePtm)?.nama_ptm || 'Hipertensi'; %>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Grafik Kunjungan & Capaian Program PTM</h2>
+                    <p class="text-[#6B7280] text-sm mt-1">Rekap tingkat eksekutif — semua data dari pasien terverifikasi</p>
+                </div>
+                <div class="bg-white px-4 py-2 rounded-xl border border-gray-200 flex items-center gap-2">
+                    <span class="text-xs font-semibold text-gray-500 uppercase">Pilih Penyakit:</span>
+                    <select id="filterPtm" onchange="window.location.href='/kepala/grafikkunjungan?jenis_ptm=' + this.value"
+                            class="text-sm font-semibold text-gray-700 outline-none cursor-pointer bg-transparent">
+                        <% jenisPtmOptions.forEach(function(p) { %>
+                            <option value="<%= p.id_jenis_ptm %>" <%= p.id_jenis_ptm === activePtm ? 'selected' : '' %>><%= p.nama_ptm %></option>
+                        <% }) %>
+                    </select>
+                </div>
             </div>
 
             <!-- GRAFIK KUNJUNGAN PASIEN (Activity 34) -->
@@ -36,7 +48,7 @@
                     <div class="flex flex-wrap items-center gap-4 text-xs font-medium">
                         <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-[#3B82F6]"></div><span class="text-[#6B7280]">Total Pasien</span></div>
                         <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-[#10B981]"></div><span class="text-[#6B7280]">Total Skrining</span></div>
-                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-[#EF4444]"></div><span class="text-[#6B7280]">Hipertensi</span></div>
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-[#EF4444]"></div><span class="text-[#6B7280]"><%= activePtmName %></span></div>
                     </div>
                 </div>
                 <% if (grafikData.length === 0) { %>
@@ -64,8 +76,8 @@
                                 <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Periode</th>
                                 <th class="text-right px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Total Pasien</th>
                                 <th class="text-right px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Total Skrining</th>
-                                <th class="text-right px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Hipertensi</th>
-                                <th class="text-right px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Terkendali</th>
+                                <th class="text-right px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium"><%= activePtmName %></th>
+                                <th class="text-right px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Normal / Terkendali</th>
                                 <th class="text-right px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">% Capaian</th>
                             </tr>
                         </thead>
@@ -97,7 +109,7 @@
             <% if (capaianNagari.length > 0) { %>
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div class="px-6 py-5 border-b border-gray-100">
-                    <h3 class="text-[#1F2937] font-poppins font-semibold">Capaian per Nagari (Kumulatif)</h3>
+                    <h3 class="text-[#1F2937] font-poppins font-semibold">Capaian <%= activePtmName %> per Nagari (Kumulatif)</h3>
                 </div>
                 <div class="p-6">
                     <div class="space-y-3">
@@ -139,7 +151,7 @@
                 datasets: [
                     { label: 'Total Pasien', data: dataPasien, backgroundColor: '#3B82F6', borderRadius: 3, barPercentage: 0.5, categoryPercentage: 0.6 },
                     { label: 'Total Skrining', data: dataSkrining, backgroundColor: '#10B981', borderRadius: 3, barPercentage: 0.5, categoryPercentage: 0.6 },
-                    { label: 'Hipertensi', data: dataHT, backgroundColor: '#EF4444', borderRadius: 3, barPercentage: 0.5, categoryPercentage: 0.6 }
+                    { label: '<%= activePtmName %>', data: dataHT, backgroundColor: '#EF4444', borderRadius: 3, barPercentage: 0.5, categoryPercentage: 0.6 }
                 ]
             },
             options: {

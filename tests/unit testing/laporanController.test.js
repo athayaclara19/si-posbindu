@@ -205,7 +205,8 @@ describe('laporanController.renderLaporanPTM()', () => {
     test('happy path → render dengan daftar laporan & periode yang tersedia', async () => {
         pool.query
             .mockResolvedValueOnce({ rows: [{ id_laporan: 1 }] })
-            .mockResolvedValueOnce({ rows: [{ periode_id: 1 }] });
+            .mockResolvedValueOnce({ rows: [{ periode_id: 1 }] })
+            .mockResolvedValueOnce({ rows: [{ id_jenis_ptm: 'hipertensi', nama_ptm: 'Hipertensi' }] });
 
         const { req, res } = mockReqRes({ session: { user: { id_user: 3, role: 'pj_ptm' } } });
 
@@ -244,7 +245,8 @@ describe('laporanController.exportLaporanExcel()', () => {
 
     test('laporan ditemukan → workbook dibuat & response Excel dikirim', async () => {
         pool.query
-            .mockResolvedValueOnce({ rows: [{ id_laporan: 1, periode_bulan: 3, periode_tahun: 2026, total_skrining: 0 }] }) // laporanRes
+            .mockResolvedValueOnce({ rows: [{ id_laporan: 1, periode_bulan: 3, periode_tahun: 2026, total_skrining: 0, id_jenis_ptm: 'hipertensi' }] }) // laporanRes
+            .mockResolvedValueOnce({ rows: [{ nama_ptm: 'Hipertensi' }] }) // activePtmRes
             .mockResolvedValueOnce({ rows: [] }) // skriningRes
             .mockResolvedValueOnce({ rows: [] }); // kasusRes
 

@@ -43,7 +43,8 @@ function bentukNarasiLaporan(bulan, tahun, totalPasien, totalSkrining) {
 }
 
 exports.getPreviewData = async (req, res) => {
-    const { bulan, tahun } = req.query;
+    const { bulan, tahun, jenis_ptm } = req.query;
+    const jenisPtmTerpilih = jenis_ptm || 'hipertensi';
     try {
         // Cari atau buat periode
         let periodeRes = await pool.query(
@@ -64,42 +65,70 @@ exports.getPreviewData = async (req, res) => {
 
         const id_periode = periodeRes.rows[0].periode_id;
 
+        let filterAbnormal = 's.sistole >= 140 OR s.diastole >= 90';
+
+        if (jenisPtmTerpilih === 'dm') {
+            filterAbnormal = `dmt.kategori_hasil IN ('Diabetes Melitus', 'Prediabetes') OR s.gula_darah >= 140`;
+        } else if (jenisPtmTerpilih === 'obesitas') {
+            filterAbnormal = `obt.kategori_obesitas IN ('Obesitas', 'Overweight') OR obt.imt >= 25`;
+        } else if (jenisPtmTerpilih === 'ppok') {
+            filterAbnormal = `ppt.kategori_risiko = 'Tinggi' OR ppt.skor_total >= 4`;
+        } else if (jenisPtmTerpilih === 'gangguan_indra') {
+            filterAbnormal = `git.hasil_pemeriksaan_mata <> 'Normal' OR git.hasil_pemeriksaan_telinga <> 'Normal'`;
+        } else if (jenisPtmTerpilih === 'kesehatan_jiwa') {
+            filterAbnormal = `kjt.kategori_hasil <> 'Normal' OR kjt.skor_total >= 6`;
+        }
+
         // Agregat total
         const aggRes = await pool.query(`
             SELECT
                 COUNT(DISTINCT s.id_pasien)  AS total_pasien,
                 COUNT(s.id_skrining)          AS total_skrining,
-                COUNT(CASE WHEN s.sistole >= 140 OR s.diastole >= 90 THEN 1 END) AS total_hipertensi
+                COUNT(CASE WHEN ${filterAbnormal} THEN 1 END) AS total_hipertensi
             FROM skrining s
             JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
+            LEFT JOIN skrining_hipertensi hp ON s.id_skrining = hp.id_skrining
+            LEFT JOIN skrining_dm dmt ON s.id_skrining = dmt.id_skrining
+            LEFT JOIN skrining_obesitas obt ON s.id_skrining = obt.id_skrining
+            LEFT JOIN skrining_ppok ppt ON s.id_skrining = ppt.id_skrining
+            LEFT JOIN skrining_gangguan_indra git ON s.id_skrining = git.id_skrining
+            LEFT JOIN skrining_kesehatan_jiwa kjt ON s.id_skrining = kjt.id_skrining
             WHERE s.status_validasi = 'terverifikasi'
-              AND k.id_periode = $1
-        `, [id_periode]);
+              AND s.id_jenis_ptm = $1
+              AND k.id_periode = $2
+        `, [jenisPtmTerpilih, id_periode]);
 
         // Distribusi per nagari
         const nagariRes = await pool.query(`
             SELECT
                 n.nama_nagari,
                 COUNT(DISTINCT s.id_pasien) AS total_pasien,
-                COUNT(CASE WHEN s.sistole >= 140 OR s.diastole >= 90 THEN 1 END) AS hipertensi
+                COUNT(CASE WHEN ${filterAbnormal} THEN 1 END) AS hipertensi
             FROM skrining s
             JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
             JOIN pasien p   ON s.id_pasien   = p.id_pasien
             JOIN jorong j   ON p.id_jorong   = j.id_jorong
             JOIN nagari n   ON j.id_nagari   = n.id_nagari
+            LEFT JOIN skrining_hipertensi hp ON s.id_skrining = hp.id_skrining
+            LEFT JOIN skrining_dm dmt ON s.id_skrining = dmt.id_skrining
+            LEFT JOIN skrining_obesitas obt ON s.id_skrining = obt.id_skrining
+            LEFT JOIN skrining_ppok ppt ON s.id_skrining = ppt.id_skrining
+            LEFT JOIN skrining_gangguan_indra git ON s.id_skrining = git.id_skrining
+            LEFT JOIN skrining_kesehatan_jiwa kjt ON s.id_skrining = kjt.id_skrining
             WHERE s.status_validasi = 'terverifikasi'
-              AND k.id_periode = $1
+              AND s.id_jenis_ptm = $1
+              AND k.id_periode = $2
             GROUP BY n.nama_nagari
             ORDER BY total_pasien DESC
-        `, [id_periode]);
+        `, [jenisPtmTerpilih, id_periode]);
 
         const agg = aggRes.rows[0];
         const narasi = bentukNarasiLaporan(bulan, tahun, agg.total_pasien, agg.total_skrining, agg.total_hipertensi);
 
         res.json({
-            total_pasien:    parseInt(agg.total_pasien),
-            total_skrining:  parseInt(agg.total_skrining),
-            total_hipertensi: parseInt(agg.total_hipertensi),
+            total_pasien:    parseInt(agg.total_pasien) || 0,
+            total_skrining:  parseInt(agg.total_skrining) || 0,
+            total_hipertensi: parseInt(agg.total_hipertensi) || 0,
             per_nagari:      nagariRes.rows,
             narasi
         });
@@ -109,10 +138,10 @@ exports.getPreviewData = async (req, res) => {
     }
 };
 
-
 // 1. Generate laporan baru
 exports.generateLaporan = async (req, res) => {
-    const { periode_bulan, periode_tahun } = req.body;
+    const { periode_bulan, periode_tahun, id_jenis_ptm } = req.body;
+    const jenisPtmTerpilih = id_jenis_ptm || 'hipertensi';
     const id_pj = req.session.user.id_user;
 
     // ================================================================
@@ -147,30 +176,51 @@ exports.generateLaporan = async (req, res) => {
         }
         const id_periode = periode.rows[0].periode_id;
 
+        let filterAbnormal = 's.sistole >= 140 OR s.diastole >= 90';
+
+        if (jenisPtmTerpilih === 'dm') {
+            filterAbnormal = `dmt.kategori_hasil IN ('Diabetes Melitus', 'Prediabetes') OR s.gula_darah >= 140`;
+        } else if (jenisPtmTerpilih === 'obesitas') {
+            filterAbnormal = `obt.kategori_obesitas IN ('Obesitas', 'Overweight') OR obt.imt >= 25`;
+        } else if (jenisPtmTerpilih === 'ppok') {
+            filterAbnormal = `ppt.kategori_risiko = 'Tinggi' OR ppt.skor_total >= 4`;
+        } else if (jenisPtmTerpilih === 'gangguan_indra') {
+            filterAbnormal = `git.hasil_pemeriksaan_mata <> 'Normal' OR git.hasil_pemeriksaan_telinga <> 'Normal'`;
+        } else if (jenisPtmTerpilih === 'kesehatan_jiwa') {
+            filterAbnormal = `kjt.kategori_hasil <> 'Normal' OR kjt.skor_total >= 6`;
+        }
+
         // Agregat data skrining terverifikasi
         const agg = await pool.query(`
             SELECT
                 COUNT(DISTINCT s.id_pasien)  AS total_pasien,
                 COUNT(s.id_skrining)          AS total_skrining,
-                COUNT(CASE WHEN s.sistole >= 140 OR s.diastole >= 90 THEN 1 END) AS total_hipertensi
+                COUNT(CASE WHEN ${filterAbnormal} THEN 1 END) AS total_hipertensi
             FROM skrining s
             JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
+            LEFT JOIN skrining_hipertensi hp ON s.id_skrining = hp.id_skrining
+            LEFT JOIN skrining_dm dmt ON s.id_skrining = dmt.id_skrining
+            LEFT JOIN skrining_obesitas obt ON s.id_skrining = obt.id_skrining
+            LEFT JOIN skrining_ppok ppt ON s.id_skrining = ppt.id_skrining
+            LEFT JOIN skrining_gangguan_indra git ON s.id_skrining = git.id_skrining
+            LEFT JOIN skrining_kesehatan_jiwa kjt ON s.id_skrining = kjt.id_skrining
             WHERE s.status_validasi = 'terverifikasi'
-              AND k.id_periode = $1
-        `, [id_periode]);
+              AND s.id_jenis_ptm = $1
+              AND k.id_periode = $2
+        `, [jenisPtmTerpilih, id_periode]);
 
-        const totalPasien    = agg.rows[0].total_pasien;
-        const totalSkrining  = agg.rows[0].total_skrining;
-        const totalHipertensi = agg.rows[0].total_hipertensi;
+        const totalPasien    = agg.rows[0].total_pasien || 0;
+        const totalSkrining  = agg.rows[0].total_skrining || 0;
+        const totalHipertensi = agg.rows[0].total_hipertensi || 0;
         const narasi = bentukNarasiLaporan(periode_bulan, periode_tahun, totalPasien, totalSkrining, totalHipertensi);
 
         const laporan = await pool.query(`
-            INSERT INTO laporan (id_pj, id_periode, total_pasien, total_skrining, status, narasi_laporan)
-            VALUES ($1, $2, $3, $4, 'draft', $5)
-            ON CONFLICT (id_pj, id_periode) DO UPDATE
-            SET total_pasien=$3, total_skrining=$4, status='draft', narasi_laporan=$5
+            INSERT INTO laporan (id_pj, id_periode, id_jenis_ptm, total_pasien, total_skrining, status, narasi_laporan)
+            VALUES ($1, $2, $3, $4, $5, 'draft', $6)
+            ON CONFLICT (id_pj, id_periode, id_jenis_ptm) DO UPDATE
+            SET total_pasien=$4, total_skrining=$5, status='draft', narasi_laporan=$6
             RETURNING id_laporan
-        `, [id_pj, id_periode, totalPasien, totalSkrining, narasi]);
+        `, [id_pj, id_periode, jenisPtmTerpilih, totalPasien, totalSkrining, narasi]);
 
         res.redirect('/ptm/laporan?generated=' + laporan.rows[0].id_laporan);
     } catch (err) {
@@ -229,13 +279,16 @@ exports.exportExcelKohort = async (req, res) => {
                 j.nama_jorong, n.nama_nagari,
                 EXTRACT(MONTH FROM k.tanggal_kegiatan) AS bulan_kegiatan,
                 s.sistole, s.diastole, s.status_validasi,
+                s.berat_badan, s.tinggi_badan, s.merokok, s.aktivitas_fisik,
+                obt.imt,
                 NULL AS status_ekonomi, NULL AS is_kasus_baru, 
                 NULL AS edukasi, NULL AS dapat_obat, NULL AS rujuk
             FROM skrining s
-            JOIN pasien p ON s.id_pasien = p.nik
+            JOIN pasien p ON s.id_pasien = p.id_pasien
             JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
             JOIN jorong j ON p.id_jorong = j.id_jorong
             JOIN nagari n ON j.id_nagari = n.id_nagari
+            LEFT JOIN skrining_obesitas obt ON obt.id_skrining = s.id_skrining
             WHERE k.id_periode = $1 AND s.status_validasi = 'terverifikasi'
             ORDER BY p.nama_pasien ASC, k.tanggal_kegiatan ASC
         `, [laporan.id_periode]);
@@ -297,7 +350,7 @@ exports.exportExcelKohort = async (req, res) => {
                 tb: row.tinggi_badan,
                 imt: row.imt,
                 rokok: row.merokok ? 'Ya' : 'Tidak',
-                fisik: row.kurang_aktivitas_fisik ? 'Kurang' : 'Cukup'
+                fisik: row.aktivitas_fisik || '-'
             });
         });
 
@@ -319,9 +372,10 @@ exports.renderLaporanPTM = async (req, res) => {
     const id_pj = req.session.user.id_user;
     try {
         const laporan = await pool.query(`
-            SELECT l.*, per.periode_bulan, per.periode_tahun
+            SELECT l.*, per.periode_bulan, per.periode_tahun, jp.nama_ptm
             FROM laporan l
             JOIN periode per ON l.id_periode = per.periode_id
+            LEFT JOIN jenis_ptm jp ON l.id_jenis_ptm = jp.id_jenis_ptm
             WHERE l.id_pj = $1
             ORDER BY per.periode_tahun DESC, per.periode_bulan DESC
         `, [id_pj]);
@@ -340,9 +394,14 @@ exports.renderLaporanPTM = async (req, res) => {
             ORDER BY per.periode_tahun DESC, per.periode_bulan DESC
         `);
 
+        const resJenisPtm = await pool.query(
+            'SELECT id_jenis_ptm, nama_ptm FROM jenis_ptm ORDER BY nama_ptm'
+        );
+
         res.render('ptm/laporanptm', {
             daftarLaporan: laporan.rows,
             periodeAda: periodeAda.rows,
+            jenisPtmOptions: resJenisPtm.rows,
             active: 'laporan',
             currentUser: req.session.user || null,
             role: req.session.user ? req.session.user.role : 'pj_ptm'
@@ -352,9 +411,6 @@ exports.renderLaporanPTM = async (req, res) => {
         res.status(500).send("Gagal memuat halaman laporan: " + err.message);
     }
 };
-
-
-
 // ============================================================
 // 4. Export Laporan ke Excel Kohort (pakai kolom yang pasti ada)
 // ============================================================
@@ -375,10 +431,14 @@ exports.exportLaporanExcel = async (req, res) => {
         const tahun    = parseInt(laporan.periode_tahun);
         const bulan    = parseInt(laporan.periode_bulan);  // bulan laporan (1–12)
         const namaBulanLaporan = NAMA_BULAN[bulan - 1];
-        const namaFile = `Kohort_Hipertensi_s.d_${namaBulanLaporan}_${tahun}.xlsx`;
+        const jenisPtmTerpilih = laporan.id_jenis_ptm || 'hipertensi';
+
+        // Ambil nama PTM
+        const activePtmRes = await pool.query('SELECT nama_ptm FROM jenis_ptm WHERE id_jenis_ptm = $1', [jenisPtmTerpilih]);
+        const namaPtm = activePtmRes.rows.length > 0 ? activePtmRes.rows[0].nama_ptm : 'Hipertensi';
+        const namaFile = `Kohort_${namaPtm.replace(/\s+/g, '_')}_s.d_${namaBulanLaporan}_${tahun}.xlsx`;
 
         // 2. Ambil skrining pasien dari Januari s.d. bulan laporan pada tahun tersebut
-        //    Misal laporan Februari 2025 → ambil data Jan & Feb 2025 SAJA
         const skriningRes = await pool.query(`
             SELECT
                 p.id_pasien,
@@ -391,20 +451,42 @@ exports.exportLaporanExcel = async (req, res) => {
                 EXTRACT(MONTH FROM k.tanggal_kegiatan)::int AS bulan,
                 s.sistole,
                 s.diastole,
+                s.gula_darah,
+                dmt.jenis_pemeriksaan AS dm_jenis_periksa,
+                dmt.kategori_hasil AS dm_kategori,
+                obt.imt,
+                obt.berat_badan,
+                obt.tinggi_badan,
+                obt.kategori_obesitas,
+                obt.lingkar_perut,
+                ppt.skor_total AS ppok_skor,
+                ppt.kategori_risiko AS ppok_risiko,
+                git.hasil_pemeriksaan_mata,
+                git.hasil_pemeriksaan_telinga,
+                kjt.skor_total AS jiwa_skor,
+                kjt.kategori_hasil AS jiwa_kategori,
                 s.edukasi,
                 s.dapat_obat,
                 s.status_rujukan,
-                CASE WHEN s.sistole >= 140 OR s.diastole >= 90 THEN 'HIPERTENSI' ELSE 'NORMAL' END AS status_td
+                s.merokok,
+                s.aktivitas_fisik
             FROM skrining s
             JOIN pasien   p ON s.id_pasien   = p.id_pasien
             JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
             JOIN jorong   j ON p.id_jorong   = j.id_jorong
             JOIN nagari   n ON j.id_nagari   = n.id_nagari
+            LEFT JOIN skrining_hipertensi hp ON hp.id_skrining = s.id_skrining
+            LEFT JOIN skrining_dm dmt ON dmt.id_skrining = s.id_skrining
+            LEFT JOIN skrining_obesitas obt ON obt.id_skrining = s.id_skrining
+            LEFT JOIN skrining_ppok ppt ON ppt.id_skrining = s.id_skrining
+            LEFT JOIN skrining_gangguan_indra git ON git.id_skrining = s.id_skrining
+            LEFT JOIN skrining_kesehatan_jiwa kjt ON kjt.id_skrining = s.id_skrining
             WHERE EXTRACT(YEAR FROM k.tanggal_kegiatan) = $1
               AND EXTRACT(MONTH FROM k.tanggal_kegiatan) <= $2
               AND s.status_validasi = 'terverifikasi'
+              AND s.id_jenis_ptm = $3
             ORDER BY p.nama_pasien ASC, bulan ASC
-        `, [tahun, bulan]);
+        `, [tahun, bulan, jenisPtmTerpilih]);
 
         // 3. Ambil info bulan pertama kasus ditemukan per pasien (s.d. bulan laporan)
         const kasusRes = await pool.query(`
@@ -419,10 +501,11 @@ exports.exportLaporanExcel = async (req, res) => {
             JOIN pasien   p ON s.id_pasien   = p.id_pasien
             JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
             WHERE s.status_validasi = 'terverifikasi'
+              AND s.id_jenis_ptm = $3
             GROUP BY p.id_pasien, EXTRACT(YEAR FROM k.tanggal_kegiatan)
             HAVING EXTRACT(YEAR FROM k.tanggal_kegiatan) = $1
                AND MIN(EXTRACT(MONTH FROM k.tanggal_kegiatan)) <= $2
-        `, [tahun, bulan]);
+        `, [tahun, bulan, jenisPtmTerpilih]);
 
         const kasusMap = {};
         kasusRes.rows.forEach(r => {
@@ -432,7 +515,7 @@ exports.exportLaporanExcel = async (req, res) => {
             };
         });
 
-        // 4. Susun data per pasien: Map id_pasien → { info, bulan: {1: {...}, 2: {...}, ...} }
+        // 4. Susun data per pasien
         const pasienMap = new Map();
         skriningRes.rows.forEach(row => {
             if (!pasienMap.has(row.id_pasien)) {
@@ -450,10 +533,64 @@ exports.exportLaporanExcel = async (req, res) => {
                 });
             }
             const pasien = pasienMap.get(row.id_pasien);
+
+            let statusText = 'NORMAL';
+            if (jenisPtmTerpilih === 'dm') {
+                const gd = parseInt(row.gula_darah) || 0;
+                const jp = row.dm_jenis_periksa || 'Sewaktu';
+                if (jp === 'Puasa' ? gd > 180 : gd > 200) {
+                    statusText = 'DIABETES MELITUS';
+                }
+            } else if (jenisPtmTerpilih === 'obesitas') {
+                const imt = parseFloat(row.imt) || 0;
+                const kat = row.kategori_obesitas || 'Normal';
+                if (kat === 'Obesitas' || kat === 'Overweight' || imt >= 25) {
+                    statusText = 'OBESITAS';
+                }
+            } else if (jenisPtmTerpilih === 'ppok') {
+                const skor = parseInt(row.ppok_skor) || 0;
+                const ris = row.ppok_risiko || 'Rendah';
+                if (ris === 'Tinggi' || skor >= 4) {
+                    statusText = 'RISIKO PPOK';
+                }
+            } else if (jenisPtmTerpilih === 'gangguan_indra') {
+                const mata = row.hasil_pemeriksaan_mata || 'Normal';
+                const tel = row.hasil_pemeriksaan_telinga || 'Normal';
+                if (mata !== 'Normal' || tel !== 'Normal') {
+                    statusText = 'GANGGUAN INDRA';
+                }
+            } else if (jenisPtmTerpilih === 'kesehatan_jiwa') {
+                const skor = parseInt(row.jiwa_skor) || 0;
+                const kat = row.jiwa_kategori || 'Normal';
+                if (kat !== 'Normal' || skor >= 6) {
+                    statusText = 'RISIKO GANGGUAN JIWA';
+                }
+            } else { // hipertensi
+                const sistole = parseInt(row.sistole) || 0;
+                const diastole = parseInt(row.diastole) || 0;
+                if (sistole >= 140 || diastole >= 90) {
+                    statusText = 'HIPERTENSI';
+                }
+            }
+
             pasien.bulan[row.bulan] = {
                 sistole:    row.sistole,
                 diastole:   row.diastole,
-                status:     row.status_td,
+                gula_darah: row.gula_darah,
+                dm_jenis_periksa: row.dm_jenis_periksa,
+                bb:         row.berat_badan,
+                tb:         row.tinggi_badan,
+                imt:        row.imt,
+                lingkar_perut: row.lingkar_perut,
+                ppok_skor:  row.ppok_skor,
+                ppok_risiko: row.ppok_risiko,
+                hasil_pemeriksaan_mata: row.hasil_pemeriksaan_mata,
+                hasil_pemeriksaan_telinga: row.hasil_pemeriksaan_telinga,
+                jiwa_skor:  row.jiwa_skor,
+                jiwa_kategori: row.jiwa_kategori,
+                status:     statusText,
+                merokok:    row.merokok ? 'Ya' : 'Tidak',
+                aktivitas_fisik: row.aktivitas_fisik || '-',
                 edukasi:    row.edukasi && row.edukasi.trim() !== '' ? 'Ada' : 'Tidak',
                 dapat_obat: row.dapat_obat && row.dapat_obat !== 'tidak'
                                 ? (row.dapat_obat === 'beli_sendiri'    ? 'Beli Sendiri'
@@ -475,200 +612,136 @@ exports.exportLaporanExcel = async (req, res) => {
             pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 }
         });
 
-        // --- Warna ---
-        const BIRU_TUA   = 'FF1D4ED8'; // header judul
-        const BIRU       = 'FF2563EB'; // header kolom identitas
-        const BIRU_MUDA  = 'FFD1E8FF'; // aksen info
-        const MERAH      = 'FFDC2626'; // font HIPERTENSI
-        const MERAH_BG   = 'FFFEE2E2'; // bg baris hipertensi
-        const ABU        = 'FFF1F5F9'; // bg bulan ganjil (alternating)
+        const BIRU_TUA   = 'FF1D4ED8';
+        const BIRU       = 'FF2563EB';
+        const BIRU_MUDA  = 'FFD1E8FF';
+        const MERAH      = 'FFDC2626';
         const PUTIH      = 'FFFFFFFF';
 
-        // Warna header per bulan (alternating biru muda & teal muda)
-        const BULAN_COLORS = [
-            'FF1E3A5F','FF1A4A6E','FF155263','FF0F3D4A','FF0D3B2E','FF1A3C1A',
-            'FF3B2F00','FF5C2200','FF5C0A0A','FF4A0A3A','FF2A0A4A','FF0A1A5C'
-        ];
-
-        // ── BARIS 1: Judul utama ──────────────────────────────────────────────
-        // Kolom identitas = 9, per bulan = 6 kolom × hanya s.d bulan laporan
         const TOTAL_COL = 9 + (6 * bulan);
 
         ws.mergeCells(1, 1, 1, TOTAL_COL);
         const judulCell = ws.getCell('A1');
-        judulCell.value     = `FORMAT LAPORAN KOHORT HIPERTENSI JANUARI - ${namaBulanLaporan.toUpperCase()} ${tahun}`;
+        judulCell.value     = `FORMAT LAPORAN KOHORT ${namaPtm.toUpperCase()} JANUARI - ${namaBulanLaporan.toUpperCase()} ${tahun}`;
         judulCell.font      = { bold: true, size: 14, color: { argb: PUTIH }, name: 'Arial' };
         judulCell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: BIRU_TUA } };
         judulCell.alignment = { horizontal: 'center', vertical: 'middle' };
         ws.getRow(1).height = 30;
 
-        // ── BARIS 2: Info puskesmas ───────────────────────────────────────────
         ws.mergeCells(2, 1, 2, TOTAL_COL);
         const infoCell = ws.getCell('A2');
-        infoCell.value     = `Dicetak: ${new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' })}   |   Total Pasien: ${daftarPasien.length}   |   Total Skrining: ${laporan.total_skrining}`;
-        infoCell.font      = { size: 10, color: { argb: BIRU_TUA }, name: 'Arial' };
+        infoCell.value     = `Dicetak: ${new Date().toLocaleDateString('id-ID')} | Total Pasien: ${daftarPasien.length} | Total Skrining: ${laporan.total_skrining}`;
         infoCell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: BIRU_MUDA } };
         infoCell.alignment = { horizontal: 'center', vertical: 'middle' };
         ws.getRow(2).height = 18;
 
-        // ── BARIS 3: spasi kecil ──────────────────────────────────────────────
-        ws.getRow(3).height = 4;
-
-        // ── BARIS 4: Header kelompok bulan ───────────────────────────────────
         const ID_HEADERS = [
-            { label: 'NO',                    width: 5  },
-            { label: 'NAMA',                  width: 24 },
-            { label: 'BULAN KASUS DITEMUKAN', width: 14 },
-            { label: 'KATEGORI KASUS',        width: 13 },
-            { label: 'NIK',                   width: 18 },
-            { label: 'JENIS KELAMIN',         width: 12 },
-            { label: 'UMUR',                  width: 7  },
-            { label: 'JORONG',                width: 14 },
-            { label: 'NAGARI',                width: 14 },
+            { label: 'NO', width: 5 }, { label: 'NAMA', width: 24 }, { label: 'BULAN KASUS', width: 14 },
+            { label: 'KATEGORI', width: 13 }, { label: 'NIK', width: 18 }, { label: 'JK', width: 12 },
+            { label: 'UMUR', width: 7 }, { label: 'JORONG', width: 14 }, { label: 'NAGARI', width: 14 }
         ];
 
-        // Set lebar kolom identitas
         ID_HEADERS.forEach((h, i) => {
             ws.getColumn(i + 1).width = h.width;
-        });
-
-        // Merge + style kolom identitas (baris 4 dan 5 digabung)
-        ID_HEADERS.forEach((h, i) => {
             ws.mergeCells(4, i + 1, 5, i + 1);
             const cell = ws.getCell(4, i + 1);
-            cell.value     = h.label;
-            cell.font      = { bold: true, size: 9, color: { argb: PUTIH }, name: 'Arial' };
-            cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: BIRU } };
+            cell.value = h.label;
+            cell.font  = { bold: true, size: 9, color: { argb: PUTIH }, name: 'Arial' };
+            cell.fill  = { type: 'pattern', pattern: 'solid', fgColor: { argb: BIRU } };
             cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-            cell.border    = { top:{style:'thin',color:{argb:'FFFFFFFF'}}, bottom:{style:'thin',color:{argb:'FFFFFFFF'}}, left:{style:'thin',color:{argb:'FFFFFFFF'}}, right:{style:'thin',color:{argb:'FFFFFFFF'}} };
+            cell.border = { top: { style: 'thin', color: { argb: 'FFB0B0B0' } }, bottom: { style: 'thin', color: { argb: 'FFB0B0B0' } }, left: { style: 'thin', color: { argb: 'FFB0B0B0' } }, right: { style: 'thin', color: { argb: 'FFB0B0B0' } } };
         });
 
-        // Header nama bulan (baris 4) + sub-header bulan (baris 5)
-        // Hanya tampilkan bulan Januari s.d. bulan laporan
-        const SUB_HEADERS = ['SISTOLE', 'DIASTOLE', 'STATUS', 'EDUKASI', 'DAPAT OBAT', 'RUJUK'];
-        NAMA_BULAN.slice(0, bulan).forEach((namaBln, blnIdx) => {
-            const startCol = 9 + (blnIdx * 6) + 1;
-            const endCol   = startCol + 5;
-            const warnaBln = BULAN_COLORS[blnIdx];
+        ws.getRow(4).height = 18;
+        ws.getRow(5).height = 18;
 
-            // Set lebar kolom bulan
-            for (let c = startCol; c <= endCol; c++) {
-                ws.getColumn(c).width = (c === startCol || c === startCol + 1) ? 9 : 10;
-            }
+        let subHeaders = ['Sistole', 'Diastole', 'Status TD', 'Edukasi', 'Dapat Obat', 'Rujuk'];
+        if (jenisPtmTerpilih === 'dm') {
+            subHeaders = ['Gd Sewaktu', 'Gd Puasa', 'Status GD', 'Edukasi', 'Dapat Obat', 'Rujuk'];
+        } else if (jenisPtmTerpilih === 'obesitas') {
+            subHeaders = ['BB (kg)', 'TB (cm)', 'IMT', 'Status Obes', 'Lingkar Perut', 'Rujuk'];
+        } else if (jenisPtmTerpilih === 'ppok') {
+            subHeaders = ['Skor', 'Status PPOK', 'Merokok', 'Aktivitas Fisik', 'Edukasi', 'Rujuk'];
+        } else if (jenisPtmTerpilih === 'gangguan_indra') {
+            subHeaders = ['Mata', 'Telinga', 'Status Indra', 'Merokok', 'Aktivitas Fisik', 'Rujuk'];
+        } else if (jenisPtmTerpilih === 'kesehatan_jiwa') {
+            subHeaders = ['Skor SRQ', 'Status Jiwa', 'Merokok', 'Aktivitas Fisik', 'Edukasi', 'Rujuk'];
+        }
 
-            // Merge header nama bulan (baris 4)
-            ws.mergeCells(4, startCol, 4, endCol);
-            const blnCell = ws.getCell(4, startCol);
-            blnCell.value     = namaBln.toUpperCase();
-            blnCell.font      = { bold: true, size: 9, color: { argb: PUTIH }, name: 'Arial' };
-            blnCell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: warnaBln } };
-            blnCell.alignment = { horizontal: 'center', vertical: 'middle' };
-            blnCell.border    = { top:{style:'thin',color:{argb:'FFFFFFFF'}}, bottom:{style:'thin',color:{argb:'FFFFFFFF'}}, left:{style:'medium',color:{argb:'FFFFFFFF'}}, right:{style:'medium',color:{argb:'FFFFFFFF'}} };
+        for (let bln = 1; bln <= bulan; bln++) {
+            const colIdx = 9 + ((bln - 1) * 6) + 1;
+            ws.mergeCells(4, colIdx, 4, colIdx + 5);
+            const cell = ws.getCell(4, colIdx);
+            cell.value = NAMA_BULAN[bln - 1].toUpperCase();
+            cell.font  = { bold: true, size: 9, color: { argb: PUTIH }, name: 'Arial' };
+            cell.fill  = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0D5C3A' } };
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            cell.border = { top: { style: 'thin', color: { argb: 'FFB0B0B0' } }, bottom: { style: 'thin', color: { argb: 'FFB0B0B0' } }, left: { style: 'medium', color: { argb: 'FFB0B0B0' } }, right: { style: 'medium', color: { argb: 'FFB0B0B0' } } };
 
-            // Sub-header per bulan (baris 5)
-            SUB_HEADERS.forEach((sub, subIdx) => {
-                const cell = ws.getCell(5, startCol + subIdx);
-                cell.value     = sub;
-                cell.font      = { bold: true, size: 8, color: { argb: PUTIH }, name: 'Arial' };
-                cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: warnaBln } };
-                cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-                cell.border    = { top:{style:'thin',color:{argb:'FFFFFFFF'}}, bottom:{style:'thin',color:{argb:'FFFFFFFF'}}, left:{style:'thin',color:{argb:'FFFFFFFF'}}, right:{style:'thin',color:{argb:'FFFFFFFF'}} };
+            subHeaders.forEach((label, subIdx) => {
+                const subCell = ws.getCell(5, colIdx + subIdx);
+                subCell.value = label;
+                subCell.font = { bold: true, size: 8, color: { argb: 'FF333333' }, name: 'Arial' };
+                subCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+                subCell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                subCell.border = { top: { style: 'thin', color: { argb: 'FFD0D0D0' } }, bottom: { style: 'medium', color: { argb: 'FFB0B0B0' } }, left: subIdx === 0 ? { style: 'medium', color: { argb: 'FFB0B0B0' } } : { style: 'thin', color: { argb: 'FFD0D0D0' } }, right: subIdx === 5 ? { style: 'medium', color: { argb: 'FFB0B0B0' } } : { style: 'thin', color: { argb: 'FFD0D0D0' } } };
+                ws.getColumn(colIdx + subIdx).width = 9.5;
             });
-        });
+        }
 
-        ws.getRow(4).height = 22;
-        ws.getRow(5).height = 28;
-
-        // ── BARIS DATA (mulai baris 6) ────────────────────────────────────────
         daftarPasien.forEach((pasien, idx) => {
             const rowNum = 6 + idx;
-
-            // Cek apakah pasien punya riwayat hipertensi di bulan manapun
-            const adaHipertensi = Object.values(pasien.bulan).some(b => b.status === 'HIPERTENSI');
-            const bgDefault     = adaHipertensi ? MERAH_BG : (idx % 2 === 0 ? PUTIH : ABU);
-
-            // Helper style cell
-            const styleCell = (cell, isLeft = false, bgOverride = null) => {
-                cell.font      = { size: 9, name: 'Arial' };
-                cell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgOverride || bgDefault } };
-                cell.alignment = { vertical: 'middle', horizontal: isLeft ? 'left' : 'center', wrapText: false };
-                cell.border    = {
-                    top:    { style: 'thin', color: { argb: 'FFCCCCCC' } },
-                    bottom: { style: 'thin', color: { argb: 'FFCCCCCC' } },
-                    left:   { style: 'thin', color: { argb: 'FFCCCCCC' } },
-                    right:  { style: 'thin', color: { argb: 'FFCCCCCC' } },
-                };
-            };
-
-            // Kolom identitas (9 kolom, tanpa status ekonomi)
-            const identitas = [
-                idx + 1,
-                pasien.nama,
-                pasien.bulan_kasus,
-                pasien.kategori,
-                pasien.nik,
-                pasien.jk === 'L' ? 'Laki-Laki' : 'Perempuan',
-                pasien.usia,
-                pasien.jorong,
-                pasien.nagari,
-            ];
+            const identitas = [idx + 1, pasien.nama, pasien.bulan_kasus, pasien.kategori, pasien.nik, pasien.jk === 'L' ? 'Laki-Laki' : 'Perempuan', pasien.usia, pasien.jorong, pasien.nagari];
             identitas.forEach((val, i) => {
                 const cell = ws.getCell(rowNum, i + 1);
                 cell.value = val;
-                styleCell(cell, i === 1 || i === 7 || i === 8);
-                if (i === 0) cell.font = { ...cell.font, bold: true };
+                cell.border = { top: { style: 'thin', color: { argb: 'FFCCCCCC' } }, bottom: { style: 'thin', color: { argb: 'FFCCCCCC' } }, left: { style: 'thin', color: { argb: 'FFCCCCCC' } }, right: { style: 'thin', color: { argb: 'FFCCCCCC' } } };
             });
 
-            // Kolom bulan (1 s.d. bulan laporan)
             for (let bln = 1; bln <= bulan; bln++) {
                 const startCol = 9 + ((bln - 1) * 6) + 1;
-                const data     = pasien.bulan[bln];
-
-                const vals = data
-                    ? [data.sistole, data.diastole, data.status, data.edukasi, data.dapat_obat, data.rujuk]
-                    : ['', '', '', '', '', ''];
-
+                const data = pasien.bulan[bln];
+                let vals = ['', '', '', '', '', ''];
+                if (data) {
+                    if (jenisPtmTerpilih === 'dm') {
+                        const gd = data.gula_darah || '';
+                        const jp = data.dm_jenis_periksa || 'Sewaktu';
+                        vals = [jp === 'Puasa' ? '' : gd, jp === 'Puasa' ? gd : '', data.status, data.edukasi, data.dapat_obat, data.rujuk];
+                    } else if (jenisPtmTerpilih === 'obesitas') {
+                        vals = [data.bb, data.tb, data.imt, data.status, data.lingkar_perut, data.rujuk];
+                    } else if (jenisPtmTerpilih === 'ppok') {
+                        vals = [data.ppok_skor, data.status, data.merokok, data.aktivitas_fisik, data.edukasi, data.rujuk];
+                    } else if (jenisPtmTerpilih === 'gangguan_indra') {
+                        vals = [data.hasil_pemeriksaan_mata, data.hasil_pemeriksaan_telinga, data.status, data.merokok, data.aktivitas_fisik, data.rujuk];
+                    } else if (jenisPtmTerpilih === 'kesehatan_jiwa') {
+                        vals = [data.jiwa_skor, data.status, data.merokok, data.aktivitas_fisik, data.edukasi, data.rujuk];
+                    } else {
+                        vals = [data.sistole, data.diastole, data.status, data.edukasi, data.dapat_obat, data.rujuk];
+                    }
+                }
                 vals.forEach((val, subIdx) => {
                     const cell = ws.getCell(rowNum, startCol + subIdx);
                     cell.value = val || '';
-                    styleCell(cell);
-
-                    // Warna merah untuk STATUS = HIPERTENSI
-                    if (subIdx === 2 && val === 'HIPERTENSI') {
-                        cell.font = { size: 9, name: 'Arial', bold: true, color: { argb: MERAH } };
-                    }
-                    // Border tebal di kiri tiap kelompok bulan
-                    if (subIdx === 0) {
-                        cell.border.left = { style: 'medium', color: { argb: 'FFB0B0B0' } };
-                    }
-                    if (subIdx === 5) {
-                        cell.border.right = { style: 'medium', color: { argb: 'FFB0B0B0' } };
-                    }
+                    if (subIdx === 2 && ['HIPERTENSI', 'DIABETES MELITUS', 'OBESITAS', 'RISIKO PPOK', 'GANGGUAN INDRA', 'RISIKO GANGGUAN JIWA'].includes(val)) cell.font = { bold: true, color: { argb: MERAH } };
+                    cell.border = { top: { style: 'thin', color: { argb: 'FFCCCCCC' } }, bottom: { style: 'thin', color: { argb: 'FFCCCCCC' } }, left: subIdx === 0 ? { style: 'medium', color: { argb: 'FFB0B0B0' } } : { style: 'thin', color: { argb: 'FFCCCCCC' } }, right: subIdx === 5 ? { style: 'medium', color: { argb: 'FFB0B0B0' } } : { style: 'thin', color: { argb: 'FFCCCCCC' } } };
                 });
             }
-
-            ws.getRow(rowNum).height = 15;
         });
 
-        // ── BARIS TOTAL ────────────────────────────────────────────────────────
         const totalRow = 6 + daftarPasien.length;
         ws.mergeCells(totalRow, 1, totalRow, TOTAL_COL);
         const totalCell = ws.getCell(totalRow, 1);
-        totalCell.value     = `TOTAL PASIEN: ${daftarPasien.length}   |   TOTAL SKRINING: ${laporan.total_skrining}`;
-        totalCell.font      = { bold: true, size: 10, color: { argb: BIRU_TUA }, name: 'Arial' };
-        totalCell.fill      = { type: 'pattern', pattern: 'solid', fgColor: { argb: BIRU_MUDA } };
+        totalCell.value = `TOTAL PASIEN: ${daftarPasien.length} | TOTAL SKRINING: ${laporan.total_skrining}`;
+        totalCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BIRU_MUDA } };
         totalCell.alignment = { horizontal: 'center', vertical: 'middle' };
         ws.getRow(totalRow).height = 18;
 
-        // Freeze panes: beku 5 baris header + 10 kolom identitas
-        ws.views = [{ state: 'frozen', xSplit: 9, ySplit: 5, topLeftCell: 'J6', activeCell: 'J6' }];
+        ws.views = [{ state: 'frozen', xSplit: 9, ySplit: 5 }];
 
-        // ── Kirim file ────────────────────────────────────────────────────────
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename="${namaFile}"`);
         await workbook.xlsx.write(res);
         res.end();
-
     } catch (err) {
         console.error("Error export Excel:", err);
         res.status(500).send("Gagal mengunduh Excel: " + err.message);

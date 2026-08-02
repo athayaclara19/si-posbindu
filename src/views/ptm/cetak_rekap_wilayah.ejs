@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rekap Periode <%= namaBulan %> <%= periode.periode_tahun %> - SI-Posbindu</title>
+    <title>Rekap Wilayah <%= levelWilayah === 'nagari' ? 'Per Nagari' : 'Per Jorong' %> <%= namaPtmTerpilih %> <%= tahunDipilih %> - SI-Posbindu</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -163,8 +163,8 @@
     <!-- Toolbar (hilang saat print) -->
     <div class="print-toolbar">
         <div class="toolbar-left">
-            <a href="/ptm/rekap" class="btn-back">← Kembali</a>
-            <span>Pratinjau Cetak — Rekap Periode <%= namaBulan %> <%= periode.periode_tahun %></span>
+            <a href="/ptm/rekap?tab=wilayah&jenis_ptm=<%= jenisPtmTerpilih %>&tahun=<%= tahunDipilih %>&level=<%= levelWilayah %>" class="btn-back">← Kembali</a>
+            <span>Pratinjau Cetak — Rekap Wilayah (<%= levelWilayah === 'nagari' ? 'Per Nagari' : 'Per Jorong' %>) Tahun <%= tahunDipilih %></span>
         </div>
         <button class="btn-print" onclick="window.print()">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -184,8 +184,8 @@
 
         <!-- Judul -->
         <div class="judul-dokumen">
-            <h3>Rekapitulasi Data Skrining <%= namaPtmTerpilih %></h3>
-            <p>Periode: <strong><%= namaBulan %> <%= periode.periode_tahun %></strong></p>
+            <h3>Rekapitulasi Wilayah <%= levelWilayah === 'nagari' ? 'Per Nagari' : 'Per Jorong' %> - <%= namaPtmTerpilih %></h3>
+            <p>Tahun: <strong><%= tahunDipilih %></strong></p>
         </div>
 
         <!-- Kartu Ringkasan -->
@@ -242,45 +242,60 @@
             </div>
         </div>
 
-        <!-- Tabel Distribusi Per Nagari -->
-        <% if (perNagari && perNagari.length > 0) { %>
+        <!-- Tabel Distribusi Wilayah -->
+        <% if (rekapWilayah && rekapWilayah.length > 0) { %>
         <table>
             <thead>
                 <tr>
                     <th style="width:5%">No</th>
-                    <th style="width:35%">Nagari</th>
-                    <th style="width:20%">Total Pasien</th>
-                    <th style="width:20%">Total Kunjungan</th>
-                    <th style="width:20%">Kasus <%= namaPtmTerpilih %></th>
+                    <th><%= levelWilayah === 'nagari' ? 'Nagari' : 'Jorong' %></th>
+                    <% if (levelWilayah === 'jorong') { %>
+                    <th>Nagari</th>
+                    <% } %>
+                    <th style="width:18%">Total Pasien</th>
+                    <th style="width:18%">Total Kunjungan</th>
+                    <th style="width:18%">Kasus <%= namaPtmTerpilih %></th>
+                    <th style="width:18%">
+                        <% if (jenisPtmTerpilih === 'hipertensi' || jenisPtmTerpilih === 'dm') { %>
+                            Terkendali
+                        <% } else { %>
+                            Normal
+                        <% } %>
+                    </th>
                 </tr>
             </thead>
             <tbody>
-                <% perNagari.forEach((n, i) => { %>
+                <% rekapWilayah.forEach((row, i) => { %>
                 <tr>
                     <td class="center"><%= i + 1 %></td>
-                    <td><%= n.nama_nagari %></td>
-                    <td class="center"><%= parseInt(n.total_pasien) || 0 %></td>
-                    <td class="center"><%= parseInt(n.total_kunjungan) || 0 %></td>
-                    <td class="center"><%= parseInt(n.hipertensi) || 0 %></td>
+                    <td><%= row.nama_wilayah %></td>
+                    <% if (levelWilayah === 'jorong') { %>
+                    <td><%= row.nama_nagari %></td>
+                    <% } %>
+                    <td class="center"><%= parseInt(row.total_pasien) || 0 %></td>
+                    <td class="center"><%= parseInt(row.total_kunjungan) || 0 %></td>
+                    <td class="center"><%= parseInt(row.total_hipertensi) || 0 %></td>
+                    <td class="center"><%= parseInt(row.terkendali) || 0 %></td>
                 </tr>
                 <% }) %>
                 <tr style="font-weight:bold; background:#dbeafe;">
-                    <td colspan="2" class="center">TOTAL</td>
+                    <td colspan="<%= levelWilayah === 'jorong' ? 3 : 2 %>" class="center">TOTAL</td>
                     <td class="center"><%= agg.total_pasien %></td>
                     <td class="center"><%= agg.total_kunjungan %></td>
                     <td class="center"><%= agg.total_hipertensi %></td>
+                    <td class="center"><%= agg.terkendali %></td>
                 </tr>
             </tbody>
         </table>
         <% } else { %>
-        <p style="text-align:center; color:#666; margin: 20px 0;">Tidak ada data distribusi per nagari untuk periode ini.</p>
+        <p style="text-align:center; color:#666; margin: 20px 0;">Tidak ada data rekapitulasi wilayah untuk pilihan ini.</p>
         <% } %>
 
         <!-- Catatan Metodologi -->
         <div class="catatan">
             <strong>Keterangan:</strong><br>
-            • <em>Kasus <%= namaPtmTerpilih %></em>: Pasien yang pada minimal satu kunjungan di periode ini terindikasi medis abnormal untuk penyakit <%= namaPtmTerpilih %>.<br>
-            • <em>Terkendali / Normal</em>: Pasien yang pada kunjungan <em>terakhir</em> di periode ini memiliki hasil pemeriksaan normal.<br>
+            • <em>Kasus <%= namaPtmTerpilih %></em>: Pasien yang terindikasi medis abnormal untuk penyakit <%= namaPtmTerpilih %> pada tahun <%= tahunDipilih %>.<br>
+            • <em>Terkendali / Normal</em>: Pasien dengan kondisi normal/terkendali pada tahun <%= tahunDipilih %>.<br>
             • Data hanya mencakup skrining yang telah diverifikasi oleh Bidan.
         </div>
 

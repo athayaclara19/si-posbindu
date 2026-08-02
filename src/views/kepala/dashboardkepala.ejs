@@ -130,18 +130,18 @@
                 </div>
 
                 <!-- Daftar mini semua laporan menunggu (jika > 1) -->
-                <% if (laporanMenunggu.length > 1) { %>
-                <div class="bg-white/60 rounded-xl p-3 space-y-1.5">
-                    <% laporanMenunggu.forEach(function(l, i) { %>
-                    <div class="flex items-center justify-between text-xs">
-                        <span class="text-[#92400E] font-medium">
-                            <%= i + 1 %>. Laporan <%= l.nama_bulan %> <%= l.periode_tahun %> — <span class="text-[#92400E]/70"><%= l.nama_pj %></span>
-                        </span>
-                        <a href="/kepala/persetujuan?id=<%= l.id_laporan %>" class="text-[#D97706] font-semibold hover:underline">Buka →</a>
-                    </div>
-                    <% }) %>
-                </div>
-                <% } %>
+                 <% if (laporanMenunggu.length > 1) { %>
+                 <div class="bg-white/60 rounded-xl p-3 space-y-1.5">
+                     <% laporanMenunggu.forEach(function(l, i) { %>
+                     <div class="flex items-center justify-between text-xs">
+                         <span class="text-[#92400E] font-medium">
+                             <%= i + 1 %>. Laporan <%= l.nama_ptm || 'Hipertensi' %> <%= l.nama_bulan %> <%= l.periode_tahun %> — <span class="text-[#92400E]/70"><%= l.nama_pj %></span>
+                         </span>
+                         <a href="/kepala/persetujuan?id=<%= l.id_laporan %>" class="text-[#D97706] font-semibold hover:underline">Buka →</a>
+                     </div>
+                     <% }) %>
+                 </div>
+                 <% } %>
             </div>
             <% } %>
 
@@ -168,7 +168,7 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-600"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
                                 </div>
                                 <div>
-                                    <p class="text-[#1F2937] font-semibold text-sm">Laporan <%= l.nama_bulan %> <%= l.periode_tahun %></p>
+                                    <p class="text-[#1F2937] font-semibold text-sm">Laporan <%= l.nama_ptm || 'Hipertensi' %> <%= l.nama_bulan %> <%= l.periode_tahun %></p>
                                     <p class="text-[#6B7280] text-xs mt-0.5">Oleh <%= l.nama_pj %> · <%= l.dikirim_pada ? new Date(l.dikirim_pada).toLocaleDateString('id-ID') : '-' %></p>
                                 </div>
                             </div>
@@ -191,6 +191,7 @@
                             <thead>
                                 <tr class="bg-[#F8FAFC] border-b border-gray-100">
                                     <th class="text-left px-6 py-3.5 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Periode</th>
+                                    <th class="text-left px-6 py-3.5 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Penyakit</th>
                                     <th class="text-left px-6 py-3.5 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Tanggal Kirim</th>
                                     <th class="text-left px-6 py-3.5 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Status</th>
                                     <th class="px-6 py-3.5"></th>
@@ -198,11 +199,12 @@
                             </thead>
                             <tbody class="divide-y divide-gray-50">
                                 <% if (riwayatLaporan.length === 0) { %>
-                                <tr><td colspan="4" class="text-center py-8 text-gray-400 text-sm">Belum ada riwayat</td></tr>
+                                <tr><td colspan="5" class="text-center py-8 text-gray-400 text-sm">Belum ada riwayat</td></tr>
                                 <% } %>
                                 <% riwayatLaporan.forEach(function(r) { %>
                                 <tr class="hover:bg-gray-50 transition-colors">
                                     <td class="px-6 py-3.5 text-sm text-[#1F2937] font-medium"><%= r.nama_bulan %> <%= r.periode_tahun %></td>
+                                    <td class="px-6 py-3.5 text-sm text-[#1F2937] font-medium"><%= r.nama_ptm || 'Hipertensi' %></td>
                                     <td class="px-6 py-3.5 text-sm text-[#6B7280]"><%= r.dikirim_pada ? new Date(r.dikirim_pada).toLocaleDateString('id-ID') : '-' %></td>
                                     <td class="px-6 py-3.5">
                                         <% if (r.status === 'disetujui') { %>

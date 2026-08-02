@@ -18,6 +18,7 @@ describe('targetController.renderKelolaTarget()', () => {
         pool.query
             .mockResolvedValueOnce({ rows: [{ id_nagari: 1, nama_nagari: 'A' }] }) // nagari aktif
             .mockResolvedValueOnce({ rows: [{ tahun: 2026 }] }) // daftar tahun
+            .mockResolvedValueOnce({ rows: [{ id_jenis_ptm: 'hipertensi', nama_ptm: 'Hipertensi' }] }) // daftar jenis PTM
             .mockResolvedValueOnce({ rows: [{ id_target: 1, target_total: 500 }, { id_target: 2, target_total: 300 }] }); // target per nagari
 
         const { req, res } = mockReqRes({ query: {}, session: {} });
@@ -33,19 +34,21 @@ describe('targetController.renderKelolaTarget()', () => {
         pool.query
             .mockResolvedValueOnce({ rows: [] })
             .mockResolvedValueOnce({ rows: [] })
+            .mockResolvedValueOnce({ rows: [{ id_jenis_ptm: 'hipertensi', nama_ptm: 'Hipertensi' }] }) // daftar jenis PTM
             .mockResolvedValueOnce({ rows: [] });
 
         const { req, res } = mockReqRes({ query: { tahun: '2024' }, session: {} });
 
         await targetController.renderKelolaTarget(req, res);
 
-        expect(pool.query.mock.calls[2][1]).toEqual([2024]);
+        expect(pool.query.mock.calls[3][1]).toEqual([2024, 'hipertensi']);
     });
 
     test('flash message dihapus setelah dipakai', async () => {
         pool.query
             .mockResolvedValueOnce({ rows: [] })
             .mockResolvedValueOnce({ rows: [] })
+            .mockResolvedValueOnce({ rows: [{ id_jenis_ptm: 'hipertensi', nama_ptm: 'Hipertensi' }] }) // daftar jenis PTM
             .mockResolvedValueOnce({ rows: [] });
 
         const { req, res } = mockReqRes({
@@ -80,7 +83,7 @@ describe('targetController.handleSimpanTargetGlobal()', () => {
         await targetController.handleSimpanTargetGlobal(req, res);
 
         expect(req.session.errorMessage).toMatch(/angka yang valid/);
-        expect(res.redirect).toHaveBeenCalledWith('/ptm/target');
+        expect(res.redirect).toHaveBeenCalledWith('/ptm/target?jenis_ptm=hipertensi');
         expect(pool.query).not.toHaveBeenCalled();
     });
 
@@ -116,10 +119,10 @@ describe('targetController.handleSimpanTargetGlobal()', () => {
         await targetController.handleSimpanTargetGlobal(req, res);
 
         // 1000 / 3 = 333 sisa 1 → nagari pertama dapat 334
-        expect(pool.query.mock.calls[1][1]).toEqual([1, 2026, 334, 'Target awal']);
-        expect(pool.query.mock.calls[2][1]).toEqual([2, 2026, 333, 'Target awal']);
+        expect(pool.query.mock.calls[1][1]).toEqual([1, 2026, 334, 'Target awal', 'hipertensi']);
+        expect(pool.query.mock.calls[2][1]).toEqual([2, 2026, 333, 'Target awal', 'hipertensi']);
         expect(req.session.successMessage).toMatch(/berhasil dibagi ke 3 nagari/);
-        expect(res.redirect).toHaveBeenCalledWith('/ptm/target?tahun=2026');
+        expect(res.redirect).toHaveBeenCalledWith('/ptm/target?tahun=2026&jenis_ptm=hipertensi');
     });
 
     test('query gagal → errorMessage sistem & redirect', async () => {
@@ -129,7 +132,7 @@ describe('targetController.handleSimpanTargetGlobal()', () => {
         await targetController.handleSimpanTargetGlobal(req, res);
 
         expect(req.session.errorMessage).toMatch(/kesalahan sistem/);
-        expect(res.redirect).toHaveBeenCalledWith('/ptm/target');
+        expect(res.redirect).toHaveBeenCalledWith('/ptm/target?jenis_ptm=hipertensi');
     });
 
 });
@@ -145,7 +148,7 @@ describe('targetController.handleEditTargetNagari()', () => {
         await targetController.handleEditTargetNagari(req, res);
 
         expect(req.session.errorMessage).toMatch(/lebih dari 0/);
-        expect(res.redirect).toHaveBeenCalledWith('/ptm/target?tahun=2026');
+        expect(res.redirect).toHaveBeenCalledWith('/ptm/target?tahun=2026&jenis_ptm=hipertensi');
         expect(pool.query).not.toHaveBeenCalled();
     });
 
@@ -180,13 +183,13 @@ describe('targetController.handleHapusTarget()', () => {
 
     test('happy path → hapus semua target tahun tsb, successMessage & redirect', async () => {
         pool.query.mockResolvedValueOnce({});
-        const { req, res } = mockReqRes({ params: { tahun: '2026' }, session: {} });
+        const { req, res } = mockReqRes({ params: { tahun: '2026' }, query: { jenis_ptm: 'hipertensi' }, session: {} });
 
         await targetController.handleHapusTarget(req, res);
 
-        expect(pool.query).toHaveBeenCalledWith('DELETE FROM target_tahunan WHERE tahun = $1', [2026]);
+        expect(pool.query).toHaveBeenCalledWith('DELETE FROM target_tahunan WHERE tahun = $1 AND id_jenis_ptm = $2', [2026, 'hipertensi']);
         expect(req.session.successMessage).toMatch(/2026 berhasil dihapus/);
-        expect(res.redirect).toHaveBeenCalledWith('/ptm/target');
+        expect(res.redirect).toHaveBeenCalledWith('/ptm/target?jenis_ptm=hipertensi');
     });
 
     test('query gagal → errorMessage & redirect', async () => {

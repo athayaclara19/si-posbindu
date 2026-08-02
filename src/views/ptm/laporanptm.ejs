@@ -27,7 +27,7 @@
             <div class="flex items-start justify-between">
                 <div>
                     <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Laporan Program PTM</h2>
-                    <p class="text-[#6B7280] text-sm mt-1">Kelola dan ajukan laporan monitoring hipertensi</p>
+                    <p class="text-[#6B7280] text-sm mt-1">Kelola dan ajukan laporan monitoring PTM</p>
                 </div>
                 <div id="headerActionBtn">
                     <button onclick="switchTab('buat')" class="flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-5 py-2.5 rounded-xl text-sm transition-all font-medium shadow-sm">
@@ -57,6 +57,7 @@
                             <thead>
                                 <tr class="bg-[#F8FAFC] border-b border-gray-100">
                                     <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Periode</th>
+                                    <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Penyakit</th>
                                     <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Tanggal Buat</th>
                                     <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Tanggal Ajukan</th>
                                     <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Total Pasien</th>
@@ -80,6 +81,9 @@
                                                 </div>
                                                 <span class="text-[#1F2937] text-sm font-medium"><%= labelPeriode %></span>
                                             </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-[#1F2937] font-medium">
+                                            <%= lap.nama_ptm || 'Hipertensi' %>
                                         </td>
                                         <td class="px-6 py-4 text-sm text-[#6B7280]"><%= tglBuat %></td>
                                         <td class="px-6 py-4 text-sm text-[#6B7280]"><%= tglKirim %></td>
@@ -197,7 +201,22 @@
                         <h3 class="text-[#1F2937] font-poppins font-semibold">Pilih Periode Laporan</h3>
                     </div>
                     <div class="px-6 py-6">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 items-end">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 items-end">
+                            <div>
+                                <label class="text-sm text-[#1F2937] font-medium mb-1.5 block">Pilih Penyakit <span class="text-[#EF4444]">*</span></label>
+                                <div class="relative">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/></svg>
+                                    <select id="select-ptm" onchange="resetPreview()" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 focus:bg-white transition-all cursor-pointer">
+                                        <% if (typeof jenisPtmOptions !== 'undefined') { %>
+                                            <% jenisPtmOptions.forEach(p => { %>
+                                                <option value="<%= p.id_jenis_ptm %>" <%= p.id_jenis_ptm === 'hipertensi' ? 'selected' : '' %>>
+                                                    <%= p.nama_ptm %>
+                                                </option>
+                                            <% }) %>
+                                        <% } %>
+                                    </select>
+                                </div>
+                            </div>
                             <div>
                                 <label class="text-sm text-[#1F2937] font-medium mb-1.5 block">Periode <span class="text-[#EF4444]">*</span></label>
                                 <div class="relative">
@@ -311,6 +330,7 @@
                         <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                             <!-- Form POST ke server (data real) -->
                             <form id="form-generate" method="POST" action="/ptm/laporan/generate" class="flex gap-3 w-full sm:w-auto">
+                                <input type="hidden" id="input-ptm" name="id_jenis_ptm" value="">
                                 <input type="hidden" id="input-bulan" name="periode_bulan" value="">
                                 <input type="hidden" id="input-tahun" name="periode_tahun" value="">
                                 <button type="submit" id="btn-simpan" class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[#10B981] hover:bg-[#059669] text-white px-6 py-2.5 rounded-xl text-sm transition-all font-medium shadow-sm">
@@ -361,7 +381,7 @@
             document.getElementById('detail-container').classList.remove('hidden-el');
 
             const labelPeriode = NAMA_BULAN[lap.periode_bulan - 1] + ' ' + lap.periode_tahun;
-            document.getElementById('detail-title').innerText = 'Laporan Monitoring Hipertensi — ' + labelPeriode;
+            document.getElementById('detail-title').innerText = 'Laporan Monitoring ' + (lap.nama_ptm || 'Hipertensi') + ' — ' + labelPeriode;
             document.getElementById('det-periode').innerText  = labelPeriode;
             document.getElementById('det-total-pasien').innerText  = parseInt(lap.total_pasien).toLocaleString('id-ID');
             document.getElementById('det-total-skrining').innerText = parseInt(lap.total_skrining || 0).toLocaleString('id-ID');
@@ -417,6 +437,7 @@
 
         async function generatePreview() {
             const val = document.getElementById('select-bulan').value;
+            const ptm = document.getElementById('select-ptm').value;
             if (!val) {
                 document.getElementById('error-periode').classList.remove('hidden-el');
                 return;
@@ -427,6 +448,7 @@
             const labelPeriode = NAMA_BULAN[parseInt(bulan) - 1] + ' ' + tahun;
 
             // Isi hidden input untuk form POST
+            document.getElementById('input-ptm').value = ptm;
             document.getElementById('input-bulan').value = bulan;
             document.getElementById('input-tahun').value = tahun;
 
@@ -437,12 +459,14 @@
             document.getElementById('preview-error').classList.add('hidden-el');
 
             try {
-                const resp = await fetch(`/ptm/laporan/preview?bulan=${bulan}&tahun=${tahun}`);
+                const resp = await fetch(`/ptm/laporan/preview?bulan=${bulan}&tahun=${tahun}&jenis_ptm=${ptm}`);
                 if (!resp.ok) throw new Error('Gagal mengambil data (HTTP ' + resp.status + ')');
                 const data = await resp.json();
                 if (data.error) throw new Error(data.error);
 
                 // Isi data ke preview
+                const selectPtmEl = document.getElementById('select-ptm');
+                const namaPtm = selectPtmEl.options[selectPtmEl.selectedIndex].text;
                 document.getElementById('prev-periode').innerText       = labelPeriode;
                 document.getElementById('prev-tgl').innerText           = new Date().toLocaleDateString('id-ID', {day:'numeric',month:'long',year:'numeric'});
                 document.getElementById('prev-total-pasien').innerText  = data.total_pasien.toLocaleString('id-ID');
@@ -463,7 +487,7 @@
                             labels: data.per_nagari.map(n => n.nama_nagari),
                             datasets: [
                                 { label: 'Total Pasien', data: data.per_nagari.map(n => parseInt(n.total_pasien)), backgroundColor: '#2563EB', borderRadius: 4, barPercentage: 0.6 },
-                                { label: 'Hipertensi',   data: data.per_nagari.map(n => parseInt(n.hipertensi)),   backgroundColor: '#EF4444', borderRadius: 4, barPercentage: 0.6 }
+                                { label: namaPtm,   data: data.per_nagari.map(n => parseInt(n.hipertensi)),   backgroundColor: '#EF4444', borderRadius: 4, barPercentage: 0.6 }
                             ]
                         },
                         options: {

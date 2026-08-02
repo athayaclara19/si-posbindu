@@ -15,6 +15,7 @@ beforeEach(() => {
 describe('petaController.renderPetaHipertensi()', () => {
 
     test('happy path → render halaman peta hipertensi', async () => {
+        pool.query.mockResolvedValueOnce({ rows: [{ id_jenis_ptm: 'hipertensi', nama_ptm: 'Hipertensi' }] });
         const { req, res } = mockReqRes({ session: { user: { role: 'kepala_puskesmas' } } });
 
         await petaController.renderPetaHipertensi(req, res);
@@ -25,6 +26,7 @@ describe('petaController.renderPetaHipertensi()', () => {
     });
 
     test('tanpa session.user → role default "kepala_puskesmas"', async () => {
+        pool.query.mockResolvedValueOnce({ rows: [{ id_jenis_ptm: 'hipertensi', nama_ptm: 'Hipertensi' }] });
         const { req, res } = mockReqRes({ session: {} });
 
         await petaController.renderPetaHipertensi(req, res);
@@ -50,7 +52,7 @@ describe('petaController.getDataPetaHipertensi()', () => {
 
         await petaController.getDataPetaHipertensi(req, res);
 
-        expect(pool.query.mock.calls[0][1]).toEqual([5, 2026]);
+        expect(pool.query.mock.calls[0][1]).toEqual(['hipertensi', 5, 2026]);
         expect(res.json).toHaveBeenCalledWith({
             success: true,
             data: [{ nama_nagari: 'Koto Tuo', total_pasien: 10, total_hipertensi: 4, persen_hipertensi: 40 }],
@@ -75,6 +77,7 @@ describe('petaController.getDataPetaHipertensi()', () => {
         await petaController.getDataPetaHipertensi(req, res);
 
         expect(pool.query.mock.calls[0][0]).not.toContain('EXTRACT(MONTH');
+        expect(pool.query.mock.calls[0][1]).toEqual(['hipertensi']);
         const payload = res.json.mock.calls[0][0];
         expect(payload.data[0].persen_hipertensi).toBe(0); // hindari pembagian oleh nol
     });

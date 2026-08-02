@@ -305,6 +305,7 @@ describe('kepalaController.renderGrafikKunjungan()', () => {
 
     test('happy path → label grafik memakai nama bulan + tahun, persen capaian dihitung', async () => {
         pool.query
+            .mockResolvedValueOnce({ rows: [{ id_jenis_ptm: 'hipertensi', nama_ptm: 'Hipertensi' }] }) // ptmRes
             .mockResolvedValueOnce({ rows: [{ bulan: '4', tahun: 2026, total_skrining: 10 }] }) // grafik
             .mockResolvedValueOnce({ rows: [{ periode_bulan: '4', periode_tahun: 2026, total_pasien: 20, terkendali: 10 }] }) // rekap
             .mockResolvedValueOnce({ rows: [{ nama_nagari: 'Koto Tuo' }] }); // nagari
@@ -321,6 +322,7 @@ describe('kepalaController.renderGrafikKunjungan()', () => {
 
     test('total_pasien 0 pada rekap periode → persen_capaian "0.0" (tidak NaN)', async () => {
         pool.query
+            .mockResolvedValueOnce({ rows: [{ id_jenis_ptm: 'hipertensi', nama_ptm: 'Hipertensi' }] })
             .mockResolvedValueOnce({ rows: [] })
             .mockResolvedValueOnce({ rows: [{ periode_bulan: '1', periode_tahun: 2026, total_pasien: 0, terkendali: 0 }] })
             .mockResolvedValueOnce({ rows: [] });

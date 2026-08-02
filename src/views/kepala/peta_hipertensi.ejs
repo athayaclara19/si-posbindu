@@ -83,23 +83,36 @@
     <%- include('../partials/sidebar', { active: 'peta', role: 'kepala' }) %>
 
     <div class="main-content-wrapper">
-        <%- include('../partials/header', { pageTitle: 'Peta Persebaran Hipertensi', role: 'kepala' }) %>
+        <%- include('../partials/header', { pageTitle: 'Peta Persebaran PTM', role: 'kepala' }) %>
 
         <main class="p-4 md:p-6 lg:p-8 space-y-6 w-full">
 
             <%/* ── Judul halaman ── */%>
             <div>
-                <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">
-                    Peta Persebaran Hipertensi
+                <h2 class="text-[#1F2937] font-poppins font-semibold text-xl" id="mainTitle">
+                    Peta Persebaran Kasus PTM
                 </h2>
                 <p class="text-[#6B7280] text-sm mt-1">
                     Kecamatan IV Koto, Kabupaten Agam · ditampilkan per nagari
                 </p>
             </div>
 
-            <%/* ── Filter Bulan & Tahun ── */%>
+            <%/* ── Filter Penyakit, Bulan & Tahun ── */%>
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div class="flex flex-wrap items-end gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Pilih Penyakit (PTM)</label>
+                        <select id="filterPtm"
+                                class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                            <% if (typeof jenisPtmOptions !== 'undefined') { %>
+                                <% jenisPtmOptions.forEach(p => { %>
+                                    <option value="<%= p.id_jenis_ptm %>" <%= p.id_jenis_ptm === 'hipertensi' ? 'selected' : '' %>><%= p.nama_ptm %></option>
+                                <% }) %>
+                            <% } else { %>
+                                <option value="hipertensi" selected>Hipertensi</option>
+                            <% } %>
+                        </select>
+                    </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 mb-1">Bulan</label>
                         <select id="filterBulan"
@@ -172,8 +185,8 @@
                             <tr class="border-b border-gray-100">
                                 <th class="text-left py-3 px-4 font-semibold text-gray-500">Nagari</th>
                                 <th class="text-right py-3 px-4 font-semibold text-gray-500">Total Pasien</th>
-                                <th class="text-right py-3 px-4 font-semibold text-gray-500">Hipertensi</th>
-                                <th class="text-right py-3 px-4 font-semibold text-gray-500">% Hipertensi</th>
+                                <th class="text-right py-3 px-4 font-semibold text-gray-500" id="thKasus">Hipertensi</th>
+                                <th class="text-right py-3 px-4 font-semibold text-gray-500" id="thPersen">% Hipertensi</th>
                                 <th class="py-3 px-4 font-semibold text-gray-500">Risiko</th>
                             </tr>
                         </thead>
@@ -269,8 +282,19 @@
     async function loadData(bulan, tahun) {
         document.getElementById('map-loading').style.display = 'flex';
 
-        let url = '/api/peta-hipertensi';
-        if (bulan && tahun) url += `?bulan=${bulan}&tahun=${tahun}`;
+        const jenis_ptm = document.getElementById('filterPtm').value;
+        const namaPtm = document.getElementById('filterPtm').options[document.getElementById('filterPtm').selectedIndex].text;
+
+        document.getElementById('thKasus').textContent = namaPtm;
+        document.getElementById('thPersen').textContent = '% ' + namaPtm;
+        const mainTitleEl = document.getElementById('mainTitle');
+        if (mainTitleEl) mainTitleEl.textContent = 'Peta Persebaran Kasus ' + namaPtm;
+
+        const legendTitleEl = document.querySelector('.legend-title');
+        if (legendTitleEl) legendTitleEl.textContent = '% ' + namaPtm;
+
+        let url = `/api/peta-hipertensi?jenis_ptm=${jenis_ptm}`;
+        if (bulan && tahun) url += `&bulan=${bulan}&tahun=${tahun}`;
 
         try {
             const res  = await fetch(url);
@@ -289,7 +313,7 @@
 
         } catch (err) {
             console.error('Gagal memuat data peta:', err);
-                Swal.fire({ icon: 'error', title: 'Gagal Memuat Data', text: 'Periksa koneksi atau hubungi administrator.', confirmButtonColor: '#2563EB' });
+            Swal.fire({ icon: 'error', title: 'Gagal Memuat Data', text: 'Periksa koneksi atau hubungi administrator.', confirmButtonColor: '#2563EB' });
         } finally {
             document.getElementById('map-loading').style.display = 'none';
         }
@@ -315,6 +339,7 @@
                 const nama   = feature.properties.NAMOBJ || feature.properties.nama_nagari || '';
                 const row    = dataMap[nama.toUpperCase()];
                 const risiko = row ? getRisikoLabel(row.persen_hipertensi) : getRisikoLabel(null);
+                const namaPtm = document.getElementById('filterPtm').options[document.getElementById('filterPtm').selectedIndex].text;
 
                 // Tooltip saat hover
                 layer.bindTooltip(`
@@ -322,7 +347,7 @@
                         <div style="font-weight:700;font-size:14px;margin-bottom:4px">${nama}</div>
                         ${row ? `
                             <div>Total Pasien: <b>${row.total_pasien.toLocaleString('id-ID')}</b></div>
-                            <div>Hipertensi: <b>${row.total_hipertensi.toLocaleString('id-ID')}</b></div>
+                            <div>${namaPtm}: <b>${row.total_hipertensi.toLocaleString('id-ID')}</b></div>
                             <div>Persentase: <b>${row.persen_hipertensi}%</b></div>
                             <div style="margin-top:4px">
                                 <span style="
@@ -392,6 +417,8 @@
             ? [...data].sort((a,b) => b.persen_hipertensi - a.persen_hipertensi)[0] 
             : null;
 
+        const namaPtm = document.getElementById('filterPtm').options[document.getElementById('filterPtm').selectedIndex].text;
+
         document.getElementById('summaryCards').innerHTML = `
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <p class="text-xs font-semibold text-gray-500 mb-1">Total Pasien</p>
@@ -399,9 +426,9 @@
                 <p class="text-xs text-gray-400 mt-1">pasien terskrining</p>
             </div>
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <p class="text-xs font-semibold text-gray-500 mb-1">Total Hipertensi</p>
+                <p class="text-xs font-semibold text-gray-500 mb-1">Total Kasus ${namaPtm}</p>
                 <p class="text-3xl font-poppins font-bold text-red-600">${totalHipertensi.toLocaleString('id-ID')}</p>
-                <p class="text-xs text-gray-400 mt-1">sistole ≥140 atau diastole ≥90</p>
+                <p class="text-xs text-gray-400 mt-1">kasus abnormal terdeteksi</p>
             </div>
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <p class="text-xs font-semibold text-gray-500 mb-1">Prevalensi</p>
@@ -414,7 +441,7 @@
                     ${nagariTertinggi ? nagariTertinggi.nama_nagari : '—'}
                 </p>
                 <p class="text-xs text-gray-400 mt-1">
-                    ${nagariTertinggi ? nagariTertinggi.persen_hipertensi + '% hipertensi' : 'Tidak ada data'}
+                    ${nagariTertinggi ? nagariTertinggi.persen_hipertensi + '% ' + namaPtm : 'Tidak ada data'}
                 </p>
             </div>
         `;
@@ -426,16 +453,19 @@
     document.getElementById('btnFilter').addEventListener('click', () => {
         const bulan = document.getElementById('filterBulan').value;
         const tahun = document.getElementById('filterTahun').value;
-        if (!bulan) {
-            Swal.fire({ icon: 'info', title: 'Pilih Bulan', text: 'Pilih bulan terlebih dahulu, atau klik "Semua Data".', confirmButtonColor: '#2563EB' });
-            return;
-        }
         loadData(bulan, tahun);
     });
 
     document.getElementById('btnReset').addEventListener('click', () => {
         document.getElementById('filterBulan').value = '';
         loadData(null, null);
+    });
+
+    // Otomatis reload saat ganti penyakit
+    document.getElementById('filterPtm').addEventListener('change', () => {
+        const bulan = document.getElementById('filterBulan').value;
+        const tahun = document.getElementById('filterTahun').value;
+        loadData(bulan || null, tahun || null);
     });
 
     // ============================================================

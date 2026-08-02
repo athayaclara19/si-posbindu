@@ -41,10 +41,11 @@ exports.renderDashboardKepala = async (req, res) => {
             SELECT l.id_laporan, l.status, l.dikirim_pada,
                    l.total_pasien, l.total_skrining,
                    per.periode_bulan, per.periode_tahun,
-                   u.nama_user AS nama_pj
+                   u.nama_user AS nama_pj, jp.nama_ptm
             FROM laporan l
             JOIN periode per ON l.id_periode = per.periode_id
             JOIN "user"  u   ON l.id_pj      = u.id_user
+            LEFT JOIN jenis_ptm jp ON l.id_jenis_ptm = jp.id_jenis_ptm
             WHERE l.status = 'dikirim'
             ORDER BY l.dikirim_pada ASC
         `);
@@ -53,10 +54,11 @@ exports.renderDashboardKepala = async (req, res) => {
         const riwayatRes = await pool.query(`
             SELECT l.id_laporan, l.status, l.dikirim_pada,
                    per.periode_bulan, per.periode_tahun,
-                   u.nama_user AS nama_pj
+                   u.nama_user AS nama_pj, jp.nama_ptm
             FROM laporan l
             JOIN periode per ON l.id_periode = per.periode_id
             JOIN "user"  u   ON l.id_pj      = u.id_user
+            LEFT JOIN jenis_ptm jp ON l.id_jenis_ptm = jp.id_jenis_ptm
             WHERE l.status IN ('disetujui', 'ditolak')
             ORDER BY l.dikirim_pada DESC
             LIMIT 10
@@ -96,12 +98,13 @@ exports.renderPersetujuan = async (req, res) => {
         const semuaRes = await pool.query(`
             SELECT l.id_laporan, l.status, l.dikirim_pada,
                    l.total_pasien, l.total_skrining, l.narasi_laporan AS narasi,
-                   l.catatan_tolak,
+                   l.catatan_tolak, l.id_jenis_ptm,
                    per.periode_bulan, per.periode_tahun,
-                   u.nama_user AS nama_pj
+                   u.nama_user AS nama_pj, jp.nama_ptm
             FROM laporan l
             JOIN periode per ON l.id_periode = per.periode_id
             JOIN "user"  u   ON l.id_pj      = u.id_user
+            LEFT JOIN jenis_ptm jp ON l.id_jenis_ptm = jp.id_jenis_ptm
             WHERE l.status != 'draft'
             ORDER BY l.dikirim_pada DESC
         `);
@@ -116,10 +119,11 @@ exports.renderPersetujuan = async (req, res) => {
 
         if (req.query.id) {
             const detRes = await pool.query(`
-                SELECT l.*, per.periode_bulan, per.periode_tahun, u.nama_user AS nama_pj
+                SELECT l.*, per.periode_bulan, per.periode_tahun, u.nama_user AS nama_pj, jp.nama_ptm
                 FROM laporan l
                 JOIN periode per ON l.id_periode = per.periode_id
                 JOIN "user"  u   ON l.id_pj      = u.id_user
+                LEFT JOIN jenis_ptm jp ON l.id_jenis_ptm = jp.id_jenis_ptm
                 WHERE l.id_laporan = $1
             `, [req.query.id]);
 
@@ -129,22 +133,51 @@ exports.renderPersetujuan = async (req, res) => {
                     nama_bulan: NAMA_BULAN[(parseInt(detRes.rows[0].periode_bulan) - 1)] || '-'
                 };
 
+                const jenisPtmTerpilih = detRes.rows[0].id_jenis_ptm || 'hipertensi';
+
+                let filterAbnormal = 's.sistole >= 140 OR s.diastole >= 90';
+                let filterNormal = 's.sistole < 140 AND s.diastole < 90';
+
+                if (jenisPtmTerpilih === 'dm') {
+                    filterAbnormal = `dmt.kategori_hasil IN ('Diabetes Melitus', 'Prediabetes') OR s.gula_darah >= 140`;
+                    filterNormal = `dmt.kategori_hasil = 'Normal' OR (s.gula_darah IS NOT NULL AND s.gula_darah < 140)`;
+                } else if (jenisPtmTerpilih === 'obesitas') {
+                    filterAbnormal = `obt.kategori_obesitas IN ('Obesitas', 'Overweight') OR obt.imt >= 25`;
+                    filterNormal = `obt.kategori_obesitas = 'Normal' OR (obt.imt IS NOT NULL AND obt.imt < 25)`;
+                } else if (jenisPtmTerpilih === 'ppok') {
+                    filterAbnormal = `ppt.kategori_risiko = 'Tinggi' OR ppt.skor_total >= 4`;
+                    filterNormal = `ppt.kategori_risiko = 'Rendah' OR (ppt.skor_total IS NOT NULL AND ppt.skor_total < 4)`;
+                } else if (jenisPtmTerpilih === 'gangguan_indra') {
+                    filterAbnormal = `git.hasil_pemeriksaan_mata <> 'Normal' OR git.hasil_pemeriksaan_telinga <> 'Normal'`;
+                    filterNormal = `git.hasil_pemeriksaan_mata = 'Normal' AND git.hasil_pemeriksaan_telinga = 'Normal'`;
+                } else if (jenisPtmTerpilih === 'kesehatan_jiwa') {
+                    filterAbnormal = `kjt.kategori_hasil <> 'Normal' OR kjt.skor_total >= 6`;
+                    filterNormal = `kjt.kategori_hasil = 'Normal' OR (kjt.skor_total IS NOT NULL AND kjt.skor_total < 6)`;
+                }
+
                 const nagariRes = await pool.query(`
                     SELECT
                         n.nama_nagari,
                         COUNT(DISTINCT s.id_pasien)::int AS total_pasien,
-                        COUNT(CASE WHEN s.sistole >= 140 OR s.diastole >= 90 THEN 1 END)::int AS hipertensi,
-                        COUNT(CASE WHEN s.sistole < 140 AND s.diastole < 90  THEN 1 END)::int AS terkendali
+                        COUNT(CASE WHEN ${filterAbnormal} THEN 1 END)::int AS hipertensi,
+                        COUNT(CASE WHEN ${filterNormal} THEN 1 END)::int AS terkendali
                     FROM skrining s
                     JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
                     JOIN pasien p   ON s.id_pasien   = p.id_pasien
                     JOIN jorong j   ON p.id_jorong   = j.id_jorong
                     JOIN nagari n   ON j.id_nagari   = n.id_nagari
+                    LEFT JOIN skrining_hipertensi hp ON s.id_skrining = hp.id_skrining
+                    LEFT JOIN skrining_dm dmt ON s.id_skrining = dmt.id_skrining
+                    LEFT JOIN skrining_obesitas obt ON s.id_skrining = obt.id_skrining
+                    LEFT JOIN skrining_ppok ppt ON s.id_skrining = ppt.id_skrining
+                    LEFT JOIN skrining_gangguan_indra git ON s.id_skrining = git.id_skrining
+                    LEFT JOIN skrining_kesehatan_jiwa kjt ON s.id_skrining = kjt.id_skrining
                     WHERE s.status_validasi = 'terverifikasi'
-                      AND k.id_periode = $1
+                      AND s.id_jenis_ptm = $1
+                      AND k.id_periode = $2
                     GROUP BY n.nama_nagari
                     ORDER BY total_pasien DESC
-                `, [detRes.rows[0].id_periode]);
+                `, [jenisPtmTerpilih, detRes.rows[0].id_periode]);
                 distribusiNagari = nagariRes.rows;
             }
         }
@@ -274,20 +307,50 @@ exports.unduhLaporanKepala = async (req, res) => {
 // ─────────────────────────────────────────────────────────────
 exports.renderGrafikKunjungan = async (req, res) => {
     try {
+        const ptmRes = await pool.query('SELECT * FROM jenis_ptm ORDER BY nama_ptm ASC');
+        const jenisPtmTerpilih = req.query.jenis_ptm || 'hipertensi';
+
+        let filterAbnormal = 's.sistole >= 140 OR s.diastole >= 90';
+        let filterNormal = 's.sistole < 140 AND s.diastole < 90';
+
+        if (jenisPtmTerpilih === 'dm') {
+            filterAbnormal = `dmt.kategori_hasil IN ('Diabetes Melitus', 'Prediabetes') OR s.gula_darah >= 140`;
+            filterNormal = `dmt.kategori_hasil = 'Normal' OR (s.gula_darah IS NOT NULL AND s.gula_darah < 140)`;
+        } else if (jenisPtmTerpilih === 'obesitas') {
+            filterAbnormal = `obt.kategori_obesitas IN ('Obesitas', 'Overweight') OR obt.imt >= 25`;
+            filterNormal = `obt.kategori_obesitas = 'Normal' OR (obt.imt IS NOT NULL AND obt.imt < 25)`;
+        } else if (jenisPtmTerpilih === 'ppok') {
+            filterAbnormal = `ppt.kategori_risiko = 'Tinggi' OR ppt.skor_total >= 4`;
+            filterNormal = `ppt.kategori_risiko = 'Rendah' OR (ppt.skor_total IS NOT NULL AND ppt.skor_total < 4)`;
+        } else if (jenisPtmTerpilih === 'gangguan_indra') {
+            filterAbnormal = `git.hasil_pemeriksaan_mata <> 'Normal' OR git.hasil_pemeriksaan_telinga <> 'Normal'`;
+            filterNormal = `git.hasil_pemeriksaan_mata = 'Normal' AND git.hasil_pemeriksaan_telinga = 'Normal'`;
+        } else if (jenisPtmTerpilih === 'kesehatan_jiwa') {
+            filterAbnormal = `kjt.kategori_hasil <> 'Normal' OR kjt.skor_total >= 6`;
+            filterNormal = `kjt.kategori_hasil = 'Normal' OR (kjt.skor_total IS NOT NULL AND kjt.skor_total < 6)`;
+        }
+
         const kunjunganRes = await pool.query(`
             SELECT
                 per.periode_bulan AS bulan, per.periode_tahun AS tahun,
                 COUNT(s.id_skrining)::int          AS total_skrining,
                 COUNT(DISTINCT s.id_pasien)::int   AS total_pasien,
-                COUNT(CASE WHEN s.sistole >= 140 OR s.diastole >= 90 THEN 1 END)::int AS hipertensi
+                COUNT(CASE WHEN ${filterAbnormal} THEN 1 END)::int AS hipertensi
             FROM skrining s
             JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
             JOIN periode per ON k.id_periode  = per.periode_id
+            LEFT JOIN skrining_hipertensi hp ON s.id_skrining = hp.id_skrining
+            LEFT JOIN skrining_dm dmt ON s.id_skrining = dmt.id_skrining
+            LEFT JOIN skrining_obesitas obt ON s.id_skrining = obt.id_skrining
+            LEFT JOIN skrining_ppok ppt ON s.id_skrining = ppt.id_skrining
+            LEFT JOIN skrining_gangguan_indra git ON s.id_skrining = git.id_skrining
+            LEFT JOIN skrining_kesehatan_jiwa kjt ON s.id_skrining = kjt.id_skrining
             WHERE s.status_validasi = 'terverifikasi'
+              AND s.id_jenis_ptm = $1
             GROUP BY per.periode_tahun, per.periode_bulan
             ORDER BY per.periode_tahun, per.periode_bulan
             LIMIT 12
-        `);
+        `, [jenisPtmTerpilih]);
 
         const grafikData = kunjunganRes.rows.map(row => ({
             ...row,
@@ -299,15 +362,22 @@ exports.renderGrafikKunjungan = async (req, res) => {
                 per.periode_bulan, per.periode_tahun,
                 COUNT(DISTINCT s.id_pasien)::int AS total_pasien,
                 COUNT(s.id_skrining)::int         AS total_skrining,
-                COUNT(CASE WHEN s.sistole >= 140 OR s.diastole >= 90 THEN 1 END)::int AS hipertensi,
-                COUNT(CASE WHEN s.sistole < 140  AND s.diastole < 90  THEN 1 END)::int AS terkendali
+                COUNT(CASE WHEN ${filterAbnormal} THEN 1 END)::int AS hipertensi,
+                COUNT(CASE WHEN ${filterNormal} THEN 1 END)::int AS terkendali
             FROM skrining s
             JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
             JOIN periode per ON k.id_periode  = per.periode_id
+            LEFT JOIN skrining_hipertensi hp ON s.id_skrining = hp.id_skrining
+            LEFT JOIN skrining_dm dmt ON s.id_skrining = dmt.id_skrining
+            LEFT JOIN skrining_obesitas obt ON s.id_skrining = obt.id_skrining
+            LEFT JOIN skrining_ppok ppt ON s.id_skrining = ppt.id_skrining
+            LEFT JOIN skrining_gangguan_indra git ON s.id_skrining = git.id_skrining
+            LEFT JOIN skrining_kesehatan_jiwa kjt ON s.id_skrining = kjt.id_skrining
             WHERE s.status_validasi = 'terverifikasi'
+              AND s.id_jenis_ptm = $1
             GROUP BY per.periode_tahun, per.periode_bulan
             ORDER BY per.periode_tahun DESC, per.periode_bulan DESC
-        `);
+        `, [jenisPtmTerpilih]);
 
         const rekapPeriode = rekapPeriodeRes.rows.map(row => ({
             ...row,
@@ -320,16 +390,23 @@ exports.renderGrafikKunjungan = async (req, res) => {
             SELECT
                 n.nama_nagari,
                 COUNT(DISTINCT s.id_pasien)::int AS total_pasien,
-                COUNT(CASE WHEN s.sistole >= 140 OR s.diastole >= 90 THEN 1 END)::int AS hipertensi,
-                COUNT(CASE WHEN s.sistole < 140  AND s.diastole < 90  THEN 1 END)::int AS terkendali
+                COUNT(CASE WHEN ${filterAbnormal} THEN 1 END)::int AS hipertensi,
+                COUNT(CASE WHEN ${filterNormal} THEN 1 END)::int AS terkendali
             FROM skrining s
             JOIN pasien p ON s.id_pasien = p.id_pasien
             JOIN jorong j ON p.id_jorong = j.id_jorong
             JOIN nagari n ON j.id_nagari = n.id_nagari
+            LEFT JOIN skrining_hipertensi hp ON s.id_skrining = hp.id_skrining
+            LEFT JOIN skrining_dm dmt ON s.id_skrining = dmt.id_skrining
+            LEFT JOIN skrining_obesitas obt ON s.id_skrining = obt.id_skrining
+            LEFT JOIN skrining_ppok ppt ON s.id_skrining = ppt.id_skrining
+            LEFT JOIN skrining_gangguan_indra git ON s.id_skrining = git.id_skrining
+            LEFT JOIN skrining_kesehatan_jiwa kjt ON s.id_skrining = kjt.id_skrining
             WHERE s.status_validasi = 'terverifikasi'
+              AND s.id_jenis_ptm = $1
             GROUP BY n.nama_nagari
             ORDER BY total_pasien DESC
-        `);
+        `, [jenisPtmTerpilih]);
 
         res.render('kepala/grafikkunjungan', {
             active: 'grafikkunjungan',
@@ -338,6 +415,8 @@ exports.renderGrafikKunjungan = async (req, res) => {
             grafikData,
             rekapPeriode,
             capaianNagari: nagariRes.rows,
+            jenisPtmOptions: ptmRes.rows,
+            activePtm: jenisPtmTerpilih
         });
     } catch (err) {
         console.error('ERROR renderGrafikKunjungan:', err);

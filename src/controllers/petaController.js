@@ -13,11 +13,13 @@ const pool = require('../config/db');
  */
 exports.renderPetaHipertensi = async (req, res) => {
     try {
+        const ptmRes = await pool.query(`SELECT * FROM jenis_ptm ORDER BY nama_ptm ASC`);
         res.render('kepala/peta_hipertensi', {
             active: 'peta-hipertensi',
-            pageTitle: 'Peta Persebaran Hipertensi',
+            pageTitle: 'Peta Persebaran PTM',
             currentUser: req.session.user || null,
-            role: req.session.user ? req.session.user.role : 'kepala_puskesmas'
+            role: req.session.user ? req.session.user.role : 'kepala_puskesmas',
+            jenisPtmOptions: ptmRes.rows
         });
     } catch (err) {
         console.error('Error renderPetaHipertensi:', err);
@@ -26,57 +28,69 @@ exports.renderPetaHipertensi = async (req, res) => {
 };
 
 /**
- * API endpoint — kembalikan JSON data hipertensi per nagari.
+ * API endpoint — kembalikan JSON data PTM per nagari.
  * Frontend (Leaflet) memanggil endpoint ini via fetch().
- *
- * Query param opsional:
- *   ?bulan=5&tahun=2025   → filter satu bulan tertentu
- *   (tanpa param)         → ambil semua data yang sudah terverifikasi
- *
- * Akses: GET /api/peta-hipertensi
- *
- * Response format:
- * {
- *   "success": true,
- *   "data": [
- *     {
- *       "nama_nagari": "Koto Tuo",
- *       "total_pasien": 42,
- *       "total_hipertensi": 18,
- *       "persen_hipertensi": 42.86
- *     },
- *     ...
- *   ]
- * }
  */
 exports.getDataPetaHipertensi = async (req, res) => {
     try {
-        const { bulan, tahun } = req.query;
+        const { bulan, tahun, jenis_ptm } = req.query;
+        const jenisPtmTerpilih = jenis_ptm || 'hipertensi';
+
+        let filterAbnormal = 's.sistole >= 140 OR s.diastole >= 90';
+        let joinTables = `
+            LEFT JOIN skrining_hipertensi hp ON s.id_skrining = hp.id_skrining
+        `;
+
+        if (jenisPtmTerpilih === 'dm') {
+            filterAbnormal = `dmt.kategori_hasil IN ('Diabetes Melitus', 'Prediabetes') OR s.gula_darah >= 140`;
+            joinTables = `
+                LEFT JOIN skrining_dm dmt ON s.id_skrining = dmt.id_skrining
+            `;
+        } else if (jenisPtmTerpilih === 'obesitas') {
+            filterAbnormal = `obt.kategori_obesitas IN ('Obesitas', 'Overweight') OR obt.imt >= 25`;
+            joinTables = `
+                LEFT JOIN skrining_obesitas obt ON s.id_skrining = obt.id_skrining
+            `;
+        } else if (jenisPtmTerpilih === 'ppok') {
+            filterAbnormal = `ppt.kategori_risiko = 'Tinggi' OR ppt.skor_total >= 4`;
+            joinTables = `
+                LEFT JOIN skrining_ppok ppt ON s.id_skrining = ppt.id_skrining
+            `;
+        } else if (jenisPtmTerpilih === 'gangguan_indra') {
+            filterAbnormal = `git.hasil_pemeriksaan_mata <> 'Normal' OR git.hasil_pemeriksaan_telinga <> 'Normal'`;
+            joinTables = `
+                LEFT JOIN skrining_gangguan_indra git ON s.id_skrining = git.id_skrining
+            `;
+        } else if (jenisPtmTerpilih === 'kesehatan_jiwa') {
+            filterAbnormal = `kjt.kategori_hasil <> 'Normal' OR kjt.skor_total >= 6`;
+            joinTables = `
+                LEFT JOIN skrining_kesehatan_jiwa kjt ON s.id_skrining = kjt.id_skrining
+            `;
+        }
 
         // -------------------------------------------------------
         // CABANG 1: Filter berdasarkan bulan & tahun tertentu
         // -------------------------------------------------------
         if (bulan && tahun) {
-            // Filter langsung berdasarkan EXTRACT bulan & tahun dari tanggal_kegiatan
-            // lebih reliable daripada lookup id_periode
             const result = await pool.query(`
                 SELECT
                     n.nama_nagari,
-                    COUNT(DISTINCT s.id_pasien)                                                          AS total_pasien,
-                    COUNT(DISTINCT CASE WHEN s.sistole >= 140 OR s.diastole >= 90 THEN s.id_pasien END) AS total_hipertensi
+                    COUNT(DISTINCT s.id_pasien)::int                                                     AS total_pasien,
+                    COUNT(DISTINCT CASE WHEN ${filterAbnormal} THEN s.id_pasien END)::int                AS total_hipertensi
                 FROM skrining s
                 JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
                 JOIN pasien p   ON s.id_pasien   = p.id_pasien
                 JOIN jorong j   ON p.id_jorong   = j.id_jorong
                 JOIN nagari n   ON j.id_nagari   = n.id_nagari
+                ${joinTables}
                 WHERE s.status_validasi = 'terverifikasi'
-                  AND EXTRACT(MONTH FROM k.tanggal_kegiatan) = $1
-                  AND EXTRACT(YEAR  FROM k.tanggal_kegiatan) = $2
+                  AND s.id_jenis_ptm = $1
+                  AND EXTRACT(MONTH FROM k.tanggal_kegiatan) = $2
+                  AND EXTRACT(YEAR  FROM k.tanggal_kegiatan) = $3
                 GROUP BY n.nama_nagari
                 ORDER BY total_hipertensi DESC
-            `, [parseInt(bulan), parseInt(tahun)]);
+            `, [jenisPtmTerpilih, parseInt(bulan), parseInt(tahun)]);
 
-            // Kalau tidak ada data untuk bulan/tahun ini, kembalikan array kosong
             if (result.rows.length === 0) {
                 return res.json({ success: true, data: [] });
             }
@@ -99,16 +113,18 @@ exports.getDataPetaHipertensi = async (req, res) => {
         const result = await pool.query(`
             SELECT
                 n.nama_nagari,
-                COUNT(DISTINCT s.id_pasien)                                                          AS total_pasien,
-                COUNT(DISTINCT CASE WHEN s.sistole >= 140 OR s.diastole >= 90 THEN s.id_pasien END) AS total_hipertensi
+                COUNT(DISTINCT s.id_pasien)::int                                                     AS total_pasien,
+                COUNT(DISTINCT CASE WHEN ${filterAbnormal} THEN s.id_pasien END)::int                AS total_hipertensi
             FROM skrining s
             JOIN pasien p ON s.id_pasien   = p.id_pasien
             JOIN jorong j ON p.id_jorong   = j.id_jorong
             JOIN nagari n ON j.id_nagari   = n.id_nagari
+            ${joinTables}
             WHERE s.status_validasi = 'terverifikasi'
+              AND s.id_jenis_ptm = $1
             GROUP BY n.nama_nagari
             ORDER BY total_hipertensi DESC
-        `);
+        `, [jenisPtmTerpilih]);
 
         const data = result.rows.map(row => ({
             nama_nagari:       row.nama_nagari,

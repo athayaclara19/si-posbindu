@@ -63,7 +63,7 @@
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                             <div>
                                 <h3 class="text-[#1F2937] font-poppins font-semibold text-lg">
-                                    Laporan <%= detailLaporan.nama_bulan %> <%= detailLaporan.periode_tahun %>
+                                    Laporan <%= detailLaporan.nama_ptm || 'Hipertensi' %> — <%= detailLaporan.nama_bulan %> <%= detailLaporan.periode_tahun %>
                                 </h3>
                                 <p class="text-[#6B7280] text-sm mt-0.5">Oleh: <%= detailLaporan.nama_pj %> · Dikirim: <%= detailLaporan.dikirim_pada ? new Date(detailLaporan.dikirim_pada).toLocaleDateString('id-ID') : '-' %></p>
                             </div>
@@ -101,8 +101,8 @@
                                     <tr class="border-b-2 border-gray-200">
                                         <th class="text-left py-3 px-2 text-[#1F2937] font-semibold">Nagari</th>
                                         <th class="text-center py-3 px-2 text-[#1F2937] font-semibold">Total Pasien</th>
-                                        <th class="text-center py-3 px-2 text-[#1F2937] font-semibold">Hipertensi</th>
-                                        <th class="text-center py-3 px-2 text-[#1F2937] font-semibold">Terkendali</th>
+                                        <th class="text-center py-3 px-2 text-[#1F2937] font-semibold"><%= detailLaporan.nama_ptm || 'Hipertensi' %></th>
+                                        <th class="text-center py-3 px-2 text-[#1F2937] font-semibold">Normal / Terkendali</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100">
@@ -186,17 +186,26 @@
                     type: 'bar',
                     data: {
                         labels: [<% distribusiNagari.forEach(function(n,i){ %>"<%= n.nama_nagari %>"<%= i < distribusiNagari.length-1 ? ',' : '' %><% }) %>],
-                        datasets: [{
-                            label: 'Total Pasien',
-                            data: [<% distribusiNagari.forEach(function(n,i){ %><%= n.total_pasien %><%= i < distribusiNagari.length-1 ? ',' : '' %><% }) %>],
-                            backgroundColor: '#EF4444',
-                            borderRadius: 4,
-                            barPercentage: 0.4
-                        }]
+                        datasets: [
+                            {
+                                label: 'Total Pasien',
+                                data: [<% distribusiNagari.forEach(function(n,i){ %><%= n.total_pasien %><%= i < distribusiNagari.length-1 ? ',' : '' %><% }) %>],
+                                backgroundColor: '#2563EB',
+                                borderRadius: 4,
+                                barPercentage: 0.6
+                            },
+                            {
+                                label: '<%= detailLaporan.nama_ptm || "Hipertensi" %>',
+                                data: [<% distribusiNagari.forEach(function(n,i){ %><%= n.hipertensi %><%= i < distribusiNagari.length-1 ? ',' : '' %><% }) %>],
+                                backgroundColor: '#EF4444',
+                                borderRadius: 4,
+                                barPercentage: 0.6
+                            }
+                        ]
                     },
                     options: {
                         responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
+                        plugins: { legend: { display: true, position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } } },
                         scales: { x: { grid: { display: false } }, y: { grid: { color: '#F3F4F6' }, min: 0 } }
                     }
                 });
@@ -212,6 +221,7 @@
                         <thead>
                             <tr class="bg-[#F8FAFC] border-b border-gray-100">
                                 <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Periode</th>
+                                <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Penyakit</th>
                                 <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Dibuat Oleh</th>
                                 <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Tanggal Kirim</th>
                                 <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Total Pasien</th>
@@ -221,12 +231,15 @@
                         </thead>
                         <tbody class="divide-y divide-gray-50">
                             <% if (laporanList.length === 0) { %>
-                            <tr><td colspan="6" class="text-center py-12 text-gray-400 text-sm">Belum ada laporan yang dikirimkan</td></tr>
+                            <tr><td colspan="7" class="text-center py-12 text-gray-400 text-sm">Belum ada laporan yang dikirimkan</td></tr>
                             <% } %>
                             <% laporanList.forEach(function(l) { %>
                             <tr class="hover:bg-gray-50 transition-colors">
                                 <td class="px-6 py-4 text-sm text-[#1F2937] font-medium">
                                     <%= l.nama_bulan %> <%= l.periode_tahun %>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-[#1F2937] font-medium">
+                                    <%= l.nama_ptm || 'Hipertensi' %>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-[#6B7280]"><%= l.nama_pj %></td>
                                 <td class="px-6 py-4 text-sm text-[#6B7280]">

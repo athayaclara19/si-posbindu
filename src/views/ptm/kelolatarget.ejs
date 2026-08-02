@@ -24,7 +24,7 @@
             <!-- Page Title -->
             <div class="mt-2">
                 <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Kelola Target Capaian</h2>
-                <p class="text-[#6B7280] text-sm mt-1">Atur target jumlah pasien skrining hipertensi per tahun dan per nagari</p>
+                <p class="text-[#6B7280] text-sm mt-1">Atur target jumlah pasien skrining PTM per tahun dan per nagari</p>
             </div>
 
             <!-- Flash Messages -->
@@ -45,17 +45,46 @@
 
             <!-- STEP 1: SET TARGET GLOBAL -->
             <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-                <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between flex-wrap gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-poppins font-semibold text-gray-800">Step 1 — Set Target Global Tahunan</h3>
+                            <p class="text-xs text-gray-400 mt-0.5">Target global akan otomatis dibagi rata ke 7 nagari. Kamu bisa ubah per nagari setelah ini.</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 class="font-poppins font-semibold text-gray-800">Step 1 — Set Target Global Tahunan</h3>
-                        <p class="text-xs text-gray-400 mt-0.5">Target global akan otomatis dibagi rata ke 7 nagari. Kamu bisa ubah per nagari setelah ini.</p>
+                    <!-- Filter tahun & Penyakit PTM -->
+                    <div class="flex items-center gap-4 flex-wrap">
+                        <!-- Filter tahun -->
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs text-gray-500 font-medium">Tahun:</label>
+                            <select onchange="window.location.href='/ptm/target?jenis_ptm=<%= jenisPtmTerpilih %>&tahun='+this.value"
+                                class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 bg-white">
+                                <option value="<%= tahunIni %>" <%= tahunDipilih === tahunIni ? 'selected' : '' %>><%= tahunIni %></option>
+                                <% tahunList.forEach(t => { %>
+                                    <% if (t.tahun !== tahunIni) { %>
+                                    <option value="<%= t.tahun %>" <%= tahunDipilih === t.tahun ? 'selected' : '' %>><%= t.tahun %></option>
+                                    <% } %>
+                                <% }) %>
+                            </select>
+                        </div>
+                        <!-- Filter jenis PTM -->
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs text-gray-500 font-medium">Penyakit:</label>
+                            <select onchange="window.location.href='/ptm/target?tahun=<%= tahunDipilih %>&jenis_ptm='+this.value"
+                                class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 bg-white">
+                                <% jenisPtmList.forEach(p => { %>
+                                    <option value="<%= p.id_jenis_ptm %>" <%= jenisPtmTerpilih === p.id_jenis_ptm ? 'selected' : '' %>><%= p.nama_ptm %></option>
+                                <% }) %>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
                 <form action="/ptm/target/global" method="POST" class="px-6 py-5">
+                    <input type="hidden" name="id_jenis_ptm" value="<%= jenisPtmTerpilih %>">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                         <div>
                             <label class="block text-xs font-medium text-gray-600 mb-1.5">
@@ -121,19 +150,6 @@
                             <h3 class="font-poppins font-semibold text-gray-800">Step 2 — Target Per Nagari</h3>
                             <p class="text-xs text-gray-400 mt-0.5">Sesuaikan target tiap nagari sesuai kebutuhan</p>
                         </div>
-                    </div>
-                    <!-- Filter tahun -->
-                    <div class="flex items-center gap-2">
-                        <label class="text-xs text-gray-500 font-medium">Tampilkan tahun:</label>
-                        <select onchange="window.location.href='/ptm/target?tahun='+this.value"
-                            class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30">
-                            <option value="<%= tahunIni %>" <%= tahunDipilih === tahunIni ? 'selected' : '' %>><%= tahunIni %></option>
-                            <% tahunList.forEach(t => { %>
-                                <% if (t.tahun !== tahunIni) { %>
-                                <option value="<%= t.tahun %>" <%= tahunDipilih === t.tahun ? 'selected' : '' %>><%= t.tahun %></option>
-                                <% } %>
-                            <% }) %>
-                        </select>
                     </div>
                 </div>
 
@@ -250,6 +266,7 @@
             <form action="/ptm/target/nagari/edit" method="POST" class="px-6 py-5 space-y-4">
                 <input type="hidden" name="id_target" id="modalIdTarget">
                 <input type="hidden" name="tahun" id="modalTahun">
+                <input type="hidden" name="id_jenis_ptm" value="<%= jenisPtmTerpilih %>">
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1.5">
                         Target Pasien <span class="text-red-500">*</span>
@@ -351,7 +368,7 @@
         function konfirmasiHapusTahun(tahun) {
             document.getElementById('pesanHapus').textContent =
                 'Semua target nagari untuk tahun ' + tahun + ' akan dihapus permanen. Data capaian pasien tidak terpengaruh.';
-            document.getElementById('formHapus').action = '/ptm/target/hapus/' + tahun;
+            document.getElementById('formHapus').action = '/ptm/target/hapus/' + tahun + '?jenis_ptm=<%= jenisPtmTerpilih %>';
             document.getElementById('modalHapus').classList.remove('hidden');
         }
 

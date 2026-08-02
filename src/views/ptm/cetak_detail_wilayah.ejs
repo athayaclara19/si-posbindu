@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rekap Periode <%= namaBulan %> <%= periode.periode_tahun %> - SI-Posbindu</title>
+    <title>Detail Pasien <%= levelWilayah === 'nagari' ? 'Nagari' : 'Jorong' %> <%= namaWilayah %> <%= namaPtmTerpilih %> - SI-Posbindu</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -163,8 +163,8 @@
     <!-- Toolbar (hilang saat print) -->
     <div class="print-toolbar">
         <div class="toolbar-left">
-            <a href="/ptm/rekap" class="btn-back">← Kembali</a>
-            <span>Pratinjau Cetak — Rekap Periode <%= namaBulan %> <%= periode.periode_tahun %></span>
+            <a href="/ptm/rekap?tab=wilayah&jenis_ptm=<%= jenisPtmTerpilih %>&tahun=<%= tahunDipilih %>&level=<%= levelWilayah %>" class="btn-back">← Kembali</a>
+            <span>Pratinjau Cetak — Detail Pasien Wilayah</span>
         </div>
         <button class="btn-print" onclick="window.print()">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -184,8 +184,11 @@
 
         <!-- Judul -->
         <div class="judul-dokumen">
-            <h3>Rekapitulasi Data Skrining <%= namaPtmTerpilih %></h3>
-            <p>Periode: <strong><%= namaBulan %> <%= periode.periode_tahun %></strong></p>
+            <h3>Daftar Detail Pasien Skrining <%= namaPtmTerpilih %></h3>
+            <p>
+                Wilayah: <strong><%= levelWilayah === 'nagari' ? 'Nagari ' + namaWilayah : 'Jorong ' + namaWilayah + ' (Nagari ' + namaNagari + ')' %></strong>
+                | Tahun: <strong><%= tahunDipilih %></strong>
+            </p>
         </div>
 
         <!-- Kartu Ringkasan -->
@@ -193,29 +196,17 @@
             <div class="kartu">
                 <div class="label">Total Pasien</div>
                 <div class="nilai"><%= agg.total_pasien %></div>
-                <div class="sub">pasien diperiksa</div>
+                <div class="sub">pasien terdaftar</div>
             </div>
             <div class="kartu">
                 <div class="label">Total Kunjungan</div>
                 <div class="nilai"><%= agg.total_kunjungan %></div>
-                <div class="sub">total skrining dilakukan</div>
+                <div class="sub">skrining dilakukan</div>
             </div>
             <div class="kartu merah">
                 <div class="label">Kasus <%= namaPtmTerpilih %></div>
                 <div class="nilai"><%= agg.total_hipertensi %></div>
-                <div class="sub">
-                    <% if (jenisPtmTerpilih === 'hipertensi') { %>
-                        TD &ge; 140/90 mmHg
-                    <% } else if (jenisPtmTerpilih === 'dm') { %>
-                        Gula Darah &ge; 140 mg/dL
-                    <% } else if (jenisPtmTerpilih === 'obesitas') { %>
-                        IMT &ge; 25
-                    <% } else if (jenisPtmTerpilih === 'ppok') { %>
-                        Skor &ge; 4 (Tinggi)
-                    <% } else { %>
-                        Hasil Pemeriksaan Abnormal
-                    <% } %>
-                </div>
+                <div class="sub">terindikasi abnormal</div>
             </div>
             <div class="kartu hijau">
                 <div class="label">
@@ -226,61 +217,133 @@
                     <% } %>
                 </div>
                 <div class="nilai"><%= agg.terkendali %></div>
-                <div class="sub">
-                    <% if (jenisPtmTerpilih === 'hipertensi') { %>
-                        TD &lt; 140/90 (kunjungan terakhir)
-                    <% } else if (jenisPtmTerpilih === 'dm') { %>
-                        Gula &lt; 140 (kunjungan terakhir)
-                    <% } else if (jenisPtmTerpilih === 'obesitas') { %>
-                        IMT < 25 (kunjungan terakhir)
-                    <% } else if (jenisPtmTerpilih === 'ppok') { %>
-                        Risiko Rendah (kunjungan terakhir)
-                    <% } else { %>
-                        Normal (kunjungan terakhir)
-                    <% } %>
-                </div>
+                <div class="sub">kondisi normal</div>
             </div>
         </div>
 
-        <!-- Tabel Distribusi Per Nagari -->
-        <% if (perNagari && perNagari.length > 0) { %>
+        <!-- Tabel Detail Pasien -->
+        <% if (daftarPasien && daftarPasien.length > 0) { %>
         <table>
             <thead>
                 <tr>
                     <th style="width:5%">No</th>
-                    <th style="width:35%">Nagari</th>
-                    <th style="width:20%">Total Pasien</th>
-                    <th style="width:20%">Total Kunjungan</th>
-                    <th style="width:20%">Kasus <%= namaPtmTerpilih %></th>
+                    <th style="width:18%">NIK</th>
+                    <th>Nama Pasien</th>
+                    <th style="width:8%">L/P</th>
+                    <th style="width:10%">Umur</th>
+                    <% if (levelWilayah === 'nagari') { %>
+                    <th style="width:20%">Jorong</th>
+                    <% } %>
+                    <th style="width:12%">Kunjungan</th>
+                    <th style="width:15%">Status Akhir</th>
                 </tr>
             </thead>
             <tbody>
-                <% perNagari.forEach((n, i) => { %>
-                <tr>
-                    <td class="center"><%= i + 1 %></td>
-                    <td><%= n.nama_nagari %></td>
-                    <td class="center"><%= parseInt(n.total_pasien) || 0 %></td>
-                    <td class="center"><%= parseInt(n.total_kunjungan) || 0 %></td>
-                    <td class="center"><%= parseInt(n.hipertensi) || 0 %></td>
-                </tr>
+                <% daftarPasien.forEach((p, i) => { %>
+                    <% 
+                        // Hitung Umur Sederhana
+                        let umur = '-';
+                        if (p.tahun_lahir) {
+                            umur = (tahunDipilih - p.tahun_lahir) + ' th';
+                        }
+
+                        // Tentukan Status Akhir klinis
+                        let statusText = '-';
+                        let isAbnormal = false;
+
+                        if (jenisPtmTerpilih === 'dm') {
+                            const gdVal = parseInt(p.gula_darah) || 0;
+                            const jp = p.jenis_pemeriksaan || 'Sewaktu';
+                            if (jp === 'Puasa') {
+                                if (gdVal > 180) {
+                                    statusText = 'Diabetes Melitus';
+                                    isAbnormal = true;
+                                } else {
+                                    statusText = 'Normal';
+                                }
+                            } else {
+                                if (gdVal > 200) {
+                                    statusText = 'Diabetes Melitus';
+                                    isAbnormal = true;
+                                } else {
+                                    statusText = 'Normal';
+                                }
+                            }
+                        } else if (jenisPtmTerpilih === 'gangguan_indra') {
+                            const mata = p.hasil_pemeriksaan_mata || 'Normal';
+                            const telinga = p.hasil_pemeriksaan_telinga || 'Normal';
+                            if (mata !== 'Normal' || telinga !== 'Normal') {
+                                statusText = 'Ada Gangguan';
+                                isAbnormal = true;
+                            } else {
+                                statusText = 'Tidak Ada Gangguan';
+                            }
+                        } else if (jenisPtmTerpilih === 'ppok') {
+                            const skor = parseInt(p.ppok_skor) || 0;
+                            const risiko = p.ppok_risiko || 'Rendah';
+                            if (risiko === 'Tinggi' || skor >= 4) {
+                                statusText = 'Ada Gangguan';
+                                isAbnormal = true;
+                            } else {
+                                statusText = 'Tidak Ada Gangguan';
+                            }
+                        } else if (jenisPtmTerpilih === 'kesehatan_jiwa') {
+                            const skor = parseInt(p.jiwa_skor) || 0;
+                            const kat = p.jiwa_kategori || 'Normal';
+                            if (kat !== 'Normal' || skor >= 6) {
+                                statusText = 'Ada Gangguan';
+                                isAbnormal = true;
+                            } else {
+                                statusText = 'Tidak Ada Gangguan';
+                            }
+                        } else if (jenisPtmTerpilih === 'obesitas') {
+                            const imt = parseFloat(p.imt) || 0;
+                            const kat = p.kategori_obesitas || 'Normal';
+                            if (kat === 'Obesitas' || kat === 'Overweight' || imt >= 25) {
+                                statusText = 'Obesitas';
+                                isAbnormal = true;
+                            } else {
+                                statusText = 'Normal';
+                            }
+                        } else { // hipertensi
+                            const sistole = parseInt(p.sistole) || 0;
+                            const diastole = parseInt(p.diastole) || 0;
+                            if (sistole >= 140 || diastole >= 90) {
+                                statusText = 'Hipertensi';
+                                isAbnormal = true;
+                            } else {
+                                statusText = 'Terkendali';
+                            }
+                        }
+                    %>
+                    <tr>
+                        <td class="center"><%= i + 1 %></td>
+                        <td class="center"><%= p.nik %></td>
+                        <td><%= p.nama_pasien %></td>
+                        <td class="center"><%= p.jenis_kelamin === 'L' ? 'L' : 'P' %></td>
+                        <td class="center"><%= umur %></td>
+                        <% if (levelWilayah === 'nagari') { %>
+                        <td><%= p.nama_jorong %></td>
+                        <% } %>
+                        <td class="center"><%= p.total_kunjungan %> kali</td>
+                        <td class="center font-bold">
+                            <span style="color: <%= isAbnormal ? '#dc2626' : '#16a34a' %>;">
+                                <%= statusText %>
+                            </span>
+                        </td>
+                    </tr>
                 <% }) %>
-                <tr style="font-weight:bold; background:#dbeafe;">
-                    <td colspan="2" class="center">TOTAL</td>
-                    <td class="center"><%= agg.total_pasien %></td>
-                    <td class="center"><%= agg.total_kunjungan %></td>
-                    <td class="center"><%= agg.total_hipertensi %></td>
-                </tr>
             </tbody>
         </table>
         <% } else { %>
-        <p style="text-align:center; color:#666; margin: 20px 0;">Tidak ada data distribusi per nagari untuk periode ini.</p>
+        <p style="text-align:center; color:#666; margin: 20px 0;">Tidak ada data pasien yang terdaftar di wilayah ini untuk tahun <%= tahunDipilih %>.</p>
         <% } %>
 
         <!-- Catatan Metodologi -->
         <div class="catatan">
             <strong>Keterangan:</strong><br>
-            • <em>Kasus <%= namaPtmTerpilih %></em>: Pasien yang pada minimal satu kunjungan di periode ini terindikasi medis abnormal untuk penyakit <%= namaPtmTerpilih %>.<br>
-            • <em>Terkendali / Normal</em>: Pasien yang pada kunjungan <em>terakhir</em> di periode ini memiliki hasil pemeriksaan normal.<br>
+            • <em>Status Akhir (Kasus)</em>: Pasien memiliki hasil pemeriksaan terindikasi abnormal pada kunjungan terakhirnya di tahun <%= tahunDipilih %>.<br>
+            • <em>Status Akhir (Terkendali / Normal)</em>: Pasien memiliki hasil pemeriksaan normal pada kunjungan terakhirnya di tahun <%= tahunDipilih %>.<br>
             • Data hanya mencakup skrining yang telah diverifikasi oleh Bidan.
         </div>
 
