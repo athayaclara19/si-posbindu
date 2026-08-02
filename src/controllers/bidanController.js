@@ -338,6 +338,34 @@ exports.renderLaporan = async (req, res) => {
 // 5. Export Excel
 exports.exportLaporanExcel = async (req, res) => {
     try {
+        const search       = (req.query.search || '').trim();
+        const jorongFilter = (req.query.jorong || '').trim();
+        const statusFilter = (req.query.status || '').trim();
+
+        const conditions  = [`s.status_validasi = 'terverifikasi'`];
+        const queryParams = [];
+
+        if (search !== '') {
+            queryParams.push(`%${search}%`);
+            conditions.push(`(p.nama_pasien ILIKE $${queryParams.length} OR p.nik ILIKE $${queryParams.length})`);
+        }
+        if (jorongFilter !== '') {
+            queryParams.push(jorongFilter);
+            conditions.push(`p.id_jorong = $${queryParams.length}`);
+        }
+        if (statusFilter !== '') {
+            const bucketMap = {
+                normal: 's.sistole < 120',
+                pra:    's.sistole >= 120 AND s.sistole < 140',
+                ht1:    's.sistole >= 140 AND s.sistole < 160',
+                ht2:    's.sistole >= 160 AND s.sistole < 180',
+                krisis: 's.sistole >= 180',
+            };
+            if (bucketMap[statusFilter]) conditions.push(bucketMap[statusFilter]);
+        }
+
+        const whereClause = `WHERE ${conditions.join(' AND ')}`;
+
         const query = `
             SELECT 
                 p.nama_pasien, p.nik, j.nama_jorong, k.tanggal_kegiatan,
@@ -374,11 +402,11 @@ exports.exportLaporanExcel = async (req, res) => {
             LEFT JOIN skrining_ppok ppt        ON ppt.id_skrining = s.id_skrining
             LEFT JOIN skrining_gangguan_indra git ON git.id_skrining = s.id_skrining
             LEFT JOIN skrining_kesehatan_jiwa kjt ON kjt.id_skrining = s.id_skrining
-            WHERE s.status_validasi = 'terverifikasi'
+            ${whereClause}
             GROUP BY p.id_pasien, p.nama_pasien, p.nik, j.nama_jorong, k.tanggal_kegiatan
             ORDER BY k.tanggal_kegiatan ASC
         `;
-        const result = await pool.query(query);
+        const result = await pool.query(query, queryParams);
         const workbook  = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Laporan Posbindu');
         worksheet.columns = [

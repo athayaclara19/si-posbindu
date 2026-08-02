@@ -27,7 +27,14 @@
                     <p class="text-[#6B7280] text-sm mt-1">Data skrining yang telah divalidasi dan siap untuk dilaporkan.</p>
                 </div>
                 
-                <a href="/bidan/laporan/export" class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#10B981] hover:bg-[#059669] text-white text-sm font-medium rounded-xl transition-all shadow-sm">
+                <%
+                    const exportParams = new URLSearchParams();
+                    if (typeof search !== 'undefined' && search) exportParams.set('search', search);
+                    if (typeof selectedJorong !== 'undefined' && selectedJorong) exportParams.set('jorong', selectedJorong);
+                    if (typeof selectedStatus !== 'undefined' && selectedStatus) exportParams.set('status', selectedStatus);
+                    const exportUrl = '/bidan/laporan/export?' + exportParams.toString();
+                %>
+                <a href="<%= exportUrl %>" class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#10B981] hover:bg-[#059669] text-white text-sm font-medium rounded-xl transition-all shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                     Export ke Excel
                 </a>
