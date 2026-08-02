@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring Hipertensi - Bidan</title>
+    <title>Monitoring PTM - Bidan</title>
     <link rel="stylesheet" href="/css/output.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -17,36 +17,49 @@
     <%- include('../partials/sidebar', { active: 'monitoring', role: 'bidan' }) %>
 
     <div class="main-content-wrapper">
-        <%- include('../partials/header', { pageTitle: 'Laporan Pengendalian Penyakit HT', role: 'bidan' }) %>
+        <%- include('../partials/header', { pageTitle: 'Monitoring Penyakit Tidak Menular (PTM)', role: 'bidan' }) %>
 
         <main class="p-4 md:p-6 lg:p-8 space-y-6 w-full">
-            <%
-                // Hitung statistik dari daftarPasien
-                const totalPasienMon = daftarPasien ? daftarPasien.length : 0;
-                const terkendaliMon = daftarPasien ? daftarPasien.filter(p => {
-                    const s = parseInt(p.sistole_terakhir);
-                    const d = parseInt(p.diastole_terakhir);
-                    return !isNaN(s) && !isNaN(d) && s < 140 && d < 90;
-                }).length : 0;
-                const persenTerkendaliMon = totalPasienMon > 0 
-                    ? ((terkendaliMon / totalPasienMon) * 100).toFixed(1) : '0.0';
-                const tahunMon = new Date().getFullYear();
-            %>
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between gap-4">
+            
+            <!-- Statistics Card -->
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between gap-6">
                 <div class="space-y-1">
                     <p class="text-xs text-gray-500 uppercase font-bold tracking-wider">Puskesmas</p>
                     <p class="text-sm font-semibold">Puskesmas IV Koto</p>
                     <p class="text-xs text-gray-500 uppercase font-bold tracking-wider pt-2">Tahun</p>
-                    <p class="text-sm font-semibold"><%= tahunMon %></p>
+                    <p class="text-sm font-semibold"><%= new Date().getFullYear() %></p>
                 </div>
                 <div class="space-y-1 md:text-right">
-                    <p class="text-xs text-gray-500 uppercase font-bold tracking-wider">Jumlah Terkendali</p>
-                    <p class="text-lg font-bold text-green-600"><%= terkendaliMon %> Pasien</p>
-                    <p class="text-xs text-gray-500 uppercase font-bold tracking-wider pt-2">Persentase Terkendali</p>
-                    <p class="text-lg font-bold text-blue-600"><%= persenTerkendaliMon %>%</p>
+                    <p class="text-xs text-gray-500 uppercase font-bold tracking-wider" id="stat-kategori-label">Jumlah Terkendali</p>
+                    <p class="text-lg font-bold text-green-600" id="stat-kategori-value">Memuat...</p>
+                    <p class="text-xs text-gray-500 uppercase font-bold tracking-wider pt-2" id="stat-persen-label">Persentase Terkendali</p>
+                    <p class="text-lg font-bold text-blue-600" id="stat-persen-value">Memuat...</p>
                 </div>
             </div>
 
+            <!-- Tab switcher PTM -->
+            <div class="flex flex-wrap gap-2 border-b border-gray-200 pb-3" id="ptm-tab-bar">
+                <button type="button" onclick="pilihTabPTM('hipertensi')" class="ptm-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-blue-600 text-white border-blue-600">
+                    <span class="w-2 h-2 rounded-full bg-red-400"></span> Hipertensi
+                </button>
+                <button type="button" onclick="pilihTabPTM('dm')" class="ptm-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Diabetes Melitus
+                </button>
+                <button type="button" onclick="pilihTabPTM('obesitas')" class="ptm-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">
+                    <span class="w-2 h-2 rounded-full bg-amber-400"></span> Obesitas
+                </button>
+                <button type="button" onclick="pilihTabPTM('ppok')" class="ptm-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">
+                    <span class="w-2 h-2 rounded-full bg-purple-400"></span> PPOK
+                </button>
+                <button type="button" onclick="pilihTabPTM('gangguan_indra')" class="ptm-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">
+                    <span class="w-2 h-2 rounded-full bg-pink-400"></span> Gangguan Indra
+                </button>
+                <button type="button" onclick="pilihTabPTM('kesehatan_jiwa')" class="ptm-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50">
+                    <span class="w-2 h-2 rounded-full bg-teal-400"></span> Kesehatan Jiwa
+                </button>
+            </div>
+
+            <!-- Monitoring Card -->
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <h3 class="text-[#1F2937] font-poppins font-semibold">Riwayat Kontrol Individu</h3>
@@ -58,7 +71,7 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-white border-b border-gray-100 text-[11px] uppercase tracking-wider font-bold text-gray-500">
+                            <tr class="bg-white border-b border-gray-100 text-[11px] uppercase tracking-wider font-bold text-gray-500" id="tabelHeader">
                                 <th class="px-6 py-4">Nama / NIK</th>
                                 <th class="px-6 py-4">Jorong</th>
                                 <th class="px-6 py-4">Kunjungan Terakhir</th>
@@ -68,75 +81,13 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50" id="tabelPasien">
-                            <% if (daftarPasien && daftarPasien.length > 0) { %>
-                                <% daftarPasien.forEach(function(p) { %>
-                                <%
-                                    const sistole = parseInt(p.sistole_terakhir);
-                                    const diastole = parseInt(p.diastole_terakhir);
-                                    let statusLabel = 'Belum ada data';
-                                    let statusCls = 'bg-gray-100 text-gray-500';
-                                    if (!isNaN(sistole) && !isNaN(diastole)) {
-                                        if (sistole >= 180 || diastole >= 110) {
-                                            statusLabel = 'Krisis';
-                                            statusCls = 'bg-red-100 text-red-700';
-                                        } else if (sistole >= 160 || diastole >= 100) {
-                                            statusLabel = 'HT Tingkat 2';
-                                            statusCls = 'bg-red-100 text-red-700';
-                                        } else if (sistole >= 140 || diastole >= 90) {
-                                            statusLabel = 'HT Tingkat 1';
-                                            statusCls = 'bg-orange-100 text-orange-700';
-                                        } else if (sistole >= 120) {
-                                            statusLabel = 'Pra-Hipertensi';
-                                            statusCls = 'bg-yellow-100 text-yellow-700';
-                                        } else {
-                                            statusLabel = 'Terkendali';
-                                            statusCls = 'bg-green-100 text-green-700';
-                                        }
-                                    }
-                                %>
-                                <tr class="hover:bg-slate-50 transition-colors baris-pasien" data-nama="<%= p.nama_pasien.toLowerCase() %>">
-                                    <td class="px-6 py-4">
-                                        <p class="font-semibold text-sm text-[#1F2937]"><%= p.nama_pasien %></p>
-                                        <p class="text-xs text-gray-500 font-mono mt-0.5"><%= p.nik %></p>
-                                    </td>
-                                    <td class="px-6 py-4 text-xs text-gray-600"><%= p.nama_jorong %></td>
-                                    <td class="px-6 py-4 text-xs text-gray-600">
-                                        <% if (p.kunjungan_terakhir) { %>
-                                            <%= new Date(p.kunjungan_terakhir).toLocaleDateString('id-ID') %>
-                                        <% } else { %>
-                                            <span class="text-gray-400">Belum ada</span>
-                                        <% } %>
-                                    </td>
-                                    <td class="px-6 py-4 text-center">
-                                        <% if (!isNaN(sistole) && !isNaN(diastole)) { %>
-                                            <span class="font-bold text-sm <%= sistole >= 140 || diastole >= 90 ? 'text-red-600' : 'text-green-600' %>">
-                                                <%= sistole %>/<%= diastole %>
-                                            </span>
-                                            <p class="text-xs text-gray-400">mmHg</p>
-                                        <% } else { %>
-                                            <span class="text-gray-400 text-xs">—</span>
-                                        <% } %>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold <%= statusCls %>"><%= statusLabel %></span>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <button onclick="bukaGrafikModal('<%= p.id_pasien %>', '<%= p.nama_pasien %>')" 
-                                                class="flex items-center gap-1.5 px-3 py-1.5 bg-[#DBEAFE] text-[#2563EB] rounded-lg text-xs font-semibold hover:bg-[#BFDBFE] transition-colors">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                                            Lihat Grafik
-                                        </button>
-                                    </td>
-                                </tr>
-                                <% }); %>
-                            <% } else { %>
-                                <tr><td colspan="6" class="text-center py-12 text-gray-400">Belum ada data pasien</td></tr>
-                            <% } %>
+                            <tr><td colspan="6" class="text-center py-12 text-gray-400">Memuat data monitoring...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
+            <!-- Modal Grafik -->
             <div id="modal-grafik" class="hidden-el fixed inset-0 z-50 flex items-center justify-center p-4">
                 <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="tutupGrafikModal()"></div>
                 <div class="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-2xl z-10 relative">
@@ -144,17 +95,20 @@
                         <div>
                             <h3 class="text-[#1F2937] font-poppins font-semibold text-lg flex items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#2563EB]"><path d="M20.2 7.8l-7.7 7.7-4-4-5.7 5.7"/><path d="M15 7h6v6"/></svg>
-                                Histori Tensi: <span id="nama-pasien-modal" class="text-[#2563EB]">ASMIARTI</span>
+                                Histori Pengukuran: <span id="nama-pasien-modal" class="text-[#2563EB]">-</span>
                             </h3>
-                            <p class="text-[#6B7280] text-xs mt-1">Pemantauan 6 Kunjungan Terakhir</p>
+                            <p class="text-[#6B7280] text-xs mt-1" id="grafik-subtitle">Pemantauan Kunjungan Terakhir</p>
                         </div>
                         <button onclick="tutupGrafikModal()" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
                     </div>
 
-                    <div class="w-full h-[300px] mt-6 border-b border-gray-100 pb-4">
+                    <div class="w-full h-[300px] mt-6 border-b border-gray-100 pb-4 relative">
                         <canvas id="historiTensiChart"></canvas>
+                        <div id="indraHistoryContainer" class="hidden-el absolute inset-0 overflow-y-auto max-h-[300px] bg-slate-50 p-4 rounded-xl border border-gray-100">
+                            <!-- Timeline Gangguan Indra dimuat lewat JS -->
+                        </div>
                     </div>
 
                     <div id="box-ringkasan" class="mt-4 bg-[#EFF6FF] border border-[#BFDBFE] rounded-xl p-4 flex gap-3">
@@ -176,194 +130,497 @@
     </div>
 
     <script>
-        // ============================================================
-        // [REVISI] FUNGSI BARU: hitungNarasiDeskriptif()
-        // Menggantikan teksKesimpulan hardcoded yang berisi rekomendasi klinis.
-        // Fungsi ini HANYA melakukan perhitungan matematis dan menghasilkan
-        // kalimat deskriptif berbasis angka — sesuai arahan dosen bimbingan.
-        //
-        // Parameter:
-        //   - arrSistole  : array nilai sistolik (angka), dari lama ke baru
-        //   - arrDiastole : array nilai diastolik (angka), dari lama ke baru
-        //
-        // Return: string narasi deskriptif (tanpa rekomendasi klinis)
-        // ============================================================
-        function hitungNarasiDeskriptif(arrSistole, arrDiastole) {
-
-            // -- Validasi: jika data kosong
-            if (!arrSistole || arrSistole.length === 0) {
-                return 'Data pengukuran belum tersedia.';
-            }
-
-            const jmlData       = arrSistole.length;
-
-            // -- Nilai terbaru (index terakhir)
-            const sistolikTerbaru  = arrSistole[jmlData - 1];
-            const diastolikTerbaru = arrDiastole[jmlData - 1];
-
-            // -- Hitung rata-rata sistolik (pembulatan 1 desimal)
-            const totalSistole = arrSistole.reduce((sum, v) => sum + v, 0);
-            const rataSistole  = (totalSistole / jmlData).toFixed(1);
-
-            // -- Hitung rata-rata diastolik
-            const totalDiastole = arrDiastole.reduce((sum, v) => sum + v, 0);
-            const rataDiastole  = (totalDiastole / jmlData).toFixed(1);
-
-            // -- [BARU] Hitung nilai sistolik tertinggi (Max) dan terendah (Min) dari seluruh riwayat
-            const sistoleMaks = Math.max(...arrSistole); // [BARU] nilai maks dari keseluruhan array
-            const sistoleMin  = Math.min(...arrSistole); // [BARU] nilai min dari keseluruhan array
-
-            // -- [BARU] Deteksi fluktuasi: cek apakah ada kenaikan DAN penurunan dalam riwayat
-            // Fluktuatif = pernah naik dan pernah turun (bukan hanya satu arah saja)
-            let adaKenaikan  = false; // [BARU]
-            let adaPenurunan = false; // [BARU]
-            if (jmlData >= 3) { // [BARU] minimal 3 titik data agar pola naik-turun bisa terdeteksi
-                for (let i = 1; i < jmlData; i++) { // [BARU] bandingkan tiap elemen dengan elemen sebelumnya
-                    if (arrSistole[i] > arrSistole[i - 1]) adaKenaikan  = true; // [BARU]
-                    if (arrSistole[i] < arrSistole[i - 1]) adaPenurunan = true; // [BARU]
-                }
-            }
-            const adalahFluktuatif = adaKenaikan && adaPenurunan; // [BARU] true jika kedua arah terdeteksi
-
-            // -- [DIUBAH] Tren sistolik: bandingkan nilai terbaru vs sebelumnya
-            // Menggunakan bahasa formal yang mudah dipahami bidan maupun pasien
-            let narasiTren = '';
-            if (jmlData >= 2) {
-                const sistolikSebelumnya = arrSistole[jmlData - 2];
-                const selisih = sistolikTerbaru - sistolikSebelumnya;
-
-                if (selisih > 5) {
-                    // [DIUBAH] Bahasa mudah dipahami: menyebut angka konkret
-                    narasiTren = `Dibandingkan kontrol sebelumnya (${sistolikSebelumnya} mmHg), tekanan sistolik naik ${selisih} mmHg menjadi ${sistolikTerbaru} mmHg.`;
-                } else if (selisih < -5) {
-                    // [DIUBAH] Bahasa mudah dipahami: menyebut angka konkret
-                    narasiTren = `Dibandingkan kontrol sebelumnya (${sistolikSebelumnya} mmHg), tekanan sistolik turun ${Math.abs(selisih)} mmHg menjadi ${sistolikTerbaru} mmHg.`;
-                } else {
-                    // [DIUBAH] Bahasa mudah dipahami: tidak ada perubahan berarti
-                    narasiTren = `Tekanan sistolik tidak banyak berubah dari kontrol sebelumnya (${sistolikSebelumnya} mmHg → ${sistolikTerbaru} mmHg).`;
-                }
-            }
-
-            // -- Tentukan kategori berdasarkan standar Kemenkes 2024
-            // (Klasifikasi ini dipertahankan karena berbasis dokumen resmi)
-            // [DIUBAH] Label kategori dibuat lebih mudah dibaca
-            let kategori = '';
-            if (sistolikTerbaru >= 180)      kategori = 'Krisis Hipertensi (≥180 mmHg)';
-            else if (sistolikTerbaru >= 160) kategori = 'Hipertensi Tingkat 2 (160–179 mmHg)';
-            else if (sistolikTerbaru >= 140) kategori = 'Hipertensi Tingkat 1 (140–159 mmHg)';
-            else if (sistolikTerbaru >= 120) kategori = 'Pra-Hipertensi (120–139 mmHg)';
-            else                             kategori = 'Normal (di bawah 120 mmHg)';
-
-            // -- [DIUBAH] Susun narasi akhir dengan bahasa formal yang mudah dipahami
-            // Kalimat pembuka menyebutkan hasil terbaru + kategori secara langsung.
-            // Ringkasan riwayat disesuaikan: fluktuatif atau tidak.
-            const kalimatTerbaru = // [DIUBAH] kalimat pertama: hasil ukur terbaru
-                `Hasil pengukuran terakhir menunjukkan tekanan darah ${sistolikTerbaru}/${diastolikTerbaru} mmHg, ` +
-                `yang termasuk dalam kategori ${kategori}.`;
-
-            const narasiRingkasanRiwayat = adalahFluktuatif
-                ? // [DIUBAH] narasi fluktuatif: bahasa lebih natural
-                  `Selama ${jmlData} kali kontrol, tekanan darah pasien mengalami naik-turun. ` +
-                  `Nilai tertinggi yang pernah tercatat adalah ${sistoleMaks} mmHg dan nilai terendahnya ${sistoleMin} mmHg. ` +
-                  `Rata-rata tekanan sistolik secara keseluruhan adalah ${rataSistole} mmHg.`
-                : // [DIUBAH] narasi tidak fluktuatif: langsung ke angka rata-rata
-                  `Berdasarkan ${jmlData} kali kontrol, rata-rata tekanan sistolik pasien adalah ${rataSistole} mmHg ` +
-                  `dan rata-rata tekanan diastolik adalah ${rataDiastole} mmHg.`;
-
-            // Gabung semua kalimat menjadi satu narasi utuh
-            const narasi = `${kalimatTerbaru} ${narasiRingkasanRiwayat} ${narasiTren}`;
-
-            return narasi;
-        }
-
-        // ============================================================
-        // [REVISI] FUNGSI bukaGrafikModal() — DIMODIFIKASI
-        // Perubahan dari versi lama:
-        //   1. Blok if-else per nama pasien DIHAPUS (data hardcoded klinis)
-        //   2. teksKesimpulan yang berisi rekomendasi klinis DIHAPUS
-        //   3. Diganti dengan pemanggilan hitungNarasiDeskriptif()
-        //   4. Manipulasi warna kotak berdasarkan kondisi klinis DIHAPUS
-        //      — warna kotak kini tetap biru netral (informatif, bukan judgement)
-        // Struktur fungsi, nama variabel, dan render Chart TIDAK diubah.
-        // ============================================================
-        // Variabel global chart — hanya satu deklarasi
+        let currentPtmType = 'hipertensi';
+        let currentData = [];
         let chartInst = null;
 
-        // Cari pasien
-        document.getElementById('cariPasien').addEventListener('input', function() {
-            const q = this.value.toLowerCase();
-            document.querySelectorAll('.baris-pasien').forEach(row => {
-                row.style.display = row.dataset.nama.includes(q) ? '' : 'none';
+        document.addEventListener('DOMContentLoaded', function() {
+            // Muat data awal (Hipertensi)
+            pilihTabPTM('hipertensi');
+
+            // Setup input pencarian pasien
+            document.getElementById('cariPasien').addEventListener('input', function() {
+                const q = this.value.toLowerCase();
+                document.querySelectorAll('.baris-pasien').forEach(row => {
+                    row.style.display = row.dataset.nama.includes(q) ? '' : 'none';
+                });
             });
         });
 
+        // Handler saat Bidan mengubah tab penyakit
+        async function pilihTabPTM(ptmType) {
+            currentPtmType = ptmType;
+            
+            // 1. Update style tombol tab aktif
+            const buttons = document.querySelectorAll('.ptm-tab-btn');
+            buttons.forEach(btn => {
+                if (btn.getAttribute('onclick').includes(`'${ptmType}'`)) {
+                    btn.className = 'ptm-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-blue-600 text-white border-blue-600';
+                } else {
+                    btn.className = 'ptm-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all bg-white text-gray-600 border-gray-200 hover:bg-gray-50';
+                }
+            });
+
+            // 2. Tampilkan loading spinner di tabel
+            const tbody = document.getElementById('tabelPasien');
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-12 text-gray-400">Memuat data monitoring...</td></tr>`;
+
+            // 3. Update table header
+            updateTableHeader(ptmType);
+
+            try {
+                // 4. Ambil data dari API
+                const res = await fetch(`/bidan/monitoring/api/list/${ptmType}`);
+                const json = await res.json();
+                
+                if (json.success) {
+                    currentData = json.data;
+                    renderTableBody(ptmType, currentData);
+                    hitungStatistikRingkasan(ptmType, currentData);
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-12 text-red-500">Gagal memuat data: ${json.error}</td></tr>`;
+                }
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-12 text-red-500">Gagal menghubungi server.</td></tr>`;
+            }
+        }
+
+        function updateTableHeader(ptmType) {
+            const tr = document.getElementById('tabelHeader');
+            let cols = `
+                <th class="px-6 py-4">Nama / NIK</th>
+                <th class="px-6 py-4">Jorong</th>
+                <th class="px-6 py-4">Kunjungan Terakhir</th>
+            `;
+
+            if (ptmType === 'hipertensi') {
+                cols += `
+                    <th class="px-6 py-4 text-center">Tensi Terakhir</th>
+                    <th class="px-6 py-4">Status</th>
+                `;
+            } else if (ptmType === 'dm') {
+                cols += `
+                    <th class="px-6 py-4 text-center">Gula Darah Terakhir</th>
+                    <th class="px-6 py-4">Status</th>
+                `;
+            } else if (ptmType === 'obesitas') {
+                cols += `
+                    <th class="px-6 py-4 text-center">IMT Terakhir</th>
+                    <th class="px-6 py-4">Status</th>
+                `;
+            } else if (ptmType === 'ppok') {
+                cols += `
+                    <th class="px-6 py-4 text-center">Skor PUMA Terakhir</th>
+                    <th class="px-6 py-4">Kategori Risiko</th>
+                `;
+            } else if (ptmType === 'gangguan_indra') {
+                cols += `
+                    <th class="px-6 py-4 text-center">Mata</th>
+                    <th class="px-6 py-4 text-center">Telinga</th>
+                `;
+            } else if (ptmType === 'kesehatan_jiwa') {
+                cols += `
+                    <th class="px-6 py-4 text-center">Skor SRQ-20 Terakhir</th>
+                    <th class="px-6 py-4">Status Jiwa</th>
+                `;
+            }
+
+            cols += `<th class="px-6 py-4">Histori</th>`;
+            tr.innerHTML = cols;
+        }
+
+        function renderTableBody(ptmType, data) {
+            const tbody = document.getElementById('tabelPasien');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-12 text-gray-400">Tidak ada data pasien yang terverifikasi untuk jenis PTM ini.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            data.forEach(p => {
+                const kunjungan = p.kunjungan_terakhir ? new Date(p.kunjungan_terakhir).toLocaleDateString('id-ID') : '—';
+                
+                let valCol = '';
+                let statusCol = '';
+
+                if (ptmType === 'hipertensi') {
+                    const sis = parseInt(p.sistole_terakhir);
+                    const dia = parseInt(p.diastole_terakhir);
+                    if (!isNaN(sis) && !isNaN(dia)) {
+                        valCol = `<span class="font-bold text-sm ${sis >= 140 || dia >= 90 ? 'text-red-600' : 'text-green-600'}">${sis}/${dia} <span class="text-xs text-gray-400 font-normal">mmHg</span></span>`;
+                        let lbl = 'Terkendali';
+                        let cls = 'bg-green-100 text-green-700';
+                        if (sis >= 180 || dia >= 110) { lbl = 'Krisis'; cls = 'bg-red-100 text-red-700'; }
+                        else if (sis >= 160 || dia >= 100) { lbl = 'HT Tingkat 2'; cls = 'bg-red-100 text-red-700'; }
+                        else if (sis >= 140 || dia >= 90) { lbl = 'HT Tingkat 1'; cls = 'bg-orange-100 text-orange-700'; }
+                        else if (sis >= 120) { lbl = 'Pra-Hipertensi'; cls = 'bg-yellow-100 text-yellow-700'; }
+                        statusCol = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold ${cls}">${lbl}</span>`;
+                    } else {
+                        valCol = '—';
+                        statusCol = '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">Belum ada</span>';
+                    }
+                } else if (ptmType === 'dm') {
+                    const gd = parseInt(p.gula_darah_terakhir);
+                    if (!isNaN(gd)) {
+                        valCol = `<span class="font-bold text-sm ${gd >= 140 ? 'text-red-600' : 'text-green-600'}">${gd} <span class="text-xs text-gray-400 font-normal">mg/dL</span></span>`;
+                        let cls = 'bg-green-100 text-green-700';
+                        let lbl = p.kategori_hasil || 'Normal';
+                        if (lbl === 'Diabetes Melitus') cls = 'bg-red-100 text-red-700';
+                        else if (lbl === 'Prediabetes') cls = 'bg-yellow-100 text-yellow-700';
+                        statusCol = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold ${cls}">${lbl}</span>`;
+                    } else {
+                        valCol = '—';
+                        statusCol = '—';
+                    }
+                } else if (ptmType === 'obesitas') {
+                    const imt = parseFloat(p.imt_terakhir);
+                    if (!isNaN(imt)) {
+                        valCol = `<span class="font-bold text-sm ${imt >= 25 ? 'text-red-600' : 'text-green-600'}">${imt.toFixed(1)}</span>`;
+                        let cls = 'bg-green-100 text-green-700';
+                        let lbl = p.kategori_hasil || 'Normal';
+                        if (lbl.includes('Obesitas')) cls = 'bg-red-100 text-red-700';
+                        else if (lbl.includes('Overweight')) cls = 'bg-yellow-100 text-yellow-700';
+                        statusCol = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold ${cls}">${lbl}</span>`;
+                    } else {
+                        valCol = '—';
+                        statusCol = '—';
+                    }
+                } else if (ptmType === 'ppok') {
+                    const skor = parseInt(p.skor_terakhir);
+                    if (!isNaN(skor)) {
+                        valCol = `<span class="font-bold text-sm ${skor >= 4 ? 'text-red-600' : 'text-green-600'}">${skor} <span class="text-xs text-gray-400 font-normal">skor</span></span>`;
+                        let cls = 'bg-green-100 text-green-700';
+                        let lbl = p.kategori_hasil || 'Risiko Rendah';
+                        if (lbl === 'Tinggi') cls = 'bg-red-100 text-red-700';
+                        statusCol = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold ${cls}">${lbl === 'Tinggi' ? 'Risiko Tinggi' : 'Risiko Rendah'}</span>`;
+                    } else {
+                        valCol = '—';
+                        statusCol = '—';
+                    }
+                } else if (ptmType === 'gangguan_indra') {
+                    const mata = p.mata_terakhir || 'Normal';
+                    const tel = p.telinga_terakhir || 'Normal';
+                    valCol = `<span class="font-semibold text-xs px-2 py-0.5 rounded-md ${mata !== 'Normal' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${mata}</span>`;
+                    statusCol = `<span class="font-semibold text-xs px-2 py-0.5 rounded-md ${tel !== 'Normal' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${tel}</span>`;
+                } else if (ptmType === 'kesehatan_jiwa') {
+                    const skor = parseInt(p.skor_terakhir);
+                    if (!isNaN(skor)) {
+                        valCol = `<span class="font-bold text-sm ${skor >= 6 ? 'text-red-600' : 'text-green-600'}">${skor} <span class="text-xs text-gray-400 font-normal">skor</span></span>`;
+                        let cls = 'bg-green-100 text-green-700';
+                        let lbl = p.kategori_hasil || 'Normal';
+                        if (lbl !== 'Normal') cls = 'bg-red-100 text-red-700';
+                        statusCol = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold ${cls}">${lbl}</span>`;
+                    } else {
+                        valCol = '—';
+                        statusCol = '—';
+                    }
+                }
+
+                html += `
+                    <tr class="hover:bg-slate-50 transition-colors baris-pasien" data-nama="${p.nama_pasien.toLowerCase()}">
+                        <td class="px-6 py-4">
+                            <p class="font-semibold text-sm text-[#1F2937]">${p.nama_pasien}</p>
+                            <p class="text-xs text-gray-500 font-mono mt-0.5">${p.nik}</p>
+                        </td>
+                        <td class="px-6 py-4 text-xs text-gray-600">${p.nama_jorong}</td>
+                        <td class="px-6 py-4 text-xs text-gray-600">${kunjungan}</td>
+                        <td class="px-6 py-4 text-center">${valCol}</td>
+                        <td class="px-6 py-4 text-center">${statusCol}</td>
+                        <td class="px-6 py-4">
+                            <button onclick="bukaGrafikModal('${p.id_pasien}', '${p.nama_pasien}')" 
+                                    class="flex items-center gap-1.5 px-3 py-1.5 bg-[#DBEAFE] text-[#2563EB] rounded-lg text-xs font-semibold hover:bg-[#BFDBFE] transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                Lihat Histori
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // Statistik ringkasan atas
+        function hitungStatistikRingkasan(ptmType, data) {
+            const lblKategori = document.getElementById('stat-kategori-label');
+            const valKategori = document.getElementById('stat-kategori-value');
+            const lblPersen = document.getElementById('stat-persen-label');
+            const valPersen = document.getElementById('stat-persen-value');
+
+            const total = data.length;
+
+            if (ptmType === 'hipertensi') {
+                lblKategori.innerText = "Tekanan Darah Terkendali";
+                lblPersen.innerText = "Persentase Terkendali";
+                const terkendali = data.filter(p => {
+                    const s = parseInt(p.sistole_terakhir);
+                    const d = parseInt(p.diastole_terakhir);
+                    return !isNaN(s) && !isNaN(d) && s < 140 && d < 90;
+                }).length;
+                const persen = total > 0 ? ((terkendali / total) * 100).toFixed(1) : '0.0';
+                valKategori.innerText = `${terkendali} Pasien`;
+                valPersen.innerText = `${persen}%`;
+            } else if (ptmType === 'dm') {
+                lblKategori.innerText = "Gula Darah Normal";
+                lblPersen.innerText = "Persentase Normal";
+                const normal = data.filter(p => p.kategori_hasil === 'Normal' || (parseInt(p.gula_darah_terakhir) < 140)).length;
+                const persen = total > 0 ? ((normal / total) * 100).toFixed(1) : '0.0';
+                valKategori.innerText = `${normal} Pasien`;
+                valPersen.innerText = `${persen}%`;
+            } else if (ptmType === 'obesitas') {
+                lblKategori.innerText = "IMT Normal (18.5 - 25)";
+                lblPersen.innerText = "Persentase Normal";
+                const normal = data.filter(p => p.kategori_hasil === 'Normal').length;
+                const persen = total > 0 ? ((normal / total) * 100).toFixed(1) : '0.0';
+                valKategori.innerText = `${normal} Pasien`;
+                valPersen.innerText = `${persen}%`;
+            } else if (ptmType === 'ppok') {
+                lblKategori.innerText = "Risiko Rendah PPOK";
+                lblPersen.innerText = "Persentase Aman";
+                const aman = data.filter(p => p.kategori_hasil === 'Rendah' || !p.kategori_hasil).length;
+                const persen = total > 0 ? ((aman / total) * 100).toFixed(1) : '0.0';
+                valKategori.innerText = `${aman} Pasien`;
+                valPersen.innerText = `${persen}%`;
+            } else if (ptmType === 'gangguan_indra') {
+                lblKategori.innerText = "Kedua Indra Normal";
+                lblPersen.innerText = "Persentase Normal";
+                const normal = data.filter(p => (p.mata_terakhir === 'Normal' || !p.mata_terakhir) && (p.telinga_terakhir === 'Normal' || !p.telinga_terakhir)).length;
+                const persen = total > 0 ? ((normal / total) * 100).toFixed(1) : '0.0';
+                valKategori.innerText = `${normal} Pasien`;
+                valPersen.innerText = `${persen}%`;
+            } else if (ptmType === 'kesehatan_jiwa') {
+                lblKategori.innerText = "Kondisi Jiwa Normal";
+                lblPersen.innerText = "Persentase Normal";
+                const normal = data.filter(p => p.kategori_hasil === 'Normal' || !p.kategori_hasil).length;
+                const persen = total > 0 ? ((normal / total) * 100).toFixed(1) : '0.0';
+                valKategori.innerText = `${normal} Pasien`;
+                valPersen.innerText = `${persen}%`;
+            }
+        }
+
+        function hitungNarasiDeskriptif(data, ptmType) {
+            if (!data || data.length === 0) {
+                return 'Data pengukuran belum tersedia.';
+            }
+
+            const jmlData = data.length;
+            const terbaru = data[jmlData - 1];
+
+            if (ptmType === 'hipertensi') {
+                const arrSistole = data.map(r => r.sistole);
+                const arrDiastole = data.map(r => r.diastole);
+                const sistolikTerbaru  = terbaru.sistole;
+                const diastolikTerbaru = terbaru.diastole;
+                const totalSistole = arrSistole.reduce((sum, v) => sum + v, 0);
+                const rataSistole  = (totalSistole / jmlData).toFixed(1);
+                const totalDiastole = arrDiastole.reduce((sum, v) => sum + v, 0);
+                const rataDiastole  = (totalDiastole / jmlData).toFixed(1);
+
+                const sistoleMaks = Math.max(...arrSistole);
+                const sistoleMin  = Math.min(...arrSistole);
+
+                let kategori = '';
+                if (sistolikTerbaru >= 180)      kategori = 'Krisis Hipertensi (≥180 mmHg)';
+                else if (sistolikTerbaru >= 160) kategori = 'Hipertensi Tingkat 2 (160–179 mmHg)';
+                else if (sistolikTerbaru >= 140) kategori = 'Hipertensi Tingkat 1 (140–159 mmHg)';
+                else if (sistolikTerbaru >= 120) kategori = 'Pra-Hipertensi (120–139 mmHg)';
+                else                             kategori = 'Normal (di bawah 120 mmHg)';
+
+                return `Hasil pengukuran terakhir menunjukkan tekanan darah ${sistolikTerbaru}/${diastolikTerbaru} mmHg, yang termasuk dalam kategori ${kategori}. Dari ${jmlData} kali pemeriksaan, nilai sistolik tertinggi adalah ${sistoleMaks} mmHg dan terendah adalah ${sistoleMin} mmHg, dengan rata-rata ${rataSistole}/${rataDiastole} mmHg.`;
+            }
+
+            if (ptmType === 'dm') {
+                const arrGula = data.map(r => r.gula_darah);
+                const gulaTerbaru = terbaru.gula_darah;
+                const totalGula = arrGula.reduce((sum, v) => sum + v, 0);
+                const rataGula = (totalGula / jmlData).toFixed(1);
+                const gulaMaks = Math.max(...arrGula);
+                const gulaMin = Math.min(...arrGula);
+
+                let kategori = 'Normal';
+                if (gulaTerbaru >= 200) kategori = 'Diabetes Melitus (≥200 mg/dL)';
+                else if (gulaTerbaru >= 140) kategori = 'Prediabetes (140–199 mg/dL)';
+
+                return `Hasil pengukuran gula darah terbaru adalah ${gulaTerbaru} mg/dL, yang masuk kategori ${kategori}. Rata-rata gula darah dari ${jmlData} kali kontrol adalah ${rataGula} mg/dL, dengan nilai tertinggi ${gulaMaks} mg/dL dan terendah ${gulaMin} mg/dL.`;
+            }
+
+            if (ptmType === 'obesitas') {
+                const arrImt = data.map(r => parseFloat(r.imt) || 0);
+                const imtTerbaru = (parseFloat(terbaru.imt) || 0).toFixed(1);
+                const totalImt = arrImt.reduce((sum, v) => sum + v, 0);
+                const rataImt = (totalImt / jmlData).toFixed(1);
+                const imtMaks = Math.max(...arrImt).toFixed(1);
+                const imtMin = Math.min(...arrImt).toFixed(1);
+
+                let kategori = 'Normal (18.5 - 25)';
+                const fImt = parseFloat(imtTerbaru);
+                if (fImt >= 27) kategori = 'Obesitas (≥27)';
+                else if (fImt >= 25) kategori = 'Overweight (25–26.9)';
+                else if (fImt < 18.5) kategori = 'Underweight (<18.5)';
+
+                return `Hasil IMT terbaru adalah ${imtTerbaru}, masuk kategori ${kategori}. Rata-rata IMT dari ${jmlData} pemeriksaan adalah ${rataImt}, dengan nilai tertinggi ${imtMaks} dan terendah ${imtMin}.`;
+            }
+
+            if (ptmType === 'ppok') {
+                const arrSkor = data.map(r => r.skor_total);
+                const skorTerbaru = terbaru.skor_total;
+                const totalSkor = arrSkor.reduce((sum, v) => sum + v, 0);
+                const rataSkor = (totalSkor / jmlData).toFixed(1);
+
+                let kategori = 'Risiko Rendah (<4)';
+                if (skorTerbaru >= 4) kategori = 'Risiko Tinggi (≥4)';
+
+                return `Hasil skor PUMA terbaru adalah ${skorTerbaru}, masuk kategori PPOK ${kategori}. Rata-rata skor PUMA dari ${jmlData} kali pengawasan adalah ${rataSkor}.`;
+            }
+
+            if (ptmType === 'gangguan_indra') {
+                return `Riwayat pemeriksaan gangguan indra pasien mencakup ${jmlData} kali kontrol. Pemeriksaan terakhir mencatat kondisi Mata: ${terbaru.hasil_pemeriksaan_mata} dan Telinga: ${terbaru.hasil_pemeriksaan_telinga}.`;
+            }
+
+            if (ptmType === 'kesehatan_jiwa') {
+                const arrSkor = data.map(r => r.skor_total);
+                const skorTerbaru = terbaru.skor_total;
+                const totalSkor = arrSkor.reduce((sum, v) => sum + v, 0);
+                const rataSkor = (totalSkor / jmlData).toFixed(1);
+
+                let kategori = 'Normal (<6)';
+                if (skorTerbaru >= 6) kategori = 'Depresi / Gangguan Emosional (≥6)';
+
+                return `Skor SRQ-20 terbaru adalah ${skorTerbaru}, masuk kategori ${kategori}. Rata-rata skor SRQ-20 dari ${jmlData} kali pengawasan adalah ${rataSkor}.`;
+            }
+
+            return '';
+        }
+
         async function bukaGrafikModal(idPasien, namaPasien) {
-            // 1. Tampilkan modal DULU sebelum render chart
             document.getElementById('modal-grafik').classList.remove('hidden-el');
             document.getElementById('nama-pasien-modal').innerText = namaPasien;
             document.getElementById('kesimpulan-pasien').textContent = 'Memuat data...';
 
-            // 2. Hancurkan chart lama jika ada
+            const chartCanvas = document.getElementById('historiTensiChart');
+            const indraContainer = document.getElementById('indraHistoryContainer');
+            chartCanvas.classList.remove('hidden-el');
+            indraContainer.classList.add('hidden-el');
+
             if (chartInst) {
                 chartInst.destroy();
                 chartInst = null;
             }
 
             try {
-                const res = await fetch(`/bidan/monitoring/api/${idPasien}`);
+                const res = await fetch(`/bidan/monitoring/api/${idPasien}?ptm_type=${currentPtmType}`);
                 const json = await res.json();
 
                 if (!json.success || !json.data || json.data.length === 0) {
-                    document.getElementById('kesimpulan-pasien').textContent = 'Belum ada riwayat skrining terverifikasi untuk pasien ini.';
+                    document.getElementById('kesimpulan-pasien').textContent = 'Belum ada riwayat pemeriksaan terverifikasi untuk kategori PTM ini.';
                     return;
                 }
 
-                const dataSistole  = json.data.map(r => r.sistole);
-                const dataDiastole = json.data.map(r => r.diastole);
-                const labels       = json.data.map(r => {
+                const narasi = hitungNarasiDeskriptif(json.data, currentPtmType);
+                document.getElementById('kesimpulan-pasien').textContent = narasi;
+
+                const labels = json.data.map(r => {
                     const d = new Date(r.tanggal_skrining);
                     return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
                 });
 
-                const narasiDeskriptif = hitungNarasiDeskriptif(dataSistole, dataDiastole);
-                document.getElementById('kesimpulan-pasien').textContent = narasiDeskriptif;
+                if (currentPtmType === 'gangguan_indra') {
+                    chartCanvas.classList.add('hidden-el');
+                    indraContainer.classList.remove('hidden-el');
+                    
+                    let tblHtml = `
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="border-b border-gray-200 font-bold text-gray-500 uppercase">
+                                    <th class="py-2">Tanggal</th>
+                                    <th class="py-2">Pemeriksaan Mata</th>
+                                    <th class="py-2">Pemeriksaan Telinga</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                    `;
+                    json.data.forEach(item => {
+                        const t = new Date(item.tanggal_skrining).toLocaleDateString('id-ID');
+                        tblHtml += `
+                            <tr>
+                                <td class="py-2.5 font-medium text-gray-600">${t}</td>
+                                <td class="py-2.5"><span class="px-2 py-0.5 rounded font-semibold ${item.hasil_pemeriksaan_mata !== 'Normal' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${item.hasil_pemeriksaan_mata}</span></td>
+                                <td class="py-2.5"><span class="px-2 py-0.5 rounded font-semibold ${item.hasil_pemeriksaan_telinga !== 'Normal' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${item.hasil_pemeriksaan_telinga}</span></td>
+                            </tr>
+                        `;
+                    });
+                    tblHtml += `</tbody></table>`;
+                    indraContainer.innerHTML = tblHtml;
+                    return;
+                }
 
-                // 3. Beri jeda kecil agar modal sudah benar-benar visible sebelum Chart.js hitung dimensi canvas
                 setTimeout(() => {
                     Chart.defaults.font.family = "'Inter', sans-serif";
-                    const ctx = document.getElementById('historiTensiChart').getContext('2d');
+                    const ctx = chartCanvas.getContext('2d');
 
-                    if (chartInst) { chartInst.destroy(); chartInst = null; }
+                    let datasets = [];
+                    if (currentPtmType === 'hipertensi') {
+                        datasets = [
+                            {
+                                label: 'Sistole',
+                                data: json.data.map(r => r.sistole),
+                                borderColor: '#EF4444',
+                                backgroundColor: 'rgba(239,68,68,0.1)',
+                                fill: true, tension: 0.3, borderWidth: 2, pointRadius: 4
+                            },
+                            {
+                                label: 'Diastole',
+                                data: json.data.map(r => r.diastole),
+                                borderColor: '#3B82F6',
+                                backgroundColor: 'rgba(59,130,246,0.1)',
+                                fill: true, tension: 0.3, borderWidth: 2, pointRadius: 4
+                            }
+                        ];
+                    } else if (currentPtmType === 'dm') {
+                        datasets = [
+                            {
+                                label: 'Gula Darah (mg/dL)',
+                                data: json.data.map(r => r.gula_darah),
+                                borderColor: '#10B981',
+                                backgroundColor: 'rgba(16,185,129,0.1)',
+                                fill: true, tension: 0.3, borderWidth: 2, pointRadius: 4
+                            }
+                        ];
+                    } else if (currentPtmType === 'obesitas') {
+                        datasets = [
+                            {
+                                label: 'IMT',
+                                data: json.data.map(r => parseFloat(r.imt) || 0),
+                                borderColor: '#F59E0B',
+                                backgroundColor: 'rgba(245,158,11,0.1)',
+                                fill: true, tension: 0.3, borderWidth: 2, pointRadius: 4
+                            }
+                        ];
+                    } else if (currentPtmType === 'ppok') {
+                        datasets = [
+                            {
+                                label: 'Skor PUMA',
+                                data: json.data.map(r => r.skor_total),
+                                borderColor: '#8B5CF6',
+                                backgroundColor: 'rgba(139,92,246,0.1)',
+                                fill: true, tension: 0.3, borderWidth: 2, pointRadius: 4
+                            }
+                        ];
+                    } else if (currentPtmType === 'kesehatan_jiwa') {
+                        datasets = [
+                            {
+                                label: 'Skor SRQ-20',
+                                data: json.data.map(r => r.skor_total),
+                                borderColor: '#0D9488',
+                                backgroundColor: 'rgba(13,148,136,0.1)',
+                                fill: true, tension: 0.3, borderWidth: 2, pointRadius: 4
+                            }
+                        ];
+                    }
 
                     chartInst = new Chart(ctx, {
                         type: 'line',
-                        data: {
-                            labels,
-                            datasets: [
-                                {
-                                    label: 'Sistole',
-                                    data: dataSistole,
-                                    borderColor: '#EF4444',
-                                    backgroundColor: 'rgba(239,68,68,0.1)',
-                                    fill: true,
-                                    tension: 0.3,
-                                    borderWidth: 2,
-                                    pointRadius: 4,
-                                    pointBackgroundColor: '#EF4444'
-                                },
-                                {
-                                    label: 'Diastole',
-                                    data: dataDiastole,
-                                    borderColor: '#3B82F6',
-                                    backgroundColor: 'rgba(59,130,246,0.1)',
-                                    fill: true,
-                                    tension: 0.3,
-                                    borderWidth: 2,
-                                    pointRadius: 4,
-                                    pointBackgroundColor: '#3B82F6'
-                                }
-                            ]
-                        },
+                        data: { labels, datasets },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
@@ -371,7 +628,7 @@
                                 legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } }
                             },
                             scales: {
-                                y: { min: 60, max: 200, grid: { color: '#F3F4F6' } },
+                                y: { beginAtZero: false, grid: { color: '#F3F4F6' } },
                                 x: { grid: { display: false } }
                             }
                         }
@@ -379,7 +636,7 @@
                 }, 50);
 
             } catch (err) {
-                document.getElementById('kesimpulan-pasien').textContent = 'Gagal memuat data. Periksa koneksi.';
+                document.getElementById('kesimpulan-pasien').textContent = 'Gagal memuat data. Periksa koneksi Anda.';
                 console.error(err);
             }
         }

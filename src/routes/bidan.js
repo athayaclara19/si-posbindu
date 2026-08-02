@@ -20,6 +20,7 @@ router.get('/rekap', ...guard, rekapController.renderRekapBidan);
 
 // --- Monitoring ---
 router.get('/monitoring',                    ...guard, monitoringController.renderMonitoring);
+router.get('/monitoring/api/list/:ptm_type', ...guard, monitoringController.getApiMonitoringList);
 router.get('/monitoring/api/:id_pasien',     ...guard, monitoringController.getApiTensiPasien);
 router.get('/monitoring/:id_pasien',         ...guard, monitoringController.renderGrafikTensi);
 
