@@ -16,7 +16,6 @@ router.get('/', ...guard, ptmController.renderDashboardPTM);
 
 // --- Rekap ---
 router.get('/rekap', ...guard, rekapController.renderRekapPTM);
-router.get('/rekap/cetak/:periode_id', ...guard, rekapController.renderCetakRekapPeriode);
 router.get('/rekap/cetak-wilayah', ...guard, rekapController.renderCetakRekapWilayah);
 router.get('/rekap/cetak-detail-wilayah', ...guard, rekapController.renderCetakDetailWilayah);
 

@@ -163,7 +163,7 @@
     <!-- Toolbar (hilang saat print) -->
     <div class="print-toolbar">
         <div class="toolbar-left">
-            <a href="/ptm/rekap?tab=wilayah&jenis_ptm=<%= jenisPtmTerpilih %>&tahun=<%= tahunDipilih %>&level=<%= levelWilayah %>" class="btn-back">← Kembali</a>
+            <a href="/ptm/rekap?jenis_ptm=<%= jenisPtmTerpilih %>&level=<%= levelWilayah %>&mode=<%= mode %>&bulan=<%= bulan %>&tahun=<%= tahun %>&bulan_awal=<%= bulanAwal %>&tahun_awal=<%= tahunAwal %>&bulan_akhir=<%= bulanAkhir %>&tahun_akhir=<%= tahunAkhir %>" class="btn-back">← Kembali</a>
             <span>Pratinjau Cetak — Detail Pasien Wilayah</span>
         </div>
         <button class="btn-print" onclick="window.print()">
@@ -187,7 +187,7 @@
             <h3>Daftar Detail Pasien Skrining <%= namaPtmTerpilih %></h3>
             <p>
                 Wilayah: <strong><%= levelWilayah === 'nagari' ? 'Nagari ' + namaWilayah : 'Jorong ' + namaWilayah + ' (Nagari ' + namaNagari + ')' %></strong>
-                | Tahun: <strong><%= tahunDipilih %></strong>
+                | Periode: <strong><%= label %></strong>
             </p>
         </div>
 
@@ -336,14 +336,14 @@
             </tbody>
         </table>
         <% } else { %>
-        <p style="text-align:center; color:#666; margin: 20px 0;">Tidak ada data pasien yang terdaftar di wilayah ini untuk tahun <%= tahunDipilih %>.</p>
+        <p style="text-align:center; color:#666; margin: 20px 0;">Tidak ada data pasien yang terdaftar di wilayah ini untuk periode <%= label %>.</p>
         <% } %>
 
         <!-- Catatan Metodologi -->
         <div class="catatan">
             <strong>Keterangan:</strong><br>
-            • <em>Status Akhir (Kasus)</em>: Pasien memiliki hasil pemeriksaan terindikasi abnormal pada kunjungan terakhirnya di tahun <%= tahunDipilih %>.<br>
-            • <em>Status Akhir (Terkendali / Normal)</em>: Pasien memiliki hasil pemeriksaan normal pada kunjungan terakhirnya di tahun <%= tahunDipilih %>.<br>
+            • <em>Status Akhir (Kasus)</em>: Pasien memiliki hasil pemeriksaan terindikasi abnormal pada kunjungan terakhirnya di periode <%= label %>.<br>
+            • <em>Status Akhir (Terkendali / Normal)</em>: Pasien memiliki hasil pemeriksaan normal pada kunjungan terakhirnya di periode <%= label %>.<br>
             • Data hanya mencakup skrining yang telah diverifikasi oleh Bidan.
         </div>
 

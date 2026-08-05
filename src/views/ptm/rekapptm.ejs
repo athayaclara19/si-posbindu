@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rekap Periode - PJ PTM</title>
+    <title>Rekap - PJ PTM</title>
     <link rel="stylesheet" href="/css/output.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -17,342 +17,328 @@
     <%- include('../partials/sidebar', { active: 'rekap', role: 'ptm' }) %>
 
     <div class="main-content-wrapper">
-        <%- include('../partials/header', { pageTitle: 'Rekap Periode', role: 'ptm' }) %>
+        <%- include('../partials/header', { pageTitle: 'Rekap', role: 'ptm' }) %>
 
         <main class="p-4 md:p-6 lg:p-8 space-y-6 w-full">
             <div>
                 <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">
                     Rekapitulasi
                 </h2>
-                <p class="text-[#6B7280] text-sm mt-1">Ringkasan data skrining otomatis per periode dan wilayah. Untuk laporan resmi, gunakan menu Laporan.</p>
+                <p class="text-[#6B7280] text-sm mt-1">Ringkasan data skrining otomatis per wilayah, untuk periode waktu yang bisa kamu atur sendiri. Untuk laporan resmi, gunakan menu Laporan.</p>
             </div>
 
-            <!-- Tab Navigation -->
-            <div class="border-b border-gray-200">
-                <nav class="-mb-px flex gap-6">
-                    <a href="/ptm/rekap?tab=periode&jenis_ptm=<%= jenisPtmTerpilih %>&tahun=<%= tahunDipilih %>&level=<%= levelWilayah %>"
-                       class="pb-4 text-sm font-medium border-b-2 transition-all <%= activeTab === 'periode' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' %>">
-                        Rekap Periode
-                    </a>
-                    <a href="/ptm/rekap?tab=wilayah&jenis_ptm=<%= jenisPtmTerpilih %>&tahun=<%= tahunDipilih %>&level=<%= levelWilayah %>"
-                       class="pb-4 text-sm font-medium border-b-2 transition-all <%= activeTab === 'wilayah' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' %>">
-                        Rekap Wilayah
-                    </a>
-                </nav>
-            </div>
-
-            <% if (activeTab === 'periode') { %>
-                <%# Banner menuju halaman Laporan %>
-                <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div>
-                            <h3 class="text-[#1F2937] font-poppins font-semibold">Buat Laporan Resmi</h3>
-                            <p class="text-[#6B7280] text-sm mt-1">Pergi ke halaman Laporan untuk membuat dan mengirim laporan resmi ke Kepala Puskesmas</p>
-                        </div>
-                        <a href="/ptm/laporan"
-                           class="flex-shrink-0 flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm whitespace-nowrap">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
-                            Ke Halaman Laporan →
-                        </a>
+            <%# Banner menuju halaman Laporan %>
+            <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="text-[#1F2937] font-poppins font-semibold">Buat Laporan Resmi</h3>
+                        <p class="text-[#6B7280] text-sm mt-1">Pergi ke halaman Laporan untuk membuat dan mengirim laporan resmi ke Kepala Puskesmas</p>
                     </div>
+                    <a href="/ptm/laporan"
+                       class="flex-shrink-0 flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-6 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm whitespace-nowrap">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Ke Halaman Laporan →
+                    </a>
                 </div>
+            </div>
 
-                <%# Tabel Riwayat Rekap Periode %>
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div class="px-6 py-5 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
-                        <div>
-                            <h3 class="text-[#1F2937] font-poppins font-semibold">Riwayat Rekap Per Periode</h3>
-                            <p class="text-[#6B7280] text-xs mt-0.5">Data diambil otomatis dari skrining yang sudah diverifikasi</p>
+            <%# Kartu Ringkasan %>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                    <p class="text-xs text-[#6B7280] font-medium">Total Pasien</p>
+                    <p class="text-2xl font-poppins font-semibold text-[#1F2937] mt-1"><%= agg.total_pasien %></p>
+                    <p class="text-xs text-gray-400 mt-0.5"><%= label %></p>
+                </div>
+                <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                    <p class="text-xs text-[#6B7280] font-medium">Total Kunjungan</p>
+                    <p class="text-2xl font-poppins font-semibold text-[#1F2937] mt-1"><%= agg.total_kunjungan %></p>
+                    <p class="text-xs text-gray-400 mt-0.5"><%= label %></p>
+                </div>
+                <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                    <p class="text-xs text-[#6B7280] font-medium">Kasus <%= namaPtmTerpilih %></p>
+                    <p class="text-2xl font-poppins font-semibold text-[#EF4444] mt-1"><%= agg.total_hipertensi %></p>
+                    <p class="text-xs text-gray-400 mt-0.5"><%= label %></p>
+                </div>
+                <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                    <p class="text-xs text-[#6B7280] font-medium">
+                        <% if (jenisPtmTerpilih === 'hipertensi') { %>Tekanan Terkendali
+                        <% } else if (jenisPtmTerpilih === 'dm') { %>Gula Darah Terkendali
+                        <% } else { %>Kondisi Normal / Terkendali<% } %>
+                    </p>
+                    <p class="text-2xl font-poppins font-semibold text-[#10B981] mt-1"><%= agg.terkendali %></p>
+                    <p class="text-xs text-gray-400 mt-0.5"><%= label %></p>
+                </div>
+            </div>
+
+            <%# Panel Filter Gabungan %>
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <form id="filterRekapForm" method="GET" action="/ptm/rekap" class="space-y-4">
+                    <div class="flex flex-wrap items-end gap-4">
+
+                        <!-- Mode Periode -->
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs text-gray-500 font-medium">Tampilkan Data</label>
+                            <select name="mode" id="modeSelect"
+                                onchange="toggleModeFields()"
+                                class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 bg-white font-medium min-w-[160px]">
+                                <option value="bulan" <%= mode === 'bulan' ? 'selected' : '' %>>Per Bulan</option>
+                                <option value="tahun" <%= mode === 'tahun' ? 'selected' : '' %>>Per Tahun</option>
+                                <option value="rentang" <%= mode === 'rentang' ? 'selected' : '' %>>Rentang Bulan</option>
+                            </select>
                         </div>
-                        <!-- Filter jenis PTM untuk rekap periode -->
-                        <div class="flex items-center gap-2">
-                            <label class="text-xs text-gray-500 font-medium">Penyakit:</label>
-                            <select onchange="window.location.href='/ptm/rekap?tab=periode&tahun=<%= tahunDipilih %>&level=<%= levelWilayah %>&jenis_ptm='+this.value"
-                                class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 bg-white">
+
+                        <!-- Field: mode = bulan -->
+                        <div id="fieldBulan" class="flex items-end gap-3" style="display:<%= mode === 'bulan' ? 'flex' : 'none' %>">
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-xs text-gray-500 font-medium">Bulan</label>
+                                <select name="bulan" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 bg-white">
+                                    <% for (let m = 1; m <= 12; m++) { %>
+                                        <option value="<%= m %>" <%= bulan === m ? 'selected' : '' %>><%= NAMA_BULAN[m] %></option>
+                                    <% } %>
+                                </select>
+                            </div>
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-xs text-gray-500 font-medium">Tahun</label>
+                                <select name="tahun" class="tahun-field border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 bg-white">
+                                    <% tahunOptions.forEach(y => { %>
+                                        <option value="<%= y %>" <%= tahun === y ? 'selected' : '' %>><%= y %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Field: mode = tahun -->
+                        <div id="fieldTahun" class="flex items-end gap-3" style="display:<%= mode === 'tahun' ? 'flex' : 'none' %>">
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-xs text-gray-500 font-medium">Tahun</label>
+                                <select name="tahun" class="tahun-field border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 bg-white">
+                                    <% tahunOptions.forEach(y => { %>
+                                        <option value="<%= y %>" <%= tahun === y ? 'selected' : '' %>><%= y %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Field: mode = rentang -->
+                        <div id="fieldRentang" class="flex items-end gap-3 flex-wrap" style="display:<%= mode === 'rentang' ? 'flex' : 'none' %>">
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-xs text-gray-500 font-medium">Dari Bulan</label>
+                                <select name="bulan_awal" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 bg-white">
+                                    <% for (let m = 1; m <= 12; m++) { %>
+                                        <option value="<%= m %>" <%= bulanAwal === m ? 'selected' : '' %>><%= NAMA_BULAN[m] %></option>
+                                    <% } %>
+                                </select>
+                            </div>
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-xs text-gray-500 font-medium">Tahun</label>
+                                <select name="tahun_awal" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 bg-white">
+                                    <% tahunOptions.forEach(y => { %>
+                                        <option value="<%= y %>" <%= tahunAwal === y ? 'selected' : '' %>><%= y %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                            <span class="text-gray-400 text-sm pb-2">s/d</span>
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-xs text-gray-500 font-medium">Sampai Bulan</label>
+                                <select name="bulan_akhir" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 bg-white">
+                                    <% for (let m = 1; m <= 12; m++) { %>
+                                        <option value="<%= m %>" <%= bulanAkhir === m ? 'selected' : '' %>><%= NAMA_BULAN[m] %></option>
+                                    <% } %>
+                                </select>
+                            </div>
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-xs text-gray-500 font-medium">Tahun</label>
+                                <select name="tahun_akhir" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 bg-white">
+                                    <% tahunOptions.forEach(y => { %>
+                                        <option value="<%= y %>" <%= tahunAkhir === y ? 'selected' : '' %>><%= y %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Tingkat wilayah -->
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs text-gray-500 font-medium">Tingkat Wilayah</label>
+                            <select name="level" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 bg-white font-medium">
+                                <option value="nagari" <%= levelWilayah === 'nagari' ? 'selected' : '' %>>Nagari</option>
+                                <option value="jorong" <%= levelWilayah === 'jorong' ? 'selected' : '' %>>Jorong</option>
+                            </select>
+                        </div>
+
+                        <!-- Jenis PTM -->
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs text-gray-500 font-medium">Penyakit</label>
+                            <select name="jenis_ptm" class="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 bg-white font-medium">
                                 <% jenisPtmList.forEach(p => { %>
                                     <option value="<%= p.id_jenis_ptm %>" <%= jenisPtmTerpilih === p.id_jenis_ptm ? 'selected' : '' %>><%= p.nama_ptm %></option>
                                 <% }) %>
                             </select>
                         </div>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead>
-                                <tr class="bg-[#F8FAFC] border-b border-gray-100">
-                                    <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Periode</th>
-                                    <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Total Pasien</th>
-                                    <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Total Kunjungan</th>
-                                    <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Kasus <%= namaPtmTerpilih %></th>
-                                    <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">
-                                        <% if (jenisPtmTerpilih === 'hipertensi') { %>
-                                            Tekanan Terkendali
-                                        <% } else if (jenisPtmTerpilih === 'dm') { %>
-                                            Gula Darah Terkendali
-                                        <% } else { %>
-                                            Kondisi Normal / Terkendali
-                                        <% } %>
-                                    </th>
-                                    <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-50">
-                                <% if (rekapData.length > 0) { %>
-                                    <% const namaBulan = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]; %>
-                                    <% rekapData.forEach(row => { %>
-                                        <%
-                                            const totalPasien     = parseInt(row.total_pasien_diperiksa) || 0;
-                                            const totalKunjungan  = parseInt(row.total_kunjungan)        || 0;
-                                            const totalHipertensi = parseInt(row.total_hipertensi)       || 0;
-                                            const terkendali      = parseInt(row.terkendali)             || 0;
-                                            const pctTerkendali   = totalPasien > 0
-                                                ? Math.round((terkendali / totalPasien) * 100)
-                                                : 0;
-                                        %>
-                                        <tr class="hover:bg-gray-50 transition-colors">
-                                            <td class="px-6 py-4 text-sm text-[#1F2937] font-medium">
-                                                <%= namaBulan[row.periode_bulan] %> <%= row.periode_tahun %>
-                                            </td>
-                                            <td class="px-6 py-4 text-sm text-center text-[#1F2937]">
-                                                <% if (totalPasien === 0) { %>
-                                                    <span class="text-gray-400">-</span>
-                                                <% } else { %>
-                                                    <span class="font-semibold"><%= totalPasien %></span>
-                                                    <span class="text-gray-400 text-xs"> pasien</span>
-                                                <% } %>
-                                            </td>
-                                            <td class="px-6 py-4 text-sm text-center text-[#1F2937]">
-                                                <% if (totalKunjungan === 0) { %>
-                                                    <span class="text-gray-400">-</span>
-                                                <% } else { %>
-                                                    <span class="font-semibold"><%= totalKunjungan %></span>
-                                                    <span class="text-gray-400 text-xs"> kunjungan</span>
-                                                <% } %>
-                                            </td>
-                                            <td class="px-6 py-4 text-sm text-center">
-                                                <% if (totalPasien === 0) { %>
-                                                    <span class="text-gray-400">-</span>
-                                                <% } else { %>
-                                                    <span class="font-semibold text-[#EF4444]"><%= totalHipertensi %></span>
-                                                    <span class="text-gray-400 text-xs"> pasien</span>
-                                                <% } %>
-                                            </td>
-                                            <td class="px-6 py-4 text-sm text-center">
-                                                <% if (totalPasien === 0) { %>
-                                                    <span class="text-gray-400">-</span>
-                                                <% } else { %>
-                                                    <div class="flex flex-col items-center gap-0.5">
-                                                        <span class="font-semibold text-[#10B981]"><%= terkendali %></span>
-                                                        <span class="text-gray-400 text-xs">(<%= pctTerkendali %>%)</span>
-                                                    </div>
-                                                <% } %>
-                                            </td>
-                                            <td class="px-6 py-4">
-                                                <div class="flex items-center justify-center gap-3">
-                                                    <% if (totalPasien > 0) { %>
-                                                        <a href="/ptm/rekap/cetak/<%= row.periode_id %>?jenis_ptm=<%= jenisPtmTerpilih %>"
-                                                           target="_blank"
-                                                           title="Cetak / Simpan sebagai PDF"
-                                                           class="flex items-center gap-1.5 text-xs text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                                                            Cetak / PDF
-                                                        </a>
-                                                    <% } else { %>
-                                                        <span class="text-xs text-gray-300 cursor-not-allowed">Tidak ada data</span>
-                                                    <% } %>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    <% }) %>
-                                <% } else { %>
-                                    <tr>
-                                        <td colspan="6" class="px-6 py-10 text-center">
-                                            <div class="flex flex-col items-center gap-2 text-gray-400">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
-                                                <span class="text-sm">Belum ada data skrining yang terverifikasi.</span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <% } %>
-                            </tbody>
-                        </table>
-                    </div>
 
-                    <%# Keterangan kolom %>
-                    <% if (rekapData.length > 0) { %>
-                    <div class="px-6 py-3 border-t border-gray-50 bg-gray-50/50">
-                        <p class="text-xs text-gray-400">
-                            <span class="font-medium">Keterangan:</span>
-                            Kasus <%= namaPtmTerpilih %> = pasien dengan indikasi medis abnormal untuk <%= namaPtmTerpilih %> minimal 1x di periode ini.
-                            Terkendali = pasien yang pada kunjungan <em>terakhirnya</em> di periode ini memiliki kondisi terkendali/normal.
-                        </p>
+                        <!-- Tombol Terapkan -->
+                        <button type="submit"
+                            class="flex items-center gap-1.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-5 py-2 rounded-lg text-sm font-medium transition-all shadow-sm">
+                            Terapkan Filter
+                        </button>
+
+                        <!-- Tombol Cetak -->
+                        <a id="btnCetak" href="#" target="_blank"
+                           class="flex items-center gap-1.5 border border-gray-200 hover:bg-gray-50 text-[#1F2937] px-5 py-2 rounded-lg text-sm font-medium transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                            Cetak / PDF
+                        </a>
                     </div>
-                    <% } %>
+                </form>
+            </div>
+
+            <%# Tabel Rekap Per Wilayah %>
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-100">
+                    <h3 class="text-[#1F2937] font-poppins font-semibold">Rekap Per Wilayah (<%= levelWilayah === 'nagari' ? 'Per Nagari' : 'Per Jorong' %>)</h3>
+                    <p class="text-[#6B7280] text-xs mt-0.5">Periode: <%= label %> — data diambil otomatis dari skrining yang sudah diverifikasi</p>
                 </div>
 
-            <% } else { %>
-                <%# TAB WILAYAH %>
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div class="px-6 py-5 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
-                        <div>
-                            <h3 class="text-[#1F2937] font-poppins font-semibold">Tabel Rekap Wilayah (<%= levelWilayah === 'nagari' ? 'Per Nagari' : 'Per Jorong' %>)</h3>
-                            <p class="text-[#6B7280] text-xs mt-0.5">Data dihimpun berdasarkan wilayah pasien pada tahun <%= tahunDipilih %></p>
-                        </div>
-                        
-                        <!-- Panel Filter Dinamis -->
-                        <div class="flex items-center gap-4 flex-wrap">
-                            <!-- Dropdown Level -->
-                            <div class="flex items-center gap-2">
-                                <label class="text-xs text-gray-500 font-medium">Tingkat:</label>
-                                <select onchange="window.location.href='/ptm/rekap?tab=wilayah&tahun=<%= tahunDipilih %>&jenis_ptm=<%= jenisPtmTerpilih %>&level='+this.value"
-                                    class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 bg-white font-medium">
-                                    <option value="nagari" <%= levelWilayah === 'nagari' ? 'selected' : '' %>>Nagari</option>
-                                    <option value="jorong" <%= levelWilayah === 'jorong' ? 'selected' : '' %>>Jorong</option>
-                                </select>
-                            </div>
-                            
-                            <!-- Dropdown Tahun -->
-                            <div class="flex items-center gap-2">
-                                <label class="text-xs text-gray-500 font-medium">Tahun:</label>
-                                <select onchange="window.location.href='/ptm/rekap?tab=wilayah&level=<%= levelWilayah %>&jenis_ptm=<%= jenisPtmTerpilih %>&tahun='+this.value"
-                                    class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 bg-white font-medium">
-                                    <option value="<%= tahunIni %>" <%= tahunDipilih === tahunIni ? 'selected' : '' %>><%= tahunIni %></option>
-                                    <option value="2025" <%= tahunDipilih === 2025 ? 'selected' : '' %>>2025</option>
-                                    <option value="2026" <%= tahunDipilih === 2026 ? 'selected' : '' %>>2026</option>
-                                    <option value="2027" <%= tahunDipilih === 2027 ? 'selected' : '' %>>2027</option>
-                                </select>
-                            </div>
-
-                            <!-- Dropdown Penyakit -->
-                            <div class="flex items-center gap-2">
-                                <label class="text-xs text-gray-500 font-medium">Penyakit:</label>
-                                <select onchange="window.location.href='/ptm/rekap?tab=wilayah&level=<%= levelWilayah %>&tahun=<%= tahunDipilih %>&jenis_ptm='+this.value"
-                                    class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 bg-white font-medium">
-                                    <% jenisPtmList.forEach(p => { %>
-                                        <option value="<%= p.id_jenis_ptm %>" <%= jenisPtmTerpilih === p.id_jenis_ptm ? 'selected' : '' %>><%= p.nama_ptm %></option>
-                                    <% }) %>
-                                </select>
-                            </div>
-
-                            <!-- Tombol Cetak Rekap Wilayah -->
-                            <a href="/ptm/rekap/cetak-wilayah?level=<%= levelWilayah %>&tahun=<%= tahunDipilih %>&jenis_ptm=<%= jenisPtmTerpilih %>"
-                               target="_blank"
-                               class="flex items-center gap-1.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                                Cetak / PDF
-                            </a>
-                        </div>
-                    </div>
-                    
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead>
-                                <tr class="bg-[#F8FAFC] border-b border-gray-100">
-                                    <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">
-                                        <%= levelWilayah === 'nagari' ? 'Nagari' : 'Jorong' %>
-                                    </th>
-                                    <% if (levelWilayah === 'jorong') { %>
-                                    <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Nagari</th>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-[#F8FAFC] border-b border-gray-100">
+                                <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">
+                                    <%= levelWilayah === 'nagari' ? 'Nagari' : 'Jorong' %>
+                                </th>
+                                <% if (levelWilayah === 'jorong') { %>
+                                <th class="text-left px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Nagari</th>
+                                <% } %>
+                                <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Total Pasien</th>
+                                <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Total Kunjungan</th>
+                                <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Kasus <%= namaPtmTerpilih %></th>
+                                <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">
+                                    <% if (jenisPtmTerpilih === 'hipertensi') { %>
+                                        Tekanan Terkendali
+                                    <% } else if (jenisPtmTerpilih === 'dm') { %>
+                                        Gula Darah Terkendali
+                                    <% } else { %>
+                                        Kondisi Normal / Terkendali
                                     <% } %>
-                                    <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Total Pasien</th>
-                                    <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Total Kunjungan</th>
-                                    <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Kasus <%= namaPtmTerpilih %></th>
-                                    <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">
-                                        <% if (jenisPtmTerpilih === 'hipertensi') { %>
-                                            Tekanan Terkendali
-                                        <% } else if (jenisPtmTerpilih === 'dm') { %>
-                                            Gula Darah Terkendali
-                                        <% } else { %>
-                                            Kondisi Normal / Terkendali
+                                </th>
+                                <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            <% if (rekapWilayah.length > 0) { %>
+                                <% rekapWilayah.forEach(row => { %>
+                                    <%
+                                        const totalPasien = parseInt(row.total_pasien) || 0;
+                                        const totalKunjungan = parseInt(row.total_kunjungan) || 0;
+                                        const kasusPositif = parseInt(row.total_hipertensi) || 0;
+                                        const terkendali = parseInt(row.terkendali) || 0;
+                                        const pctTerkendali = totalPasien > 0 ? Math.round((terkendali / totalPasien) * 100) : 0;
+                                    %>
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-6 py-4 text-sm text-[#1F2937] font-medium">
+                                            <%= row.nama_wilayah %>
+                                        </td>
+                                        <% if (levelWilayah === 'jorong') { %>
+                                        <td class="px-6 py-4 text-sm text-gray-500">
+                                            <%= row.nama_nagari %>
+                                        </td>
                                         <% } %>
-                                    </th>
-                                    <th class="text-center px-6 py-4 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-50">
-                                <% if (rekapData.length > 0) { %>
-                                    <% rekapData.forEach(row => { %>
-                                        <% 
-                                            const totalPasien = parseInt(row.total_pasien_diperiksa) || 0;
-                                            const totalKunjungan = parseInt(row.total_kunjungan) || 0;
-                                            const kasusPositif = parseInt(row.total_hipertensi) || 0;
-                                            const terkendali = parseInt(row.terkendali) || 0;
-                                            const pctTerkendali = totalPasien > 0 ? Math.round((terkendali / totalPasien) * 100) : 0;
-                                        %>
-                                        <tr class="hover:bg-gray-50 transition-colors">
-                                            <td class="px-6 py-4 text-sm text-[#1F2937] font-medium">
-                                                <%= row.nama_wilayah %>
-                                            </td>
-                                            <% if (levelWilayah === 'jorong') { %>
-                                            <td class="px-6 py-4 text-sm text-gray-500">
-                                                <%= row.nama_nagari %>
-                                            </td>
-                                            <% } %>
-                                            <td class="px-6 py-4 text-sm text-center text-[#1F2937]">
-                                                <span class="font-semibold"><%= totalPasien %></span>
-                                                <span class="text-gray-400 text-xs"> pasien</span>
-                                            </td>
-                                            <td class="px-6 py-4 text-sm text-center text-[#1F2937]">
-                                                <span class="font-semibold"><%= totalKunjungan %></span>
-                                                <span class="text-gray-400 text-xs"> kunjungan</span>
-                                            </td>
-                                            <td class="px-6 py-4 text-sm text-center">
-                                                <span class="font-semibold text-[#EF4444]"><%= kasusPositif %></span>
-                                                <span class="text-gray-400 text-xs"> pasien</span>
-                                            </td>
-                                            <td class="px-6 py-4 text-sm text-center">
-                                                <div class="flex flex-col items-center gap-0.5">
-                                                    <span class="font-semibold text-[#10B981]"><%= terkendali %></span>
-                                                    <span class="text-gray-400 text-xs">(<%= pctTerkendali %>%)</span>
-                                                </div>
-                                            </td>
-                                            <td class="px-6 py-4">
-                                                <div class="flex items-center justify-center gap-3">
-                                                    <% if (totalPasien > 0) { %>
-                                                        <a href="/ptm/rekap/cetak-detail-wilayah?level=<%= levelWilayah %>&id=<%= levelWilayah === 'nagari' ? row.id_nagari : row.id_jorong %>&tahun=<%= tahunDipilih %>&jenis_ptm=<%= jenisPtmTerpilih %>"
-                                                           target="_blank"
-                                                           title="Cetak Detail Pasien Wilayah ini"
-                                                           class="flex items-center gap-1.5 text-xs text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                                                            Cetak Detail
-                                                        </a>
-                                                    <% } else { %>
-                                                        <span class="text-xs text-gray-300 cursor-not-allowed">Tidak ada data</span>
-                                                    <% } %>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    <% }) %>
-                                <% } else { %>
-                                    <tr>
-                                        <td colspan="<%= levelWilayah === 'jorong' ? 7 : 6 %>" class="px-6 py-10 text-center">
-                                            <div class="flex flex-col items-center gap-2 text-gray-400">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
-                                                <span class="text-sm">Tidak ada data rekapitulasi wilayah untuk pilihan ini.</span>
+                                        <td class="px-6 py-4 text-sm text-center text-[#1F2937]">
+                                            <span class="font-semibold"><%= totalPasien %></span>
+                                            <span class="text-gray-400 text-xs"> pasien</span>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-center text-[#1F2937]">
+                                            <span class="font-semibold"><%= totalKunjungan %></span>
+                                            <span class="text-gray-400 text-xs"> kunjungan</span>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-center">
+                                            <span class="font-semibold text-[#EF4444]"><%= kasusPositif %></span>
+                                            <span class="text-gray-400 text-xs"> pasien</span>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-center">
+                                            <div class="flex flex-col items-center gap-0.5">
+                                                <span class="font-semibold text-[#10B981]"><%= terkendali %></span>
+                                                <span class="text-gray-400 text-xs">(<%= pctTerkendali %>%)</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center justify-center gap-3">
+                                                <% if (totalPasien > 0) { %>
+                                                    <a href="/ptm/rekap/cetak-detail-wilayah?level=<%= levelWilayah %>&id=<%= levelWilayah === 'nagari' ? row.id_nagari : row.id_jorong %>&jenis_ptm=<%= jenisPtmTerpilih %>&mode=<%= mode %>&bulan=<%= bulan %>&tahun=<%= tahun %>&bulan_awal=<%= bulanAwal %>&tahun_awal=<%= tahunAwal %>&bulan_akhir=<%= bulanAkhir %>&tahun_akhir=<%= tahunAkhir %>"
+                                                       target="_blank"
+                                                       title="Cetak Detail Pasien Wilayah ini"
+                                                       class="flex items-center gap-1.5 text-xs text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                                        Cetak Detail
+                                                    </a>
+                                                <% } else { %>
+                                                    <span class="text-xs text-gray-300 cursor-not-allowed">Tidak ada data</span>
+                                                <% } %>
                                             </div>
                                         </td>
                                     </tr>
-                                <% } %>
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <%# Keterangan kolom %>
-                    <% if (rekapData.length > 0) { %>
-                    <div class="px-6 py-3 border-t border-gray-50 bg-gray-50/50">
-                        <p class="text-xs text-gray-400">
-                            <span class="font-medium">Keterangan:</span>
-                            Kasus <%= namaPtmTerpilih %> = pasien dengan indikasi medis abnormal untuk <%= namaPtmTerpilih %> pada tahun <%= tahunDipilih %>.
-                            Terkendali = pasien dengan kondisi normal/terkendali pada tahun <%= tahunDipilih %>.
-                        </p>
-                    </div>
-                    <% } %>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="<%= levelWilayah === 'jorong' ? 7 : 6 %>" class="px-6 py-10 text-center">
+                                        <div class="flex flex-col items-center gap-2 text-gray-400">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                            <span class="text-sm">Tidak ada data rekapitulasi wilayah untuk pilihan ini.</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
                 </div>
-            <% } %>
+
+                <%# Keterangan kolom %>
+                <% if (rekapWilayah.length > 0) { %>
+                <div class="px-6 py-3 border-t border-gray-50 bg-gray-50/50">
+                    <p class="text-xs text-gray-400">
+                        <span class="font-medium">Keterangan:</span>
+                        Kasus <%= namaPtmTerpilih %> = pasien dengan indikasi medis abnormal untuk <%= namaPtmTerpilih %> pada periode <%= label %>.
+                        Terkendali = pasien dengan kondisi normal/terkendali pada kunjungan terakhirnya di periode ini.
+                    </p>
+                </div>
+                <% } %>
             </div>
         </main>
     </div>
 
 <%- include('../partials/profil') %>
+
+<script>
+    function toggleModeFields() {
+        const mode = document.getElementById('modeSelect').value;
+        const fieldBulan = document.getElementById('fieldBulan');
+        const fieldTahun = document.getElementById('fieldTahun');
+        const fieldRentang = document.getElementById('fieldRentang');
+
+        fieldBulan.style.display = (mode === 'bulan') ? 'flex' : 'none';
+        fieldTahun.style.display = (mode === 'tahun') ? 'flex' : 'none';
+        fieldRentang.style.display = (mode === 'rentang') ? 'flex' : 'none';
+
+        // Nonaktifkan input yang tersembunyi agar tidak ikut ter-submit
+        // (mencegah field bernama sama, mis. "tahun", terkirim dobel).
+        fieldBulan.querySelectorAll('select, input').forEach(el => el.disabled = (mode !== 'bulan'));
+        fieldTahun.querySelectorAll('select, input').forEach(el => el.disabled = (mode !== 'tahun'));
+        fieldRentang.querySelectorAll('select, input').forEach(el => el.disabled = (mode !== 'rentang'));
+    }
+
+    // Set kondisi awal saat halaman dimuat
+    toggleModeFields();
+
+    function buildCetakUrl() {
+        const form = document.getElementById('filterRekapForm');
+        const params = new URLSearchParams(new FormData(form));
+        return '/ptm/rekap/cetak-wilayah?' + params.toString();
+    }
+
+    document.getElementById('btnCetak').addEventListener('click', function (e) {
+        e.preventDefault();
+        window.open(buildCetakUrl(), '_blank');
+    });
+</script>
 
 </div>
 </body>

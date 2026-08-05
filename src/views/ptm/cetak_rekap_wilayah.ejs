@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rekap Wilayah <%= levelWilayah === 'nagari' ? 'Per Nagari' : 'Per Jorong' %> <%= namaPtmTerpilih %> <%= tahunDipilih %> - SI-Posbindu</title>
+    <title>Rekap Wilayah <%= levelWilayah === 'nagari' ? 'Per Nagari' : 'Per Jorong' %> <%= namaPtmTerpilih %> <%= label %> - SI-Posbindu</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -163,8 +163,8 @@
     <!-- Toolbar (hilang saat print) -->
     <div class="print-toolbar">
         <div class="toolbar-left">
-            <a href="/ptm/rekap?tab=wilayah&jenis_ptm=<%= jenisPtmTerpilih %>&tahun=<%= tahunDipilih %>&level=<%= levelWilayah %>" class="btn-back">← Kembali</a>
-            <span>Pratinjau Cetak — Rekap Wilayah (<%= levelWilayah === 'nagari' ? 'Per Nagari' : 'Per Jorong' %>) Tahun <%= tahunDipilih %></span>
+            <a href="/ptm/rekap?jenis_ptm=<%= jenisPtmTerpilih %>&level=<%= levelWilayah %>&mode=<%= mode %>&bulan=<%= bulan %>&tahun=<%= tahun %>&bulan_awal=<%= bulanAwal %>&tahun_awal=<%= tahunAwal %>&bulan_akhir=<%= bulanAkhir %>&tahun_akhir=<%= tahunAkhir %>" class="btn-back">← Kembali</a>
+            <span>Pratinjau Cetak — Rekap Wilayah (<%= levelWilayah === 'nagari' ? 'Per Nagari' : 'Per Jorong' %>) <%= label %></span>
         </div>
         <button class="btn-print" onclick="window.print()">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -185,7 +185,7 @@
         <!-- Judul -->
         <div class="judul-dokumen">
             <h3>Rekapitulasi Wilayah <%= levelWilayah === 'nagari' ? 'Per Nagari' : 'Per Jorong' %> - <%= namaPtmTerpilih %></h3>
-            <p>Tahun: <strong><%= tahunDipilih %></strong></p>
+            <p>Periode: <strong><%= label %></strong></p>
         </div>
 
         <!-- Kartu Ringkasan -->
@@ -294,8 +294,8 @@
         <!-- Catatan Metodologi -->
         <div class="catatan">
             <strong>Keterangan:</strong><br>
-            • <em>Kasus <%= namaPtmTerpilih %></em>: Pasien yang terindikasi medis abnormal untuk penyakit <%= namaPtmTerpilih %> pada tahun <%= tahunDipilih %>.<br>
-            • <em>Terkendali / Normal</em>: Pasien dengan kondisi normal/terkendali pada tahun <%= tahunDipilih %>.<br>
+            • <em>Kasus <%= namaPtmTerpilih %></em>: Pasien yang terindikasi medis abnormal untuk penyakit <%= namaPtmTerpilih %> pada periode <%= label %>.<br>
+            • <em>Terkendali / Normal</em>: Pasien dengan kondisi normal/terkendali pada periode <%= label %>.<br>
             • Data hanya mencakup skrining yang telah diverifikasi oleh Bidan.
         </div>
 
