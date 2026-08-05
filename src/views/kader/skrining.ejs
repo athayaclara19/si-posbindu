@@ -23,7 +23,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Input Skrining Multi-PTM - Kader</title>
+    <title>Input Skrining PTM - Kader</title>
     <link rel="stylesheet" href="/css/output.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.min.css" rel="stylesheet">
@@ -88,13 +88,13 @@
     <%- include('../partials/sidebar', { active: 'skrining' }) %>
 
     <div class="main-content-wrapper">
-        <%- include('../partials/header', { pageTitle: 'Input Skrining Multi-PTM' }) %>
+        <%- include('../partials/header', { pageTitle: 'Input Skrining PTM' }) %>
 
         <main class="p-8 w-full">
             <div class="w-full space-y-6">
 
                 <div id="form-header">
-                    <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Form Input Skrining — Multi PTM</h2>
+                    <h2 class="text-[#1F2937] font-poppins font-semibold text-xl">Form Input Skrining PTM</h2>
                     <p class="text-[#6B7280] text-sm">Satu kunjungan pasien bisa langsung mencatat beberapa jenis PTM sekaligus</p>
                 </div>
 
@@ -679,9 +679,15 @@
             <p class="text-xs text-gray-400">Skor total PUMA dihitung dari usia pasien + faktor merokok + gejala di atas. Skor ≥6 → risiko tinggi, disarankan rujuk pemeriksaan spirometri.</p>
         `);
 
+        // Set kondisi awal Step 3 "Merokok" mengikuti isian PPOK saat form pertama kali dimuat
+        // (default kosong -> otomatis "Tidak" & terkunci).
+        syncMerokokFromPPOK();
+
         // Kalau di PPOK ada data rokok/hari atau lama merokok terisi (>0),
         // otomatis set "Merokok" di Step 3 = Ya dan kunci (nggak bisa diklik manual).
-        // Kalau data rokok di PPOK dikosongkan lagi, kembalikan jadi bisa dipilih manual.
+        // Kalau PPOK dikosongkan (rokok/hari = 0 dan lama merokok = 0),
+        // otomatis set "Merokok" = Tidak dan tetap dikunci, karena datanya
+        // sudah bisa disimpulkan langsung dari isian PPOK.
         function syncMerokokFromPPOK() {
             const rokokHariEl = document.getElementById('pk-rokok-hari');
             const lamaRokokEl = document.getElementById('pk-lama-rokok');
@@ -693,16 +699,21 @@
             const note = document.getElementById('merokok-auto-note');
             if (!merokokSelect) return;
 
+            merokokSelect.classList.add('pointer-events-none', 'opacity-60');
+            merokokSelect.setAttribute('data-auto-locked', 'true');
+
             if (rokokHari > 0 || lamaRokok > 0) {
                 merokokSelect.value = 'true';
-                merokokSelect.classList.add('pointer-events-none', 'opacity-60');
-                merokokSelect.setAttribute('data-auto-locked', 'true');
-                if (note) note.classList.remove('hidden');
-            } else if (merokokSelect.getAttribute('data-auto-locked') === 'true') {
-                merokokSelect.classList.remove('pointer-events-none', 'opacity-60');
-                merokokSelect.removeAttribute('data-auto-locked');
-                merokokSelect.value = '';
-                if (note) note.classList.add('hidden');
+                if (note) {
+                    note.textContent = 'Otomatis "Ya" karena sudah ada data rokok di bagian PPOK';
+                    note.classList.remove('hidden');
+                }
+            } else {
+                merokokSelect.value = 'false';
+                if (note) {
+                    note.textContent = 'Otomatis "Tidak" karena bagian rokok di PPOK dikosongkan';
+                    note.classList.remove('hidden');
+                }
             }
 
             hitungSkorPUMA();
@@ -826,7 +837,7 @@
             srqHTML += '<div class="srq-row ' + highlight + '">' +
                 '<span class="text-xs text-gray-700 pr-3">' + n + '. ' + q + (n===17 ? ' ⚠️' : '') + '</span>' +
                 '<div class="toggle-yatidak flex gap-2 flex-shrink-0">' +
-                '<span><input type="radio" name="kesehatan_jiwa[j' + n + ']" value="false" id="srq-' + n + '-t" class="hidden"><label for="srq-' + n + '-t">Tidak</label></span>' +
+                '<span><input type="radio" name="kesehatan_jiwa[j' + n + ']" value="false" id="srq-' + n + '-t" class="hidden" checked><label for="srq-' + n + '-t">Tidak</label></span>' +
                 '<span><input type="radio" name="kesehatan_jiwa[j' + n + ']" value="true" id="srq-' + n + '-y" class="hidden"><label for="srq-' + n + '-y">Ya</label></span>' +
                 '</div></div>';
         });

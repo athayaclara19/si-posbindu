@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Riwayat Skrining Lengkap - <%= pasien.nama_pasien %></title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             margin: 0;
@@ -242,6 +243,45 @@
             size: A4 landscape;
             margin: 0;
         }
+
+        /* ── Grafik Tren Pemeriksaan ── */
+        .grafik-section {
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+
+        .grafik-section h4 {
+            font-size: 11pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-bottom: 1px solid #000;
+            padding-bottom: 4px;
+            margin-bottom: 10px;
+        }
+
+        .grafik-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .grafik-box {
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 8px;
+        }
+
+        .grafik-box .grafik-title {
+            font-size: 9pt;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+
+        .grafik-box canvas {
+            width: 100% !important;
+            height: 130px !important;
+        }
     </style>
 </head>
 
@@ -306,6 +346,12 @@
                 <td><%= pasien.no_hp || '-' %></td>
             </tr>
         </table>
+
+        <!-- Grafik Tren Pemeriksaan -->
+        <div class="grafik-section" id="grafik-section" style="display:none;">
+            <h4>Grafik Tren Riwayat Pemeriksaan</h4>
+            <div class="grafik-grid" id="grafik-grid"></div>
+        </div>
 
         <!-- Tabel Riwayat Kunjungan -->
         <% if (kunjunganList && kunjunganList.length > 0) { %>
@@ -443,11 +489,153 @@
     </div>
 
     <script>
-        // Otomatis cetak saat halaman dibuka
+        // Data riwayat kunjungan (dari server) dipakai untuk gambar grafik tren
+        const kunjunganData = <%- JSON.stringify(kunjunganList || []) %>;
+
+        const PTM_CHART_DEF = {
+            hipertensi: {
+                title: 'Tekanan Darah (mmHg)',
+                yMin: 40, yMax: 200,
+                getSeries: (list) => ([
+                    {
+                        label: 'Sistole',
+                        data: list.map(p => p.sistole),
+                        borderColor: '#EF4444',
+                        backgroundColor: 'rgba(239,68,68,0.1)',
+                        fill: true, tension: 0.3, borderWidth: 2
+                    },
+                    {
+                        label: 'Diastole',
+                        data: list.map(p => p.diastole),
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59,130,246,0.1)',
+                        fill: true, tension: 0.3, borderWidth: 2
+                    }
+                ])
+            },
+            dm: {
+                title: 'Gula Darah (mg/dL)',
+                yMin: 50, yMax: 300,
+                getSeries: (list) => ([{
+                    label: 'Gula Darah',
+                    data: list.map(p => p.dm_gula_darah),
+                    borderColor: '#10B981',
+                    backgroundColor: 'rgba(16,185,129,0.1)',
+                    fill: true, tension: 0.3, borderWidth: 2
+                }])
+            },
+            obesitas: {
+                title: 'IMT (kg/m²)',
+                yMin: 15, yMax: 35,
+                getSeries: (list) => ([{
+                    label: 'IMT',
+                    data: list.map(p => parseFloat(p.ob_imt) || 0),
+                    borderColor: '#F59E0B',
+                    backgroundColor: 'rgba(245,158,11,0.1)',
+                    fill: true, tension: 0.3, borderWidth: 2
+                }])
+            },
+            ppok: {
+                title: 'Skor PUMA (PPOK)',
+                yMin: 0, yMax: 10,
+                getSeries: (list) => ([{
+                    label: 'Skor PUMA',
+                    data: list.map(p => p.pp_skor_total),
+                    borderColor: '#8B5CF6',
+                    backgroundColor: 'rgba(139,92,246,0.1)',
+                    fill: true, tension: 0.3, borderWidth: 2
+                }])
+            },
+            kesehatan_jiwa: {
+                title: 'Skor SRQ-20 (Kesehatan Jiwa)',
+                yMin: 0, yMax: 20,
+                getSeries: (list) => ([{
+                    label: 'Skor SRQ-20',
+                    data: list.map(p => p.kj_skor_total),
+                    borderColor: '#0D9488',
+                    backgroundColor: 'rgba(13,148,136,0.1)',
+                    fill: true, tension: 0.3, borderWidth: 2
+                }])
+            }
+        };
+
+        function siapkanDataGrafik() {
+            // Urutkan kunjungan dari yang paling lama ke terbaru (kunjunganData aslinya terbaru dulu)
+            const kunjunganAsc = [...kunjunganData].reverse();
+
+            // Kumpulkan per jenis PTM: [{ tanggal, ...field }]
+            const perPtm = {};
+            kunjunganAsc.forEach(kunj => {
+                (kunj.pemeriksaan || []).forEach(p => {
+                    if (!PTM_CHART_DEF[p.id_jenis_ptm]) return;
+                    if (!perPtm[p.id_jenis_ptm]) perPtm[p.id_jenis_ptm] = [];
+                    perPtm[p.id_jenis_ptm].push({ tanggal: kunj.tanggal_kegiatan, ...p });
+                });
+            });
+            return perPtm;
+        }
+
+        function gambarGrafik() {
+            const perPtm = siapkanDataGrafik();
+            const jenisAda = Object.keys(perPtm).filter(k => perPtm[k].length > 0);
+            if (jenisAda.length === 0) return;
+
+            const grid = document.getElementById('grafik-grid');
+            document.getElementById('grafik-section').style.display = 'block';
+
+            Chart.defaults.font.family = "'Inter', Arial, sans-serif";
+
+            jenisAda.forEach(jenis => {
+                const def  = PTM_CHART_DEF[jenis];
+                const list = perPtm[jenis];
+                const banyakData = list.length;
+
+                const box = document.createElement('div');
+                box.className = 'grafik-box';
+                if (jenis === 'hipertensi' && banyakData > 5) {
+                    box.style.gridColumn = 'span 2';
+                }
+                const canvasId = 'chart-' + jenis;
+                box.innerHTML = `<div class="grafik-title">${def.title}</div><canvas id="${canvasId}"></canvas>`;
+                grid.appendChild(box);
+
+                // Titik lebih kecil & label tanggal dibatasi kalau datanya banyak, biar gak numpuk
+                const pointRadius = banyakData > 12 ? 1.5 : banyakData > 6 ? 2.5 : 3.5;
+                const maxTicks    = banyakData > 12 ? 6 : 8;
+
+                const datasets = def.getSeries(list).map(ds => ({ ...ds, pointRadius }));
+                const labels = list.map(p => new Date(p.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }));
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: { labels, datasets },
+                    options: {
+                        responsive: false,
+                        animation: false,
+                        plugins: {
+                            legend: { display: datasets.length > 1, position: 'bottom', labels: { boxWidth: 8, font: { size: 8 } } }
+                        },
+                        scales: {
+                            y: {
+                                min: def.yMin, max: def.yMax,
+                                grid: { color: '#F3F4F6' }, ticks: { font: { size: 7 } }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: { size: 7 }, autoSkip: true, maxTicksLimit: maxTicks, maxRotation: 0, minRotation: 0 }
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        // Gambar dulu grafiknya, baru trigger cetak setelah render selesai
         window.addEventListener('DOMContentLoaded', () => {
+            gambarGrafik();
             setTimeout(() => {
                 window.print();
-            }, 500);
+            }, 700);
         });
     </script>
 
