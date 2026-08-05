@@ -345,84 +345,109 @@ exports.renderRiwayat = async (req, res) => {
 
         const whereClause = 'WHERE ' + conditions.join(' AND ');
 
-        // Hitung total untuk pagination
+        // Hitung total pasien (distinct id_pasien) untuk pagination
         const countResult = await pool.query(
-            `SELECT COUNT(*) FROM (
-                SELECT 1 FROM skrining s
-                JOIN pasien p ON s.id_pasien = p.id_pasien
-                ${whereClause}
-                GROUP BY s.id_pasien, s.id_kegiatan, s.sistole, s.diastole, s.berat_badan, s.tinggi_badan, s.gula_darah, s.merokok, s.aktivitas_fisik, s.edukasi, s.dapat_obat, s.status_rujukan
-             ) AS sub`, params);
+            `SELECT COUNT(DISTINCT s.id_pasien) 
+             FROM skrining s
+             JOIN pasien p ON s.id_pasien = p.id_pasien
+             ${whereClause}`, params);
         const totalData  = parseInt(countResult.rows[0].count);
         const totalPages = Math.ceil(totalData / limit);
 
-        // Ambil data dengan LIMIT & OFFSET
-        const dataParams = [...params, limit, offset];
-        const query = `
-            SELECT s.id_pasien, s.id_kegiatan, k.tanggal_kegiatan, p.nama_pasien, p.nik, j.nama_jorong,
-                   s.sistole, s.diastole, s.berat_badan, s.tinggi_badan, s.gula_darah, s.merokok, s.aktivitas_fisik, s.edukasi, s.dapat_obat, s.status_rujukan,
-                   json_agg(json_build_object(
-                       'id_skrining', s.id_skrining,
-                       'id_jenis_ptm', s.id_jenis_ptm,
-                       'nama_ptm', jp.nama_ptm,
-                       'status_validasi', s.status_validasi,
-                       'catatan_bidan', s.catatan_bidan,
-                       'sistole', s.sistole,
-                       'diastole', s.diastole,
-                       'berat_badan', s.berat_badan,
-                       'tinggi_badan', s.tinggi_badan,
-                       'gula_darah', s.gula_darah,
-                       'merokok', s.merokok,
-                       'aktivitas_fisik', s.aktivitas_fisik,
-                       'edukasi', s.edukasi,
-                       'dapat_obat', s.dapat_obat,
-                       'status_rujukan', s.status_rujukan,
-                       'tanggal_validasi', s.tanggal_validasi,
-                       'status_tekanan', s.status_tekanan,
-                       'ht_status_tekanan', hp.status_tekanan,
-                       'dm_gula_darah', dmt.gula_darah,
-                       'dm_jenis_pemeriksaan', dmt.jenis_pemeriksaan,
-                       'dm_kategori_hasil', dmt.kategori_hasil,
-                       'ob_berat_badan', obt.berat_badan,
-                       'ob_tinggi_badan', obt.tinggi_badan,
-                       'ob_imt', obt.imt,
-                       'ob_lingkar_perut', obt.lingkar_perut,
-                       'ob_kategori_obesitas', obt.kategori_obesitas,
-                       'pp_rokok_per_hari', ppt.jumlah_batang_rokok_per_hari,
-                       'pp_lama_merokok', ppt.lama_tahun_merokok,
-                       'pp_sesak_napas', ppt.sesak_napas,
-                       'pp_batuk_kronis', ppt.batuk_berdahak_kronis,
-                       'pp_skor_total', ppt.skor_total,
-                       'pp_kategori_risiko', ppt.kategori_risiko,
-                       'pp_rujukan_spirometri', ppt.rujukan_spirometri,
-                       'gi_mata', git.hasil_pemeriksaan_mata,
-                       'gi_telinga', git.hasil_pemeriksaan_telinga,
-                       'gi_keterangan', git.keterangan,
-                       'kj_skor_total', kjt.skor_total,
-                       'kj_kategori_hasil', kjt.kategori_hasil,
-                       'kj_risiko_bunuh_diri', kjt.indikasi_risiko_bunuh_diri
-                   )) AS pemeriksaan
-            FROM skrining s
-            JOIN pasien   p ON s.id_pasien   = p.id_pasien
-            JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
-            JOIN jorong   j ON p.id_jorong   = j.id_jorong
-            LEFT JOIN jenis_ptm jp ON s.id_jenis_ptm = jp.id_jenis_ptm
-            LEFT JOIN skrining_hipertensi hp   ON hp.id_skrining  = s.id_skrining
-            LEFT JOIN skrining_dm dmt          ON dmt.id_skrining = s.id_skrining
-            LEFT JOIN skrining_obesitas obt    ON obt.id_skrining = s.id_skrining
-            LEFT JOIN skrining_ppok ppt        ON ppt.id_skrining = s.id_skrining
-            LEFT JOIN skrining_gangguan_indra git ON git.id_skrining = s.id_skrining
-            LEFT JOIN skrining_kesehatan_jiwa kjt ON kjt.id_skrining = s.id_skrining
-            ${whereClause}
-            GROUP BY s.id_pasien, s.id_kegiatan, k.tanggal_kegiatan, p.nama_pasien, p.nik, j.nama_jorong,
-                     s.sistole, s.diastole, s.berat_badan, s.tinggi_badan, s.gula_darah, s.merokok, s.aktivitas_fisik, s.edukasi, s.dapat_obat, s.status_rujukan
-            ORDER BY k.tanggal_kegiatan DESC
-            LIMIT $${pi} OFFSET $${pi + 1}
-        `;
-        const result = await pool.query(query, dataParams);
+        let riwayat = [];
+        if (totalData > 0) {
+            // Ambil daftar id_pasien untuk halaman ini, urutkan berdasarkan tanggal skrining terbaru (max tanggal_kegiatan DESC)
+            const patientIdsResult = await pool.query(`
+                SELECT s.id_pasien, MAX(k.tanggal_kegiatan) AS max_date
+                FROM skrining s
+                JOIN pasien p ON s.id_pasien = p.id_pasien
+                JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
+                ${whereClause}
+                GROUP BY s.id_pasien
+                ORDER BY max_date DESC
+                LIMIT $${pi} OFFSET $${pi + 1}
+            `, [...params, limit, offset]);
+
+            const patientIds = patientIdsResult.rows.map(r => r.id_pasien);
+
+            if (patientIds.length > 0) {
+                // Ambil data kunjungan lengkap hanya untuk id_pasien yang terpilih
+                const dataQuery = `
+                    SELECT p.id_pasien, p.nama_pasien, p.nik, j.nama_jorong,
+                           json_agg(json_build_object(
+                               'id_kegiatan', sub.id_kegiatan,
+                               'tanggal_kegiatan', sub.tanggal_kegiatan,
+                               'pemeriksaan', sub.pemeriksaan
+                           ) ORDER BY sub.tanggal_kegiatan DESC) AS kunjungan
+                    FROM (
+                        SELECT s.id_pasien, s.id_kegiatan, k.tanggal_kegiatan,
+                               json_agg(json_build_object(
+                                   'id_skrining', s.id_skrining,
+                                   'id_jenis_ptm', s.id_jenis_ptm,
+                                   'nama_ptm', jp.nama_ptm,
+                                   'status_validasi', s.status_validasi,
+                                   'catatan_bidan', s.catatan_bidan,
+                                   'sistole', s.sistole,
+                                   'diastole', s.diastole,
+                                   'berat_badan', s.berat_badan,
+                                   'tinggi_badan', s.tinggi_badan,
+                                   'gula_darah', s.gula_darah,
+                                   'merokok', s.merokok,
+                                   'aktivitas_fisik', s.aktivitas_fisik,
+                                   'edukasi', s.edukasi,
+                                   'dapat_obat', s.dapat_obat,
+                                   'status_rujukan', s.status_rujukan,
+                                   'tanggal_validasi', s.tanggal_validasi,
+                                   'status_tekanan', s.status_tekanan,
+                                   'ht_status_tekanan', hp.status_tekanan,
+                                   'dm_gula_darah', dmt.gula_darah,
+                                   'dm_jenis_pemeriksaan', dmt.jenis_pemeriksaan,
+                                   'dm_kategori_hasil', dmt.kategori_hasil,
+                                   'ob_berat_badan', obt.berat_badan,
+                                   'ob_tinggi_badan', obt.tinggi_badan,
+                                   'ob_imt', obt.imt,
+                                   'ob_lingkar_perut', obt.lingkar_perut,
+                                   'ob_kategori_obesitas', obt.kategori_obesitas,
+                                   'pp_rokok_per_hari', ppt.jumlah_batang_rokok_per_hari,
+                                   'pp_lama_merokok', ppt.lama_tahun_merokok,
+                                   'pp_sesak_napas', ppt.sesak_napas,
+                                   'pp_batuk_kronis', ppt.batuk_berdahak_kronis,
+                                   'pp_skor_total', ppt.skor_total,
+                                   'pp_kategori_risiko', ppt.kategori_risiko,
+                                   'pp_rujukan_spirometri', ppt.rujukan_spirometri,
+                                   'gi_mata', git.hasil_pemeriksaan_mata,
+                                   'gi_telinga', git.hasil_pemeriksaan_telinga,
+                                   'gi_keterangan', git.keterangan,
+                                   'kj_skor_total', kjt.skor_total,
+                                   'kj_kategori_hasil', kjt.kategori_hasil,
+                                   'kj_risiko_bunuh_diri', kjt.indikasi_risiko_bunuh_diri
+                               )) AS pemeriksaan
+                        FROM skrining s
+                        JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
+                        JOIN pasien p ON s.id_pasien = p.id_pasien
+                        LEFT JOIN jenis_ptm jp ON s.id_jenis_ptm = jp.id_jenis_ptm
+                        LEFT JOIN skrining_hipertensi hp   ON hp.id_skrining  = s.id_skrining
+                        LEFT JOIN skrining_dm dmt          ON dmt.id_skrining = s.id_skrining
+                        LEFT JOIN skrining_obesitas obt    ON obt.id_skrining = s.id_skrining
+                        LEFT JOIN skrining_ppok ppt        ON ppt.id_skrining = s.id_skrining
+                        LEFT JOIN skrining_gangguan_indra git ON git.id_skrining = s.id_skrining
+                        LEFT JOIN skrining_kesehatan_jiwa kjt ON kjt.id_skrining = s.id_skrining
+                        ${whereClause}
+                        GROUP BY s.id_pasien, s.id_kegiatan, k.tanggal_kegiatan
+                    ) sub
+                    JOIN pasien p ON sub.id_pasien = p.id_pasien
+                    JOIN jorong j ON p.id_jorong = j.id_jorong
+                    WHERE p.id_pasien = ANY($${pi})
+                    GROUP BY p.id_pasien, p.nama_pasien, p.nik, j.nama_jorong
+                    ORDER BY MAX(sub.tanggal_kegiatan) DESC
+                `;
+                const dataResult = await pool.query(dataQuery, [...params, patientIds]);
+                riwayat = dataResult.rows;
+            }
+        }
 
         res.render('kader/riwayat', {
-            riwayat: result.rows,
+            riwayat,
             active: 'riwayat',
             notifikasi: [],
             currentUser: req.session.user || null,
@@ -661,5 +686,183 @@ exports.handleEditSkrining = async (req, res) => {
         res.status(500).send("Gagal menyimpan perubahan: " + err.message);
     } finally {
         client.release();
+    }
+};
+
+// 6. Cetak Bukti Skrining Pasien
+exports.renderCetakSkriningPasien = async (req, res) => {
+    const { id_pasien, id_kegiatan } = req.params;
+    try {
+        // 1. Ambil detail pasien
+        const pasienRes = await pool.query(`
+            SELECT p.*, j.nama_jorong, n.nama_nagari
+            FROM pasien p
+            JOIN jorong j ON p.id_jorong = j.id_jorong
+            JOIN nagari n ON j.id_nagari = n.id_nagari
+            WHERE p.id_pasien = $1
+        `, [id_pasien]);
+
+        if (pasienRes.rows.length === 0) {
+            return res.status(404).send("Pasien tidak ditemukan.");
+        }
+
+        // 2. Ambil detail kegiatan
+        const kegiatanRes = await pool.query(`
+            SELECT k.*, 
+                   (
+                       SELECT nama_user FROM "user" 
+                       WHERE id_user = (SELECT id_validator FROM skrining WHERE id_kegiatan = k.id_kegiatan AND id_validator IS NOT NULL LIMIT 1)
+                   ) AS nama_validator,
+                   (SELECT nama_user FROM "user" WHERE role = 'pj_ptm' LIMIT 1) AS nama_pj
+            FROM kegiatan k
+            WHERE k.id_kegiatan = $1
+        `, [id_kegiatan]);
+
+        if (kegiatanRes.rows.length === 0) {
+            return res.status(404).send("Kegiatan tidak ditemukan.");
+        }
+
+        // 3. Ambil data skrining
+        const skriningRes = await pool.query(`
+            SELECT s.*, jp.nama_ptm,
+                   hp.status_tekanan   AS ht_status_tekanan,
+                   dmt.gula_darah      AS dm_gula_darah,
+                   dmt.jenis_pemeriksaan AS dm_jenis_pemeriksaan,
+                   dmt.kategori_hasil  AS dm_kategori_hasil,
+                   obt.berat_badan     AS ob_berat_badan,
+                   obt.tinggi_badan    AS ob_tinggi_badan,
+                   obt.imt             AS ob_imt,
+                   obt.lingkar_perut   AS ob_lingkar_perut,
+                   obt.kategori_obesitas AS ob_kategori_obesitas,
+                   ppt.jumlah_batang_rokok_per_hari AS pp_rokok_per_hari,
+                   ppt.lama_tahun_merokok AS pp_lama_merokok,
+                   ppt.sesak_napas     AS pp_sesak_napas,
+                   ppt.batuk_berdahak_kronis AS pp_batuk_kronis,
+                   ppt.skor_total      AS pp_skor_total,
+                   ppt.kategori_risiko AS pp_kategori_risiko,
+                   ppt.rujukan_spirometri AS pp_rujukan_spirometri,
+                   git.hasil_pemeriksaan_mata AS gi_mata,
+                   git.hasil_pemeriksaan_telinga AS gi_telinga,
+                   git.keterangan      AS gi_keterangan,
+                   kjt.skor_total      AS kj_skor_total,
+                   kjt.kategori_hasil  AS kj_kategori_hasil,
+                   kjt.indikasi_risiko_bunuh_diri AS kj_risiko_bunuh_diri
+            FROM skrining s
+            LEFT JOIN jenis_ptm jp ON s.id_jenis_ptm = jp.id_jenis_ptm
+            LEFT JOIN skrining_hipertensi hp   ON hp.id_skrining  = s.id_skrining
+            LEFT JOIN skrining_dm dmt          ON dmt.id_skrining = s.id_skrining
+            LEFT JOIN skrining_obesitas obt    ON obt.id_skrining = s.id_skrining
+            LEFT JOIN skrining_ppok ppt        ON ppt.id_skrining = s.id_skrining
+            LEFT JOIN skrining_gangguan_indra git ON git.id_skrining = s.id_skrining
+            LEFT JOIN skrining_kesehatan_jiwa kjt ON kjt.id_skrining = s.id_skrining
+            WHERE s.id_pasien = $1 AND s.id_kegiatan = $2
+        `, [id_pasien, id_kegiatan]);
+
+        res.render('kader/cetak_skrining_pasien', {
+            pasien: pasienRes.rows[0],
+            kegiatan: kegiatanRes.rows[0],
+            skriningList: skriningRes.rows,
+            currentUser: req.session.user || null,
+            role: req.session.user ? req.session.user.role : 'kader',
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Gagal memuat pratinjau cetak skrining.");
+    }
+};
+
+// 7. Cetak Semua Riwayat Skrining Pasien
+exports.renderCetakSemuaSkrining = async (req, res) => {
+    const { id_pasien } = req.params;
+    try {
+        // 1. Ambil detail pasien
+        const pasienRes = await pool.query(`
+            SELECT p.*, j.nama_jorong, n.nama_nagari
+            FROM pasien p
+            JOIN jorong j ON p.id_jorong = j.id_jorong
+            JOIN nagari n ON j.id_nagari = n.id_nagari
+            WHERE p.id_pasien = $1
+        `, [id_pasien]);
+
+        if (pasienRes.rows.length === 0) {
+            return res.status(404).send("Pasien tidak ditemukan.");
+        }
+
+        const pasien = pasienRes.rows[0];
+
+        // Hitung Usia
+        const currentYear = new Date().getFullYear();
+        pasien.usia = pasien.tahun_lahir ? currentYear - pasien.tahun_lahir : pasien.usia;
+
+        // 2. Ambil semua riwayat skrining pasien
+        const queryStr = `
+            SELECT s.*, k.tanggal_kegiatan, k.lokasi, jp.nama_ptm,
+                   u.nama_user AS nama_kader,
+                   (SELECT nama_user FROM "user" WHERE id_user = s.id_validator) AS nama_validator,
+                   hp.status_tekanan   AS ht_status_tekanan,
+                   dmt.gula_darah      AS dm_gula_darah,
+                   dmt.jenis_pemeriksaan AS dm_jenis_pemeriksaan,
+                   dmt.kategori_hasil  AS dm_kategori_hasil,
+                   obt.berat_badan     AS ob_berat_badan,
+                   obt.tinggi_badan    AS ob_tinggi_badan,
+                   obt.imt             AS ob_imt,
+                   obt.lingkar_perut   AS ob_lingkar_perut,
+                   obt.kategori_obesitas AS ob_kategori_obesitas,
+                   ppt.jumlah_batang_rokok_per_hari AS pp_rokok_per_hari,
+                   ppt.lama_tahun_merokok AS pp_lama_merokok,
+                   ppt.sesak_napas     AS pp_sesak_napas,
+                   ppt.batuk_berdahak_kronis AS pp_batuk_kronis,
+                   ppt.skor_total      AS pp_skor_total,
+                   ppt.kategori_risiko AS pp_kategori_risiko,
+                   ppt.rujukan_spirometri AS pp_rujukan_spirometri,
+                   git.hasil_pemeriksaan_mata AS gi_mata,
+                   git.hasil_pemeriksaan_telinga AS gi_telinga,
+                   git.keterangan      AS gi_keterangan,
+                   kjt.skor_total      AS kj_skor_total,
+                   kjt.kategori_hasil  AS kj_kategori_hasil,
+                   kjt.indikasi_risiko_bunuh_diri AS kj_risiko_bunuh_diri
+            FROM skrining s
+            JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
+            LEFT JOIN jenis_ptm jp ON s.id_jenis_ptm = jp.id_jenis_ptm
+            LEFT JOIN "user" u ON s.id_kader = u.id_user
+            LEFT JOIN skrining_hipertensi hp   ON hp.id_skrining  = s.id_skrining
+            LEFT JOIN skrining_dm dmt          ON dmt.id_skrining = s.id_skrining
+            LEFT JOIN skrining_obesitas obt    ON obt.id_skrining = s.id_skrining
+            LEFT JOIN skrining_ppok ppt        ON ppt.id_skrining = s.id_skrining
+            LEFT JOIN skrining_gangguan_indra git ON git.id_skrining = s.id_skrining
+            LEFT JOIN skrining_kesehatan_jiwa kjt ON kjt.id_skrining = s.id_skrining
+            WHERE s.id_pasien = $1
+            ORDER BY k.tanggal_kegiatan DESC, s.id_skrining DESC
+        `;
+        const skriningRes = await pool.query(queryStr, [id_pasien]);
+
+        // Grouping by id_kegiatan
+        const grouped = {};
+        skriningRes.rows.forEach(row => {
+            const key = row.id_kegiatan;
+            if (!grouped[key]) {
+                grouped[key] = {
+                    id_kegiatan: row.id_kegiatan,
+                    tanggal_kegiatan: row.tanggal_kegiatan,
+                    lokasi: row.lokasi,
+                    nama_kader: row.nama_kader,
+                    nama_validator: row.nama_validator,
+                    pemeriksaan: []
+                };
+            }
+            grouped[key].pemeriksaan.push(row);
+        });
+
+        const kunjunganList = Object.values(grouped).sort((a, b) => new Date(b.tanggal_kegiatan) - new Date(a.tanggal_kegiatan));
+
+        res.render('kader/cetak_riwayat_semua', {
+            pasien,
+            kunjunganList,
+            currentUser: req.session.user || null,
+            tanggalCetak: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Gagal memuat pratinjau cetak riwayat.");
     }
 };

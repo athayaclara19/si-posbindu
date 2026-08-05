@@ -200,7 +200,9 @@ describe('bidanController.renderLaporan()', () => {
         pool.query
             .mockResolvedValueOnce({ rows: [{ count: '2' }] }) // countResult
             .mockResolvedValueOnce({ rows: [{ id_skrining: 1 }] }) // data
-            .mockResolvedValueOnce({ rows: [{ id_jorong: 1, nama_jorong: 'A' }] }); // jorong dropdown
+            .mockResolvedValueOnce({ rows: [{ id_jorong: 1, nama_jorong: 'A', id_nagari: 1 }] }) // jorong dropdown
+            .mockResolvedValueOnce({ rows: [{ id_nagari: 1, nama_nagari: 'B' }] }) // nagari dropdown
+            .mockResolvedValueOnce({ rows: [{ id_jenis_ptm: 'hipertensi', nama_ptm: 'Hipertensi' }] }); // jenisPtm dropdown
     }
 
     test('tanpa filter apapun → whereClause default hanya status terverifikasi', async () => {

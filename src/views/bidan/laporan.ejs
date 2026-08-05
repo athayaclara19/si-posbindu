@@ -30,7 +30,9 @@
                 <%
                     const exportParams = new URLSearchParams();
                     if (typeof search !== 'undefined' && search) exportParams.set('search', search);
+                    if (typeof selectedNagari !== 'undefined' && selectedNagari) exportParams.set('nagari', selectedNagari);
                     if (typeof selectedJorong !== 'undefined' && selectedJorong) exportParams.set('jorong', selectedJorong);
+                    if (typeof selectedPtm !== 'undefined' && selectedPtm) exportParams.set('ptm', selectedPtm);
                     if (typeof selectedStatus !== 'undefined' && selectedStatus) exportParams.set('status', selectedStatus);
                     const exportUrl = '/bidan/laporan/export?' + exportParams.toString();
                 %>
@@ -41,36 +43,58 @@
             </div>
 
             <%# ====== SEARCH & FILTER ====== %>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
 
-                <div class="w-full md:flex-1">
+                <!-- Search -->
+                <div class="w-full">
                     <div class="flex items-center w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus-within:bg-white focus-within:border-[#2563EB] transition-all shadow-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 flex-shrink-0 mr-3">
                             <circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/>
                         </svg>
-                        <input type="text" id="searchLaporan" placeholder="Cari Nama atau NIK Pasien..." class="w-full bg-transparent border-none outline-none p-0 text-sm text-[#1F2937] placeholder-gray-400 focus:ring-0">
+                        <input type="text" id="searchLaporan" placeholder="Nama / NIK..." class="w-full bg-transparent border-none outline-none p-0 text-sm text-[#1F2937] placeholder-gray-400 focus:ring-0">
                     </div>
                 </div>
 
-                <div class="w-full md:w-56">
-                    <select id="filterJorong" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-all cursor-pointer shadow-sm">
-                        <option value="">Semua Jorong</option>
-                        <% if (typeof jorong !== 'undefined') { %>
-                            <% jorong.forEach(j => { %>
-                                <option value="<%= j.id_jorong %>" <%= (typeof selectedJorong !== 'undefined' && String(selectedJorong) === String(j.id_jorong)) ? 'selected' : '' %>><%= j.nama_jorong %></option>
+                <!-- Filter Nagari -->
+                <div class="w-full">
+                    <select id="filterNagari" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-all cursor-pointer shadow-sm">
+                        <option value="">Semua Nagari</option>
+                        <% if (typeof nagari !== 'undefined') { %>
+                            <% nagari.forEach(n => { %>
+                                <option value="<%= n.id_nagari %>" <%= (typeof selectedNagari !== 'undefined' && String(selectedNagari) === String(n.id_nagari)) ? 'selected' : '' %>><%= n.nama_nagari %></option>
                             <% }) %>
                         <% } %>
                     </select>
                 </div>
 
-                <div class="w-full md:w-56">
+                <!-- Filter Jorong -->
+                <div class="w-full">
+                    <select id="filterJorong" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-all cursor-pointer shadow-sm">
+                        <option value="">Semua Jorong</option>
+                        <% if (typeof jorong !== 'undefined') { %>
+                            <% jorong.forEach(j => { %>
+                                <option value="<%= j.id_jorong %>" data-nagari="<%= j.id_nagari %>" <%= (typeof selectedJorong !== 'undefined' && String(selectedJorong) === String(j.id_jorong)) ? 'selected' : '' %>><%= j.nama_jorong %></option>
+                            <% }) %>
+                        <% } %>
+                    </select>
+                </div>
+
+                <!-- Filter Penyakit (PTM) -->
+                <div class="w-full">
+                    <select id="filterPenyakit" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-all cursor-pointer shadow-sm">
+                        <option value="all" <%= (typeof selectedPtm === 'undefined' || selectedPtm === 'all') ? 'selected' : '' %>>Semua Penyakit</option>
+                        <% if (typeof jenisPtm !== 'undefined') { %>
+                            <% jenisPtm.forEach(ptm => { %>
+                                <option value="<%= ptm.id_jenis_ptm %>" <%= (typeof selectedPtm !== 'undefined' && selectedPtm === ptm.id_jenis_ptm) ? 'selected' : '' %>><%= ptm.nama_ptm %></option>
+                            <% }) %>
+                        <% } %>
+                    </select>
+                </div>
+
+                <!-- Filter Status PTM -->
+                <div class="w-full">
                     <select id="filterStatus" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-[#2563EB] bg-gray-50 hover:bg-white transition-all cursor-pointer shadow-sm">
-                        <option value="">Semua Status Tensi</option>
-                        <option value="normal" <%= (typeof selectedStatus !== 'undefined' && selectedStatus === 'normal') ? 'selected' : '' %>>Normal (&lt;120)</option>
-                        <option value="pra"    <%= (typeof selectedStatus !== 'undefined' && selectedStatus === 'pra')    ? 'selected' : '' %>>Pra-Hipertensi (120-139)</option>
-                        <option value="ht1"    <%= (typeof selectedStatus !== 'undefined' && selectedStatus === 'ht1')    ? 'selected' : '' %>>Hipertensi Tkt.1 (140-159)</option>
-                        <option value="ht2"    <%= (typeof selectedStatus !== 'undefined' && selectedStatus === 'ht2')    ? 'selected' : '' %>>Hipertensi Tkt.2 (160-179)</option>
-                        <option value="krisis" <%= (typeof selectedStatus !== 'undefined' && selectedStatus === 'krisis') ? 'selected' : '' %>>Krisis (&ge;180)</option>
+                        <!-- Dynamic Status Options -->
                     </select>
                 </div>
 
@@ -158,7 +182,9 @@
                     const buildLaporanUrl = (p) => {
                         const params = new URLSearchParams();
                         if (search) params.set('search', search);
+                        if (typeof selectedNagari !== 'undefined' && selectedNagari) params.set('nagari', selectedNagari);
                         if (typeof selectedJorong !== 'undefined' && selectedJorong) params.set('jorong', selectedJorong);
+                        if (typeof selectedPtm !== 'undefined' && selectedPtm) params.set('ptm', selectedPtm);
                         if (typeof selectedStatus !== 'undefined' && selectedStatus) params.set('status', selectedStatus);
                         params.set('page', p);
                         return '/bidan/laporan?' + params.toString();
@@ -200,9 +226,11 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const searchInput  = document.getElementById('searchLaporan');
-            const filterJorong = document.getElementById('filterJorong');
-            const filterStatus = document.getElementById('filterStatus');
+            const searchInput    = document.getElementById('searchLaporan');
+            const filterNagari   = document.getElementById('filterNagari');
+            const filterJorong   = document.getElementById('filterJorong');
+            const filterPenyakit = document.getElementById('filterPenyakit');
+            const filterStatus   = document.getElementById('filterStatus');
 
             const urlParams = new URLSearchParams(window.location.search);
             searchInput.value = urlParams.get('search') || '';
@@ -211,7 +239,9 @@
                 const params = new URLSearchParams(window.location.search);
                 const state = {
                     search: params.get('search') || '',
+                    nagari: params.get('nagari') || '',
                     jorong: params.get('jorong') || '',
+                    ptm:    params.get('ptm')    || 'all',
                     status: params.get('status') || '',
                     page:   params.get('page')   || 1,
                 };
@@ -219,13 +249,98 @@
 
                 const qs = new URLSearchParams();
                 if (state.search) qs.set('search', state.search);
+                if (state.nagari) qs.set('nagari', state.nagari);
                 if (state.jorong) qs.set('jorong', state.jorong);
+                if (state.ptm && state.ptm !== 'all') qs.set('ptm', state.ptm);
                 if (state.status) qs.set('status', state.status);
                 qs.set('page', state.page);
                 window.location.href = '/bidan/laporan?' + qs.toString();
             }
 
-            // Kirim pencarian ke server saat berhenti mengetik (debounce)
+            // --- Dynamic Status Options helper ---
+            function updateStatusDropdown(ptmValue, selectedValue) {
+                filterStatus.innerHTML = '';
+                
+                let options = [];
+                if (ptmValue === 'hipertensi' || ptmValue === 'all') {
+                    options = [
+                        { value: '', text: 'Semua Status Tensi' },
+                        { value: 'normal', text: 'Normal (<120)' },
+                        { value: 'pra', text: 'Pra-Hipertensi (120-139)' },
+                        { value: 'ht1', text: 'Hipertensi Tkt.1 (140-159)' },
+                        { value: 'ht2', text: 'Hipertensi Tkt.2 (160-179)' },
+                        { value: 'krisis', text: 'Krisis (≥180)' }
+                    ];
+                } else if (ptmValue === 'dm') {
+                    options = [
+                        { value: '', text: 'Semua Status GD' },
+                        { value: 'normal', text: 'Normal' },
+                        { value: 'prediabetes', text: 'Prediabetes' },
+                        { value: 'dm', text: 'Diabetes Melitus' }
+                    ];
+                } else if (ptmValue === 'obesitas') {
+                    options = [
+                        { value: '', text: 'Semua Status Obesitas' },
+                        { value: 'normal', text: 'Normal' },
+                        { value: 'overweight', text: 'Overweight' },
+                        { value: 'obesitas', text: 'Obesitas' }
+                    ];
+                } else if (ptmValue === 'ppok') {
+                    options = [
+                        { value: '', text: 'Semua Risiko PPOK' },
+                        { value: 'rendah', text: 'Risiko Rendah' },
+                        { value: 'tinggi', text: 'Risiko Tinggi' }
+                    ];
+                } else if (ptmValue === 'gangguan_indra') {
+                    options = [
+                        { value: '', text: 'Semua Status Indra' },
+                        { value: 'normal', text: 'Normal' },
+                        { value: 'gangguan', text: 'Ada Gangguan' }
+                    ];
+                } else if (ptmValue === 'kesehatan_jiwa') {
+                    options = [
+                        { value: '', text: 'Semua Status Jiwa' },
+                        { value: 'normal', text: 'Normal' },
+                        { value: 'masalah_jiwa', text: 'Masalah Kesehatan Jiwa' },
+                        { value: 'bunuh_diri', text: 'Risiko Bunuh Diri' }
+                    ];
+                }
+
+                options.forEach(opt => {
+                    const el = document.createElement('option');
+                    el.value = opt.value;
+                    el.textContent = opt.text;
+                    if (opt.value === selectedValue) {
+                        el.selected = true;
+                    }
+                    filterStatus.appendChild(el);
+                });
+            }
+
+            // Initial status population
+            const currentPtm = urlParams.get('ptm') || 'all';
+            const currentStatus = urlParams.get('status') || '';
+            updateStatusDropdown(currentPtm, currentStatus);
+
+            // --- Dynamic Jorong Options filtering by Nagari ---
+            const jorongOptions = Array.from(filterJorong.options);
+            function updateJorongOptions(nagariId) {
+                filterJorong.innerHTML = '';
+                jorongOptions.forEach(opt => {
+                    if (opt.value === '' || !nagariId || opt.getAttribute('data-nagari') === nagariId) {
+                        filterJorong.appendChild(opt.cloneNode(true));
+                    }
+                });
+            }
+
+            // Initial jorong population
+            const currentNagari = urlParams.get('nagari') || '';
+            if (currentNagari) {
+                updateJorongOptions(currentNagari);
+                filterJorong.value = urlParams.get('jorong') || '';
+            }
+
+            // --- Event Listeners ---
             let debounceTimer;
             searchInput.addEventListener('input', function() {
                 clearTimeout(debounceTimer);
@@ -234,8 +349,18 @@
                 }, 500);
             });
 
+            filterNagari.addEventListener('change', function() {
+                updateJorongOptions(filterNagari.value);
+                navigateWithFilters({ nagari: filterNagari.value, jorong: '', page: 1 });
+            });
+
             filterJorong.addEventListener('change', function() {
                 navigateWithFilters({ jorong: filterJorong.value, page: 1 });
+            });
+
+            filterPenyakit.addEventListener('change', function() {
+                updateStatusDropdown(filterPenyakit.value, '');
+                navigateWithFilters({ ptm: filterPenyakit.value, status: '', page: 1 });
             });
 
             filterStatus.addEventListener('change', function() {

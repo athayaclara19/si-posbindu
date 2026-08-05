@@ -202,7 +202,8 @@ describe('kaderControllers.renderRiwayat()', () => {
     test('tanpa search/status → whereClause hanya berdasarkan id_kader', async () => {
         pool.query
             .mockResolvedValueOnce({ rows: [{ count: '3' }] })
-            .mockResolvedValueOnce({ rows: [{ id_skrining: 1 }] });
+            .mockResolvedValueOnce({ rows: [{ id_pasien: 1 }] })
+            .mockResolvedValueOnce({ rows: [{ id_pasien: 1, nama_pasien: 'Ani' }] });
 
         const { req, res } = mockReqRes({ query: {}, session: { user: { id_user: 5 } } });
 
@@ -215,7 +216,8 @@ describe('kaderControllers.renderRiwayat()', () => {
     test('dengan search & status label UI → dipetakan ke nilai DB yang benar', async () => {
         pool.query
             .mockResolvedValueOnce({ rows: [{ count: '1' }] })
-            .mockResolvedValueOnce({ rows: [] });
+            .mockResolvedValueOnce({ rows: [{ id_pasien: 1 }] })
+            .mockResolvedValueOnce({ rows: [{ id_pasien: 1, nama_pasien: 'Ani' }] });
 
         const { req, res } = mockReqRes({
             query: { search: 'Ani', status: 'Perlu Revisi' },
@@ -230,7 +232,8 @@ describe('kaderControllers.renderRiwayat()', () => {
     test('status "Semua" → tidak menambah kondisi status', async () => {
         pool.query
             .mockResolvedValueOnce({ rows: [{ count: '2' }] })
-            .mockResolvedValueOnce({ rows: [] });
+            .mockResolvedValueOnce({ rows: [{ id_pasien: 1 }] })
+            .mockResolvedValueOnce({ rows: [{ id_pasien: 1, nama_pasien: 'Ani' }] });
 
         const { req, res } = mockReqRes({ query: { status: 'Semua' }, session: { user: { id_user: 5 } } });
 
@@ -246,6 +249,72 @@ describe('kaderControllers.renderRiwayat()', () => {
         await kaderController.renderRiwayat(req, res);
 
         expect(res.status).toHaveBeenCalledWith(500);
+    });
+
+});
+
+// ==============================================================
+// GRUP 4.5: renderCetakSkriningPasien()
+// ==============================================================
+describe('kaderControllers.renderCetakSkriningPasien()', () => {
+
+    test('happy path → render bukti cetak', async () => {
+        pool.query
+            .mockResolvedValueOnce({ rows: [{ id_pasien: '123', nama_pasien: 'Ani' }] }) // pasien
+            .mockResolvedValueOnce({ rows: [{ id_kegiatan: '99', nama_kegiatan: 'Posbindu', nama_pj: 'Bidan Clara' }] }) // kegiatan
+            .mockResolvedValueOnce({ rows: [{ id_skrining: 1, nama_ptm: 'Hipertensi' }] }); // skrining
+
+        const { req, res } = mockReqRes({ params: { id_pasien: '123', id_kegiatan: '99' }, session: {} });
+
+        await kaderController.renderCetakSkriningPasien(req, res);
+
+        expect(res.render).toHaveBeenCalledWith('kader/cetak_skrining_pasien', expect.objectContaining({
+            pasien: expect.objectContaining({ nama_pasien: 'Ani' }),
+            kegiatan: expect.objectContaining({ nama_pj: 'Bidan Clara' }),
+            skriningList: expect.any(Array),
+        }));
+    });
+
+    test('pasien tidak ditemukan → status 404', async () => {
+        pool.query.mockResolvedValueOnce({ rows: [] });
+
+        const { req, res } = mockReqRes({ params: { id_pasien: '999', id_kegiatan: '99' }, session: {} });
+
+        await kaderController.renderCetakSkriningPasien(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(404);
+    });
+
+});
+
+// ==============================================================
+// GRUP 4.6: renderCetakSemuaSkrining()
+// ==============================================================
+describe('kaderControllers.renderCetakSemuaSkrining()', () => {
+
+    test('happy path → render semua bukti cetak', async () => {
+        pool.query
+            .mockResolvedValueOnce({ rows: [{ id_pasien: '123', nama_pasien: 'Ani' }] }) // pasien
+            .mockResolvedValueOnce({ rows: [{ id_skrining: 1, id_kegiatan: 99, nama_ptm: 'Hipertensi', tanggal_kegiatan: '2026-01-01' }] }); // skrining list
+
+        const { req, res } = mockReqRes({ params: { id_pasien: '123' }, session: {} });
+
+        await kaderController.renderCetakSemuaSkrining(req, res);
+
+        expect(res.render).toHaveBeenCalledWith('kader/cetak_riwayat_semua', expect.objectContaining({
+            pasien: expect.objectContaining({ nama_pasien: 'Ani' }),
+            kunjunganList: expect.any(Array),
+        }));
+    });
+
+    test('pasien tidak ditemukan → status 404', async () => {
+        pool.query.mockResolvedValueOnce({ rows: [] });
+
+        const { req, res } = mockReqRes({ params: { id_pasien: '999' }, session: {} });
+
+        await kaderController.renderCetakSemuaSkrining(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(404);
     });
 
 });

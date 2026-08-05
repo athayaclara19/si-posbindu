@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riwayat Skrining Lengkap - <%= pasien.nama_pasien %></title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 11pt;
+            color: #000;
+            background: #fff;
+            line-height: 1.4;
+        }
+
+        /* ── Tombol Cetak (hanya tampil di layar, hilang saat print) ── */
+        .print-toolbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #1e40af;
+            color: #fff;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 999;
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+        }
+
+        .print-toolbar .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-print {
+            background: #fff;
+            color: #1e40af;
+            border: none;
+            padding: 7px 18px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-print:hover {
+            background: #dbeafe;
+        }
+
+        .btn-back {
+            background: transparent;
+            color: #bfdbfe;
+            border: 1px solid #bfdbfe;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .btn-back:hover {
+            color: #fff;
+            border-color: #fff;
+        }
+
+        /* ── Area konten dokumen ── */
+        .dokumen {
+            max-width: 210mm;
+            margin: 60px auto 40px auto;
+            padding: 15mm 15mm 15mm 20mm;
+            background: #fff;
+        }
+
+        /* ── Header Kop ── */
+        .kop {
+            text-align: center;
+            border-bottom: 3px double #000;
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+        }
+
+        .kop h1 {
+            font-size: 14pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kop h2 {
+            font-size: 12pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .kop p {
+            font-size: 10pt;
+            margin-top: 2px;
+        }
+
+        /* ── Judul Dokumen ── */
+        .judul-dokumen {
+            text-align: center;
+            margin: 16px 0 20px;
+        }
+
+        .judul-dokumen h3 {
+            font-size: 13pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-decoration: underline;
+        }
+
+        .judul-dokumen p {
+            font-size: 11pt;
+            margin-top: 4px;
+        }
+
+        /* ── Data Pasien ── */
+        .pasien-info {
+            width: 100%;
+            margin-bottom: 20px;
+            font-size: 11pt;
+        }
+
+        .pasien-info td {
+            border: none;
+            padding: 3px 0;
+        }
+
+        .pasien-info td.label {
+            width: 180px;
+            color: #555;
+        }
+
+        .pasien-info td.separator {
+            width: 15px;
+            text-align: center;
+        }
+
+        .pasien-info td.value {
+            font-weight: bold;
+        }
+
+        /* ── Tabel ── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 9.5pt;
+        }
+
+        th,
+        td {
+            border: 1px solid #000;
+            padding: 6px 8px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f3f4f6;
+            color: #000;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        td.center {
+            text-align: center;
+        }
+
+        .medis-badge {
+            font-weight: bold;
+        }
+
+        .tag-status {
+            font-size: 8pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* ── Tanda Tangan ── */
+        .ttd-section {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            page-break-inside: avoid;
+        }
+
+        .ttd-box {
+            text-align: center;
+            width: 220px;
+        }
+
+        .ttd-box .ttd-label {
+            font-size: 10pt;
+            margin-bottom: 70px;
+        }
+
+        .ttd-box .ttd-nama {
+            font-size: 10pt;
+            font-weight: bold;
+            border-top: 1px solid #000;
+            padding-top: 4px;
+        }
+
+        .ttd-box .ttd-jabatan {
+            font-size: 9pt;
+        }
+
+        /* ── Print mode ── */
+        @media print {
+            .print-toolbar {
+                display: none !important;
+            }
+
+            .dokumen {
+                margin: 0;
+                padding: 10mm;
+                max-width: 100%;
+            }
+
+            body {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+        }
+
+        @page {
+            size: A4 landscape;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Toolbar (hilang saat print) -->
+    <div class="print-toolbar">
+        <div class="toolbar-left">
+            <button onclick="window.close()" class="btn-back">← Tutup</button>
+            <span>Pratinjau Cetak — Semua Riwayat Skrining Pasien</span>
+        </div>
+        <button class="btn-print" onclick="window.print()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 6 2 18 2 18 9" />
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                <rect x="6" y="14" width="12" height="8" />
+            </svg>
+            Cetak / Simpan PDF
+        </button>
+    </div>
+
+    <!-- Dokumen -->
+    <div class="dokumen">
+
+        <!-- Kop Surat -->
+        <div class="kop">
+            <h1>Puskesmas IV Koto</h1>
+            <h2>Program Pengendalian Penyakit Tidak Menular (PTM)</h2>
+            <p>Kecamatan IV Koto, Kabupaten Agam, Sumatera Barat</p>
+        </div>
+
+        <!-- Judul -->
+        <div class="judul-dokumen">
+            <h3>Laporan Riwayat Skrining Kesehatan Pasien</h3>
+            <p>Dicetak pada: <strong><%= tanggalCetak %></strong></p>
+        </div>
+
+        <!-- Identitas Pasien -->
+        <table class="pasien-info">
+            <tr>
+                <td class="label">Nama Lengkap Pasien</td>
+                <td class="separator">:</td>
+                <td class="value"><%= pasien.nama_pasien %></td>
+                <td class="label" style="padding-left: 40px;">NIK / No. Identitas</td>
+                <td class="separator">:</td>
+                <td class="value"><%= pasien.nik %></td>
+            </tr>
+            <tr>
+                <td class="label">Usia / Jenis Kelamin</td>
+                <td class="separator">:</td>
+                <td><%= pasien.usia %> Tahun / <%= pasien.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan' %></td>
+                <td class="label" style="padding-left: 40px;">Alamat Domisili</td>
+                <td class="separator">:</td>
+                <td><%= pasien.alamat || '-' %>, Jorong <%= pasien.nama_jorong %>, Nagari <%= pasien.nama_nagari %></td>
+            </tr>
+            <tr>
+                <td class="label">Pekerjaan / Agama</td>
+                <td class="separator">:</td>
+                <td><%= pasien.pekerjaan || '-' %> / <%= pasien.agama || '-' %></td>
+                <td class="label" style="padding-left: 40px;">No. HP / Telepon</td>
+                <td class="separator">:</td>
+                <td><%= pasien.no_hp || '-' %></td>
+            </tr>
+        </table>
+
+        <!-- Tabel Riwayat Kunjungan -->
+        <% if (kunjunganList && kunjunganList.length > 0) { %>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 4%">No</th>
+                        <th style="width: 14%">Tanggal &amp; Lokasi</th>
+                        <th style="width: 20%">Penyakit (PTM) &amp; Hasil Pemeriksaan</th>
+                        <th style="width: 25%">Vitals &amp; Parameter Umum</th>
+                        <th style="width: 25%">Tindak Lanjut &amp; Catatan Edukasi</th>
+                        <th style="width: 12%">Status Validasi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% kunjunganList.forEach((kunj, index) => { %>
+                        <tr>
+                            <td class="center font-bold"><%= index + 1 %></td>
+                            <td>
+                                <strong><%= new Date(kunj.tanggal_kegiatan).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %></strong>
+                                <br><span style="color: #666; font-size: 8.5pt;">Tempat: <%= kunj.lokasi %></span>
+                            </td>
+                            <td>
+                                <ul style="list-style-type: none; padding-left: 0;">
+                                    <% kunj.pemeriksaan.forEach(p => { %>
+                                        <li style="margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px dashed #eee;">
+                                            <strong><%= p.nama_ptm %></strong>: 
+                                            <% if (p.id_jenis_ptm === 'hipertensi') { %>
+                                                <%= p.sistole %>/<%= p.diastole %> mmHg (<%= p.ht_status_tekanan || 'Normal' %>)
+                                            <% } else if (p.id_jenis_ptm === 'dm') { %>
+                                                <%= p.dm_gula_darah %> mg/dL (<%= p.dm_kategori_hasil || 'Normal' %>)
+                                            <% } else if (p.id_jenis_ptm === 'obesitas') { %>
+                                                IMT: <%= p.ob_imt ? parseFloat(p.ob_imt).toFixed(1) : '-' %> (<%= p.ob_kategori_obesitas || 'Normal' %>)
+                                            <% } else if (p.id_jenis_ptm === 'ppok') { %>
+                                                PUMA: <%= p.pp_skor_total %> (<%= p.pp_kategori_risiko || 'Rendah' %>)
+                                            <% } else if (p.id_jenis_ptm === 'gangguan_indra') { %>
+                                                Mata: <%= p.gi_mata %>, Telinga: <%= p.gi_telinga %>
+                                            <% } else if (p.id_jenis_ptm === 'kesehatan_jiwa') { %>
+                                                SRQ: <%= p.kj_skor_total %> (<%= p.kj_kategori_hasil %>)
+                                            <% } %>
+                                        </li>
+                                    <% }) %>
+                                </ul>
+                            </td>
+                            <td>
+                                <% const main = kunj.pemeriksaan[0] || {}; %>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 8.5pt;">
+                                    <div>Berat Badan: <strong><%= main.berat_badan || '-' %> kg</strong></div>
+                                    <div>Tinggi Badan: <strong><%= main.tinggi_badan || '-' %> cm</strong></div>
+                                    <div>Gula Darah: <strong><%= main.gula_darah || '-' %> mg/dL</strong></div>
+                                    <div>Kolesterol: <strong><%= main.kolesterol || '-' %> mg/dL</strong></div>
+                                    <div style="grid-column: span 2;">Merokok: <strong><%= main.merokok ? 'Ya' : 'Tidak' %></strong></div>
+                                    <div style="grid-column: span 2;">Aktivitas Fisik: <strong><%= main.aktivitas_fisik || '-' %></strong></div>
+                                </div>
+                            </td>
+                            <td>
+                                <% 
+                                    const obatMap = {
+                                        'tidak': 'Tidak',
+                                        'beli_sendiri': 'Beli Sendiri',
+                                        'dari_puskesmas': 'Dari Puskesmas',
+                                        'dari_rumah_sakit': 'Dari Rumah Sakit'
+                                    };
+                                    let obatLabel = 'Tidak';
+                                    let rujukanLabel = 'Tidak';
+                                    let edukasiText = '';
+
+                                    kunj.pemeriksaan.forEach(p => {
+                                        if (p.dapat_obat && p.dapat_obat !== 'tidak') {
+                                            obatLabel = obatMap[p.dapat_obat];
+                                        }
+                                        if (p.status_rujukan === 'iya') {
+                                            rujukanLabel = 'Ya (Dirujuk)';
+                                        }
+                                        if (p.edukasi && p.edukasi.trim() !== '') {
+                                            edukasiText += (edukasiText ? '; ' : '') + p.edukasi;
+                                        }
+                                    });
+                                %>
+                                <div style="font-size: 8.5pt;">
+                                    <div>Menerima Obat: <strong><%= obatLabel %></strong></div>
+                                    <div>Rujukan Medis: <strong><%= rujukanLabel %></strong></div>
+                                    <% if (edukasiText) { %>
+                                        <div style="margin-top: 4px; color: #1e3a8a;">Edukasi: <em>"<%= edukasiText %>"</em></div>
+                                    <% } %>
+                                </div>
+                            </td>
+                            <td class="center">
+                                <% 
+                                    let statusUtama = 'menunggu';
+                                    let bidanCatatan = '';
+                                    kunj.pemeriksaan.forEach(p => {
+                                        if (p.status_validasi === 'revisi') {
+                                            statusUtama = 'revisi';
+                                            if (p.catatan_bidan) bidanCatatan = p.catatan_bidan;
+                                        } else if (p.status_validasi === 'terverifikasi' && statusUtama !== 'revisi') {
+                                            statusUtama = 'terverifikasi';
+                                        }
+                                    });
+                                %>
+                                <% if (statusUtama === 'terverifikasi') { %>
+                                    <span style="color: green; font-weight: bold;">VALID</span>
+                                <% } else if (statusUtama === 'revisi') { %>
+                                    <span style="color: red; font-weight: bold;">REVISI</span>
+                                    <% if (bidanCatatan) { %>
+                                        <div style="font-size: 7.5pt; color: #7f1d1d; margin-top: 2px;">Ket: <%= bidanCatatan %></div>
+                                    <% } %>
+                                <% } else { %>
+                                    <span style="color: #d97706; font-weight: bold;">MENUNGGU</span>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        <% } else { %>
+            <p style="text-align: center; color: #666; margin: 40px 0; font-style: italic;">Belum ada riwayat skrining kesehatan untuk pasien ini.</p>
+        <% } %>
+
+        <!-- Tanda Tangan -->
+        <div class="ttd-section">
+            <div class="ttd-box" style="text-align: left; border: none; width: auto;">
+                <p style="font-size: 9pt; color: #666;">Catatan:<br>Laporan ini memuat rekam medis skrining penyakit tidak menular (PTM) pasien.<br>Gunakan dokumen ini untuk keperluan rujukan atau kontrol kesehatan.</p>
+            </div>
+            <div class="ttd-box">
+                <div class="ttd-label">
+                    Kab. Agam, <%= tanggalCetak %><br>
+                    Petugas / Pemeriksa,
+                </div>
+                <div class="ttd-nama"><%= currentUser ? currentUser.nama_user : 'Bidan Desa' %></div>
+                <div class="ttd-jabatan">Staf Puskesmas IV Koto</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Otomatis cetak saat halaman dibuka
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                window.print();
+            }, 500);
+        });
+    </script>
+
+</body>
+
+</html>

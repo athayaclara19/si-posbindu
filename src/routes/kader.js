@@ -24,6 +24,8 @@ router.post('/skrining/edit/:id_skrining', ...guard, kaderController.handleEditS
 
 // --- Riwayat ---
 router.get('/riwayat', ...guard, kaderController.renderRiwayat);
+router.get('/riwayat/cetak/:id_pasien/:id_kegiatan', ...guard, kaderController.renderCetakSkriningPasien);
+router.get('/riwayat/cetak-semua/:id_pasien', ...guard, kaderController.renderCetakSemuaSkrining);
 
 // --- Pasien ---
 router.get('/pasien',          ...guard, pasienController.renderDaftarPasien);

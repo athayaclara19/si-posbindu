@@ -207,11 +207,15 @@ exports.renderLaporan = async (req, res) => {
     try {
         // --- Ambil parameter pencarian, filter, & pagination dari query string ---
         const search       = (req.query.search || '').trim();
+        const nagariFilter = (req.query.nagari || '').trim();   // id_nagari
         const jorongFilter = (req.query.jorong || '').trim();   // id_jorong
-        const statusFilter = (req.query.status || '').trim();   // normal | pra | ht1 | ht2 | krisis
+        let ptmFilter      = (req.query.ptm || '').trim();      // id_jenis_ptm (hipertensi, dm, dll.)
+        const statusFilter = (req.query.status || '').trim();   // status specific to PTM
         const page         = Math.max(1, parseInt(req.query.page) || 1);
         const limit         = 20;
         const offset         = (page - 1) * limit;
+
+        if (ptmFilter === '') ptmFilter = 'all';
 
         // --- Bangun kondisi WHERE secara dinamis ---
         const conditions  = [`s.status_validasi = 'terverifikasi'`];
@@ -221,19 +225,63 @@ exports.renderLaporan = async (req, res) => {
             queryParams.push(`%${search}%`);
             conditions.push(`(p.nama_pasien ILIKE $${queryParams.length} OR p.nik ILIKE $${queryParams.length})`);
         }
+        if (nagariFilter !== '') {
+            queryParams.push(nagariFilter);
+            conditions.push(`j.id_nagari = $${queryParams.length}`);
+        }
         if (jorongFilter !== '') {
             queryParams.push(jorongFilter);
             conditions.push(`p.id_jorong = $${queryParams.length}`);
         }
+        if (ptmFilter !== 'all') {
+            queryParams.push(ptmFilter);
+            conditions.push(`s.id_jenis_ptm = $${queryParams.length}`);
+        }
+
         if (statusFilter !== '') {
-            const bucketMap = {
-                normal: 's.sistole < 120',
-                pra:    's.sistole >= 120 AND s.sistole < 140',
-                ht1:    's.sistole >= 140 AND s.sistole < 160',
-                ht2:    's.sistole >= 160 AND s.sistole < 180',
-                krisis: 's.sistole >= 180',
-            };
-            if (bucketMap[statusFilter]) conditions.push(bucketMap[statusFilter]);
+            if (ptmFilter === 'hipertensi' || ptmFilter === 'all') {
+                const map = {
+                    normal: 's.sistole < 120 AND s.diastole < 80',
+                    pra:    '(s.sistole >= 120 AND s.sistole < 140) OR (s.diastole >= 80 AND s.diastole < 90)',
+                    ht1:    '(s.sistole >= 140 AND s.sistole < 160) OR (s.diastole >= 90 AND s.diastole < 100)',
+                    ht2:    '(s.sistole >= 160 AND s.sistole < 180) OR (s.diastole >= 100 AND s.diastole < 110)',
+                    krisis: 's.sistole >= 180 OR s.diastole >= 110'
+                };
+                if (map[statusFilter]) conditions.push(map[statusFilter]);
+            } else if (ptmFilter === 'dm') {
+                const map = {
+                    normal: "dmt.kategori_hasil = 'Normal'",
+                    prediabetes: "dmt.kategori_hasil = 'Prediabetes'",
+                    dm: "dmt.kategori_hasil = 'Diabetes Melitus'"
+                };
+                if (map[statusFilter]) conditions.push(map[statusFilter]);
+            } else if (ptmFilter === 'obesitas') {
+                const map = {
+                    normal: "obt.kategori_obesitas = 'Normal'",
+                    overweight: "obt.kategori_obesitas = 'Overweight'",
+                    obesitas: "obt.kategori_obesitas = 'Obesitas'"
+                };
+                if (map[statusFilter]) conditions.push(map[statusFilter]);
+            } else if (ptmFilter === 'ppok') {
+                const map = {
+                    rendah: "ppt.kategori_risiko = 'Rendah'",
+                    tinggi: "ppt.kategori_risiko = 'Tinggi'"
+                };
+                if (map[statusFilter]) conditions.push(map[statusFilter]);
+            } else if (ptmFilter === 'gangguan_indra') {
+                const map = {
+                    normal: "git.hasil_pemeriksaan_mata = 'Normal' AND git.hasil_pemeriksaan_telinga = 'Normal'",
+                    gangguan: "git.hasil_pemeriksaan_mata <> 'Normal' OR git.hasil_pemeriksaan_telinga <> 'Normal'"
+                };
+                if (map[statusFilter]) conditions.push(map[statusFilter]);
+            } else if (ptmFilter === 'kesehatan_jiwa') {
+                const map = {
+                    normal: "kjt.kategori_hasil = 'Normal'",
+                    masalah_jiwa: "kjt.kategori_hasil = 'Masalah Kesehatan Jiwa'",
+                    bunuh_diri: "kjt.indikasi_risiko_bunuh_diri = true"
+                };
+                if (map[statusFilter]) conditions.push(map[statusFilter]);
+            }
         }
 
         const whereClause = `WHERE ${conditions.join(' AND ')}`;
@@ -245,6 +293,12 @@ exports.renderLaporan = async (req, res) => {
             JOIN pasien  p ON s.id_pasien   = p.id_pasien
             JOIN kegiatan k ON s.id_kegiatan = k.id_kegiatan
             JOIN jorong  j ON p.id_jorong   = j.id_jorong
+            LEFT JOIN skrining_hipertensi hp   ON hp.id_skrining  = s.id_skrining
+            LEFT JOIN skrining_dm dmt          ON dmt.id_skrining = s.id_skrining
+            LEFT JOIN skrining_obesitas obt    ON obt.id_skrining = s.id_skrining
+            LEFT JOIN skrining_ppok ppt        ON ppt.id_skrining = s.id_skrining
+            LEFT JOIN skrining_gangguan_indra git ON git.id_skrining = s.id_skrining
+            LEFT JOIN skrining_kesehatan_jiwa kjt ON kjt.id_skrining = s.id_skrining
             ${whereClause}
         `;
         const countResult = await pool.query(countQuery, queryParams);
@@ -313,18 +367,24 @@ exports.renderLaporan = async (req, res) => {
         `;
         const result = await pool.query(query, dataParams);
 
-        // --- Data jorong untuk dropdown filter ---
-        const jorong = await pool.query('SELECT id_jorong, nama_jorong FROM jorong ORDER BY nama_jorong ASC');
+        // --- Data jorong & nagari untuk dropdown filter ---
+        const jorong = await pool.query('SELECT id_jorong, nama_jorong, id_nagari FROM jorong ORDER BY nama_jorong ASC');
+        const nagari = await pool.query('SELECT id_nagari, nama_nagari FROM nagari ORDER BY nama_nagari ASC');
+        const listJenisPtm = await pool.query('SELECT id_jenis_ptm, nama_ptm FROM jenis_ptm ORDER BY nama_ptm ASC');
 
         res.render('bidan/laporan', {
             laporanData: result.rows,
             jorong: jorong.rows,
+            nagari: nagari.rows,
+            jenisPtm: listJenisPtm.rows,
             active: 'laporan',
             currentUser: req.session.user || null,
             role: req.session.user ? req.session.user.role : 'bidan',
             // Data pencarian, filter & pagination untuk view
             search,
+            selectedNagari: nagariFilter,
             selectedJorong: jorongFilter,
+            selectedPtm: ptmFilter,
             selectedStatus: statusFilter,
             page,
             totalPages,
@@ -336,13 +396,17 @@ exports.renderLaporan = async (req, res) => {
         res.status(500).send("Gagal memuat laporan.");
     }
 };
- 
+
 // 5. Export Excel
 exports.exportLaporanExcel = async (req, res) => {
     try {
         const search       = (req.query.search || '').trim();
+        const nagariFilter = (req.query.nagari || '').trim();
         const jorongFilter = (req.query.jorong || '').trim();
+        let ptmFilter      = (req.query.ptm || '').trim();
         const statusFilter = (req.query.status || '').trim();
+
+        if (ptmFilter === '') ptmFilter = 'all';
 
         const conditions  = [`s.status_validasi = 'terverifikasi'`];
         const queryParams = [];
@@ -351,19 +415,63 @@ exports.exportLaporanExcel = async (req, res) => {
             queryParams.push(`%${search}%`);
             conditions.push(`(p.nama_pasien ILIKE $${queryParams.length} OR p.nik ILIKE $${queryParams.length})`);
         }
+        if (nagariFilter !== '') {
+            queryParams.push(nagariFilter);
+            conditions.push(`j.id_nagari = $${queryParams.length}`);
+        }
         if (jorongFilter !== '') {
             queryParams.push(jorongFilter);
             conditions.push(`p.id_jorong = $${queryParams.length}`);
         }
+        if (ptmFilter !== 'all') {
+            queryParams.push(ptmFilter);
+            conditions.push(`s.id_jenis_ptm = $${queryParams.length}`);
+        }
+
         if (statusFilter !== '') {
-            const bucketMap = {
-                normal: 's.sistole < 120',
-                pra:    's.sistole >= 120 AND s.sistole < 140',
-                ht1:    's.sistole >= 140 AND s.sistole < 160',
-                ht2:    's.sistole >= 160 AND s.sistole < 180',
-                krisis: 's.sistole >= 180',
-            };
-            if (bucketMap[statusFilter]) conditions.push(bucketMap[statusFilter]);
+            if (ptmFilter === 'hipertensi' || ptmFilter === 'all') {
+                const map = {
+                    normal: 's.sistole < 120 AND s.diastole < 80',
+                    pra:    '(s.sistole >= 120 AND s.sistole < 140) OR (s.diastole >= 80 AND s.diastole < 90)',
+                    ht1:    '(s.sistole >= 140 AND s.sistole < 160) OR (s.diastole >= 90 AND s.diastole < 100)',
+                    ht2:    '(s.sistole >= 160 AND s.sistole < 180) OR (s.diastole >= 100 AND s.diastole < 110)',
+                    krisis: 's.sistole >= 180 OR s.diastole >= 110'
+                };
+                if (map[statusFilter]) conditions.push(map[statusFilter]);
+            } else if (ptmFilter === 'dm') {
+                const map = {
+                    normal: "dmt.kategori_hasil = 'Normal'",
+                    prediabetes: "dmt.kategori_hasil = 'Prediabetes'",
+                    dm: "dmt.kategori_hasil = 'Diabetes Melitus'"
+                };
+                if (map[statusFilter]) conditions.push(map[statusFilter]);
+            } else if (ptmFilter === 'obesitas') {
+                const map = {
+                    normal: "obt.kategori_obesitas = 'Normal'",
+                    overweight: "obt.kategori_obesitas = 'Overweight'",
+                    obesitas: "obt.kategori_obesitas = 'Obesitas'"
+                };
+                if (map[statusFilter]) conditions.push(map[statusFilter]);
+            } else if (ptmFilter === 'ppok') {
+                const map = {
+                    rendah: "ppt.kategori_risiko = 'Rendah'",
+                    tinggi: "ppt.kategori_risiko = 'Tinggi'"
+                };
+                if (map[statusFilter]) conditions.push(map[statusFilter]);
+            } else if (ptmFilter === 'gangguan_indra') {
+                const map = {
+                    normal: "git.hasil_pemeriksaan_mata = 'Normal' AND git.hasil_pemeriksaan_telinga = 'Normal'",
+                    gangguan: "git.hasil_pemeriksaan_mata <> 'Normal' OR git.hasil_pemeriksaan_telinga <> 'Normal'"
+                };
+                if (map[statusFilter]) conditions.push(map[statusFilter]);
+            } else if (ptmFilter === 'kesehatan_jiwa') {
+                const map = {
+                    normal: "kjt.kategori_hasil = 'Normal'",
+                    masalah_jiwa: "kjt.kategori_hasil = 'Masalah Kesehatan Jiwa'",
+                    bunuh_diri: "kjt.indikasi_risiko_bunuh_diri = true"
+                };
+                if (map[statusFilter]) conditions.push(map[statusFilter]);
+            }
         }
 
         const whereClause = `WHERE ${conditions.join(' AND ')}`;
