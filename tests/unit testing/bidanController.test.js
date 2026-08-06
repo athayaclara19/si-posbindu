@@ -199,7 +199,8 @@ describe('bidanController.renderLaporan()', () => {
     function setupHappyPath() {
         pool.query
             .mockResolvedValueOnce({ rows: [{ count: '2' }] }) // countResult
-            .mockResolvedValueOnce({ rows: [{ id_skrining: 1 }] }) // data
+            .mockResolvedValueOnce({ rows: [{ id_pasien: '123' }] }) // patientIdsResult
+            .mockResolvedValueOnce({ rows: [{ id_pasien: '123', kunjungan: [] }] }) // dataQuery
             .mockResolvedValueOnce({ rows: [{ id_jorong: 1, nama_jorong: 'A', id_nagari: 1 }] }) // jorong dropdown
             .mockResolvedValueOnce({ rows: [{ id_nagari: 1, nama_nagari: 'B' }] }) // nagari dropdown
             .mockResolvedValueOnce({ rows: [{ id_jenis_ptm: 'hipertensi', nama_ptm: 'Hipertensi' }] }); // jenisPtm dropdown

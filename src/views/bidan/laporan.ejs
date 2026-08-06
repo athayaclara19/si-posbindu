@@ -116,10 +116,9 @@
                         <thead>
                             <tr class="bg-[#F8FAFC] border-b border-gray-100">
                                 <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Pasien / NIK</th>
-                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Tanggal / Jorong</th>
-                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Penyakit (PTM)</th>
-                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Ringkasan Hasil</th>
-                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Aksi</th>
+                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Jorong</th>
+                                <th class="text-left px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium">Jumlah Kunjungan</th>
+                                <th class="text-center px-5 py-3 text-xs text-[#6B7280] uppercase tracking-wider font-medium w-36">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50">
@@ -130,53 +129,97 @@
                                         hipertensi: 'Hipertensi', dm: 'Diabetes Melitus', obesitas: 'Obesitas',
                                         ppok: 'PPOK', gangguan_indra: 'Gangguan Indra', kesehatan_jiwa: 'Kesehatan Jiwa'
                                     };
-                                    let badges = '';
-                                    let summaryParts = [];
-                                    r.pemeriksaan.forEach(p => {
-                                        const lbl = p.nama_ptm || PTM_LABELS[p.id_jenis_ptm] || p.id_jenis_ptm;
-                                        badges += `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#DBEAFE] text-[#1D4ED8] text-[10px] font-semibold mr-1 mb-1">${lbl}</span>`;
-                                        
-                                        if (p.id_jenis_ptm === 'hipertensi') {
-                                            summaryParts.push(`Tensi: ${p.sistole}/${p.diastole}`);
-                                        } else if (p.id_jenis_ptm === 'dm') {
-                                            summaryParts.push(`GD: ${p.dm_gula_darah || p.gula_darah}`);
-                                        } else if (p.id_jenis_ptm === 'obesitas') {
-                                            summaryParts.push(`IMT: ${p.ob_imt ? parseFloat(p.ob_imt).toFixed(1) : '-'}`);
-                                        } else if (p.id_jenis_ptm === 'ppok') {
-                                            summaryParts.push(`P Puma: ${p.pp_skor_total}`);
-                                        } else if (p.id_jenis_ptm === 'gangguan_indra') {
-                                            summaryParts.push(`Indra: ${p.gi_mata || '-'}`);
-                                        } else if (p.id_jenis_ptm === 'kesehatan_jiwa') {
-                                            summaryParts.push(`SRQ: ${p.kj_skor_total}`);
-                                        }
-                                    });
-                                    const summaryText = summaryParts.join(', ');
                                 %>
-                                <tr class="hover:bg-slate-50 transition-colors">
+                                <tr class="hover:bg-slate-50 transition-colors cursor-pointer border-b border-slate-100" onclick="toggleKunjungan('<%= r.id_pasien %>')">
                                     <td class="px-5 py-4">
                                         <p class="text-[#1F2937] text-sm font-semibold"><%= r.nama_pasien %></p>
                                         <p class="text-[#6B7280] text-xs font-mono"><%= r.nik %></p>
                                     </td>
-                                    <td class="px-5 py-4">
-                                        <p class="text-[#1F2937] text-sm"><%= new Date(r.tanggal_kegiatan).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) %></p>
-                                        <p class="text-[#6B7280] text-xs"><%= r.nama_jorong %></p>
+                                    <td class="px-5 py-4 text-sm text-gray-600">
+                                        <%= r.nama_jorong %>
                                     </td>
                                     <td class="px-5 py-4">
-                                        <div class="flex flex-wrap"><%- badges %></div>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700">
+                                            <%= r.kunjungan.length %> Kali Skrining
+                                        </span>
                                     </td>
-                                    <td class="px-5 py-4">
-                                        <p class="text-[#1F2937] text-xs font-medium max-w-[200px] truncate" title="<%= summaryText %>"><%= summaryText %></p>
-                                    </td>
-                                    <td class="px-5 py-4">
-                                        <button type="button" data-skrining='<%- JSON.stringify(r).replace(/'/g, "&apos;") %>' onclick="showDetailLaporan(this)" class="px-3.5 py-1.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold rounded-lg transition-all shadow-sm">
-                                            Lihat Detail
+                                    <td class="px-5 py-4 text-center">
+                                        <button type="button" class="text-xs text-blue-600 hover:text-blue-800 font-semibold transition-all">
+                                            Lihat Riwayat
                                         </button>
+                                    </td>
+                                </tr>
+                                <tr id="kunjungan-<%= r.id_pasien %>" class="hidden bg-slate-50/50">
+                                    <td colspan="4" class="px-6 py-3.5 border-b border-gray-100">
+                                        <div class="border border-slate-200/60 rounded-xl bg-white shadow-sm overflow-hidden">
+                                            <table class="w-full text-xs text-left">
+                                                <thead>
+                                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold">
+                                                        <th class="py-2.5 px-4 w-36">Tanggal Skrining</th>
+                                                        <th class="py-2.5 px-4 w-48">Penyakit (PTM)</th>
+                                                        <th class="py-2.5 px-4">Ringkasan Hasil</th>
+                                                        <th class="py-2.5 px-4 text-center w-32">Aksi</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-slate-100">
+                                                    <% r.kunjungan.forEach(kunj => { %>
+                                                        <%
+                                                            let badges = '';
+                                                            let summaryParts = [];
+                                                            kunj.pemeriksaan.forEach(p => {
+                                                                const lbl = p.nama_ptm || PTM_LABELS[p.id_jenis_ptm] || p.id_jenis_ptm;
+                                                                badges += `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#DBEAFE] text-[#1D4ED8] text-[10px] font-semibold mr-1 mb-1">${lbl}</span>`;
+                                                                
+                                                                if (p.id_jenis_ptm === 'hipertensi') {
+                                                                    summaryParts.push(`Tensi: ${p.sistole}/${p.diastole}`);
+                                                                } else if (p.id_jenis_ptm === 'dm') {
+                                                                    summaryParts.push(`GD: ${p.dm_gula_darah || p.gula_darah}`);
+                                                                } else if (p.id_jenis_ptm === 'obesitas') {
+                                                                    summaryParts.push(`IMT: ${p.ob_imt ? parseFloat(p.ob_imt).toFixed(1) : '-'}`);
+                                                                } else if (p.id_jenis_ptm === 'ppok') {
+                                                                    summaryParts.push(`P Puma: ${p.pp_skor_total}`);
+                                                                } else if (p.id_jenis_ptm === 'gangguan_indra') {
+                                                                    summaryParts.push(`Indra: ${p.gi_mata || '-'}`);
+                                                                } else if (p.id_jenis_ptm === 'kesehatan_jiwa') {
+                                                                    summaryParts.push(`SRQ: ${p.kj_skor_total}`);
+                                                                }
+                                                            });
+                                                            const summaryText = summaryParts.join(', ');
+                                                            
+                                                            const modalData = {
+                                                                nama_pasien: r.nama_pasien,
+                                                                nik: r.nik,
+                                                                nama_jorong: r.nama_jorong,
+                                                                tanggal_kegiatan: kunj.tanggal_kegiatan,
+                                                                pemeriksaan: kunj.pemeriksaan
+                                                            };
+                                                        %>
+                                                        <tr class="hover:bg-slate-50/80 transition-colors">
+                                                            <td class="py-2.5 px-4 font-medium text-slate-700">
+                                                                <%= new Date(kunj.tanggal_kegiatan).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+                                                            </td>
+                                                            <td class="py-2.5 px-4">
+                                                                <div class="flex flex-wrap"><%- badges %></div>
+                                                            </td>
+                                                            <td class="py-2.5 px-4 text-slate-600">
+                                                                <%= summaryText %>
+                                                            </td>
+                                                            <td class="py-2.5 px-4 text-center">
+                                                                <button type="button" data-skrining='<%- JSON.stringify(modalData).replace(/'/g, "&apos;") %>' onclick="event.stopPropagation(); showDetailLaporan(this);" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md transition-colors text-[10px]">
+                                                                    Lihat Detail
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    <% }) %>
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </td>
                                 </tr>
                                 <% }) %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="5" class="px-5 py-12 text-center text-sm text-gray-500">
+                                    <td colspan="4" class="px-5 py-12 text-center text-sm text-gray-500">
                                         Belum ada data skrining yang tervalidasi.
                                     </td>
                                 </tr>
@@ -406,6 +449,13 @@
             const modal = document.getElementById('detailModalLaporan');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+        }
+
+        function toggleKunjungan(idPasien) {
+            const row = document.getElementById(`kunjungan-${idPasien}`);
+            if (row) {
+                row.classList.toggle('hidden');
+            }
         }
     </script>
 
