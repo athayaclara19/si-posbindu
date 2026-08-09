@@ -17,7 +17,10 @@ exports.renderLogin = (req, res) => {
 
 // 2. Proses Login
 exports.handleLogin = async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
+    if (!email || !password) {
+        return res.render('login', { error: 'Username dan Password wajib diisi.' });
+    }
     try {
         const result = await pool.query(
             'SELECT * FROM "user" WHERE username = $1 AND is_active = true',
